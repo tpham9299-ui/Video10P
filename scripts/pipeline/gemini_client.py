@@ -320,6 +320,8 @@ class GeminiClient:
         self._sleep = sleep_fn or time.sleep
         self._models_khong_kha_dung: set[str] = set()
         self._models_da_do: list[str] = []
+        self.nguon_tham_khao_gan_nhat: list[dict[str, str]] = []
+        self.truy_van_web_gan_nhat: list[str] = []
 
         if not self.api_keys:
             raise GeminiError(
@@ -467,6 +469,76 @@ class GeminiClient:
             raise GeminiError(f"Gemini tra ve noi dung rong: {body[:300]}")
         return ket_qua
 
+    @staticmethod
+    def _trich_nguon_tu_phan_hoi(body: str) -> tuple[list[dict[str, str]], list[str]]:
+        """Trich danh sach nguon tham khao va truy van web tu groundingMetadata/groundingChunks."""
+        try:
+            du_lieu = json.loads(body)
+        except (json.JSONDecodeError, ValueError):
+            return [], []
+
+        candidates = du_lieu.get("candidates") or []
+        if not candidates or not isinstance(candidates[0], dict):
+            return [], []
+
+        cand = candidates[0]
+        meta = cand.get("groundingMetadata")
+        if not isinstance(meta, dict):
+            meta = du_lieu.get("groundingMetadata")
+        if not isinstance(meta, dict):
+            return [], []
+
+        nguon: list[dict[str, str]] = []
+        da_co_url: set[str] = set()
+
+        def _them_nguon(url_raw: Any, tieu_de_raw: Any = "") -> None:
+            url = str(url_raw or "").strip()
+            if not url or url in da_co_url:
+                return
+            da_co_url.add(url)
+            tieu_de = str(tieu_de_raw or "").strip() or url
+            nguon.append({"tieuDe": tieu_de, "url": url})
+
+        chunks = meta.get("groundingChunks") or []
+        if isinstance(chunks, list):
+            for ch in chunks:
+                if not isinstance(ch, dict):
+                    continue
+                web = ch.get("web")
+                if isinstance(web, dict):
+                    _them_nguon(web.get("uri") or web.get("url"), web.get("title"))
+                ctx = ch.get("retrievedContext")
+                if isinstance(ctx, dict):
+                    _them_nguon(ctx.get("uri") or ctx.get("url"), ctx.get("title"))
+
+        attributions = meta.get("groundingAttributions") or []
+        if isinstance(attributions, list):
+            for attr in attributions:
+                if not isinstance(attr, dict):
+                    continue
+                web = attr.get("web")
+                if isinstance(web, dict):
+                    _them_nguon(web.get("uri") or web.get("url"), web.get("title"))
+
+        raw_queries = meta.get("webSearchQueries") or []
+        truy_van = [
+            str(q).strip()
+            for q in raw_queries
+            if isinstance(q, str) and q.strip()
+        ] if isinstance(raw_queries, list) else []
+
+        return nguon, truy_van
+
+    @staticmethod
+    def _la_loi_khong_ho_tro_tool_tim_kiem(status_code: int | None, body_text: str) -> bool:
+        if status_code != 400:
+            return False
+        thap = body_text.lower()
+        return any(
+            tk in thap
+            for tk in ("google_search", "search grounding", "grounding", "tools are not supported")
+        )
+
     def tao_van_ban(
         self,
         prompt: str,
@@ -475,19 +547,24 @@ class GeminiClient:
         yeu_cau_json: bool = False,
         max_output_tokens: int = 8192,
         so_vong_toi_da: int = 2,
-    ) -> str:
-        """Goi Gemini API, tu dong xoay key, tu do model khi 404/400 va chuyen fallback khi het quota 429."""
+        bat_tim_kiem_web: bool = False,
+        tra_ve_nguon: bool = False,
+    ) -> str | tuple[str, list[dict[str, str]]]:
+        """Goi Gemini API, tu dong xoay key, tu do model khi 404/400, chuyen fallback khi 429 va ho tro Google Search Grounding."""
         generation_config: dict[str, Any] = {
             "temperature": nhiet_do,
             "maxOutputTokens": max_output_tokens,
         }
-        if yeu_cau_json:
+        # Khi bat Google Search Grounding, mot so model khong cho ket hop responseMimeType=application/json
+        if yeu_cau_json and not bat_tim_kiem_web:
             generation_config["responseMimeType"] = "application/json"
 
         payload: dict[str, Any] = {
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": generation_config,
         }
+        if bat_tim_kiem_web:
+            payload["tools"] = [{"google_search": {}}]
         if system_instruction:
             payload["systemInstruction"] = {
                 "parts": [{"text": system_instruction}]
@@ -520,12 +597,34 @@ class GeminiClient:
 
                 if status == 200:
                     self.model = model_hien_tai
-                    return self._trich_van_ban_tu_phan_hoi(body)
+                    van_ban = self._trich_van_ban_tu_phan_hoi(body)
+                    nguon, truy_van = self._trich_nguon_tu_phan_hoi(body)
+                    self.nguon_tham_khao_gan_nhat = nguon
+                    self.truy_van_web_gan_nhat = truy_van
+                    if tra_ve_nguon:
+                        return van_ban, nguon
+                    return van_ban
 
                 loi_cuoi = (
                     f"HTTP {status} (model {model_hien_tai}, key #{self._chi_so_key + 1} {key_an}): "
                     f"{body[:240]}"
                 )
+
+                if bat_tim_kiem_web and self._la_loi_khong_ho_tro_tool_tim_kiem(status, body):
+                    con_fallback = [
+                        m
+                        for m in hang_doi_model
+                        if m not in models_da_thu and m not in self._models_khong_kha_dung
+                    ]
+                    if con_fallback:
+                        model_ke_tiep = con_fallback[0]
+                        print(
+                            f"[Gemini] Model '{model_hien_tai}' khong ho tro google_search. "
+                            f"Chuyen sang model du phong '{model_ke_tiep}'..."
+                        )
+                        hang_doi_model = con_fallback
+                        chuyen_model = True
+                        break
 
                 if _la_loi_model_khong_hop_le(status, body):
                     self._models_khong_kha_dung.add(model_hien_tai)
@@ -636,21 +735,39 @@ class GeminiClient:
         nhiet_do: float = 0.7,
         max_output_tokens: int = 8192,
         so_lan_thu_lai_json: int = 2,
+        bat_tim_kiem_web: bool = False,
+        tra_ve_nguon: bool = False,
     ) -> Any:
-        """Goi Gemini yeu cau tra ve JSON, tu lam sach va thu lai toi da 2 lan neu JSON loi."""
+        """Goi Gemini yeu cau tra ve JSON, tu lam sach, thu lai toi da 2 lan va ho tro Google Search Grounding."""
         prompt_hien_tai = prompt
         loi_gan_nhat: Exception | None = None
+        nguon_gop: list[dict[str, str]] = []
+        url_da_co: set[str] = set()
 
         for lan in range(so_lan_thu_lai_json + 1):
-            raw = self.tao_van_ban(
+            ket_qua_raw = self.tao_van_ban(
                 prompt=prompt_hien_tai,
                 system_instruction=system_instruction,
                 nhiet_do=nhiet_do if lan == 0 else max(0.2, nhiet_do - 0.25 * lan),
                 yeu_cau_json=True,
                 max_output_tokens=max_output_tokens,
+                bat_tim_kiem_web=bat_tim_kiem_web,
+                tra_ve_nguon=True,
             )
+            assert isinstance(ket_qua_raw, tuple)
+            raw, nguon_lan = ket_qua_raw
+            for item in nguon_lan:
+                u = item.get("url", "")
+                if u and u not in url_da_co:
+                    url_da_co.add(u)
+                    nguon_gop.append(item)
+
             try:
-                return parse_json_an_toan(raw)
+                parsed = parse_json_an_toan(raw)
+                self.nguon_tham_khao_gan_nhat = nguon_gop
+                if tra_ve_nguon:
+                    return parsed, nguon_gop
+                return parsed
             except (json.JSONDecodeError, ValueError) as err:
                 loi_gan_nhat = err
                 if lan < so_lan_thu_lai_json:

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Bo test don vi offline (khong goi API that) cho pipeline san xuat phim Toan hoc >10 phut (v0.3)."""
+"""Bo test don vi offline (khong goi API that) cho he thong AI san xuat phim Toan hoc >10 phut (v0.5)."""
 
 from __future__ import annotations
 
@@ -14,6 +14,18 @@ GOC_DU_AN = Path(__file__).resolve().parents[1]
 if str(GOC_DU_AN) not in sys.path:
     sys.path.insert(0, str(GOC_DU_AN))
 
+from scripts.pipeline.bo_nho_hoc_hoi import (
+    TOI_DA_BAI_HOC,
+    chon_chu_de_tiep_theo,
+    da_ton_tai_chu_de,
+    ghi_nhan_tap_hoan_thanh,
+    hoc_tu_phan_hoi,
+    luu_bo_nho,
+    tai_bo_nho,
+    tao_ngu_canh_hoc_hoi,
+    them_bai_hoc,
+    them_chu_de_hang_doi,
+)
 from scripts.pipeline.chuan_hoa_doc_toan import chuan_hoa_doc_toan
 from scripts.pipeline.chuanbi_dai import (
     bam_noi_dung_tts,
@@ -36,10 +48,17 @@ from scripts.pipeline.render_dai import (
     dinh_dang_thoi_gian_youtube,
     ghep_luoi_kiem_dinh,
     phan_tich_danh_sach_chuong_chon,
+    tao_chapters_va_mo_ta,
     tao_noi_dung_chapters,
     tinh_hash_chuong,
     tinh_pham_vi_frame_chuong,
 )
+from scripts.pipeline.san_tim_chu_de import (
+    nap_hang_doi_chu_de,
+    nghien_cuu_chu_de,
+    tra_cuu_tom_tat_wikipedia,
+)
+from scripts.pipeline.san_xuat_lien_tuc import chay_san_xuat_lien_tuc
 from scripts.pipeline.tao_kich_ban_10p import (
     LOAI_BIEU_CAM,
     LOAI_BOI_CANH,
@@ -55,6 +74,7 @@ from scripts.pipeline.tao_kich_ban_10p import (
     kiem_tra_latex,
     tao_markdown_doc_duyet,
     tao_slug,
+    tu_kiem_dinh_kich_ban,
 )
 
 
@@ -574,6 +594,13 @@ class TestSanitizerVaBienKichOffline(unittest.TestCase):
                             for i in range(1, 7)
                         ],
                     }
+                if "TU KIEM DINH" in prompt:
+                    return {
+                        "diemTongThe": 9.1,
+                        "nhanXetChung": "Kich ban mach lac, hai huoc di dom va dung kien thuc Toan hoc.",
+                        "canhCanSua": [],
+                        "baiHocMoi": [],
+                    }
                 if "canhBoSung" in prompt:
                     return {
                         "canhBoSung": [
@@ -629,11 +656,12 @@ class TestSanitizerVaBienKichOffline(unittest.TestCase):
             self.assertEqual(len(kq["chuong"][0]["canh"]), 8)
             self.assertEqual(kq["chuong"][0]["canh"][0]["boCuc"], "mo_dau")
             self.assertEqual(kq["chuong"][5]["canh"][-1]["boCuc"], "ket_thuc")
-            # 1 blueprint + 6 hoi + 1 luot bo sung cho hoi 1 = 8 luot goi
-            self.assertEqual(fake.so_lan_goi, 8)
+            # 1 blueprint + 6 hoi + 1 luot bo sung cho hoi 1 + 1 luot tu kiem dinh tang 3 = 9 luot goi
+            self.assertEqual(fake.so_lan_goi, 9)
             md_text = f_md.read_text(encoding="utf-8")
             self.assertIn("[TOÁN / KaTeX]", md_text)
             self.assertIn("[HÀI]", md_text)
+            self.assertIn("Tự kiểm định", md_text)
 
             # Chay lai lan 2 phai dung 100% cache (so_lan_goi khong tang!)
             bien_kich_3_tang(
@@ -643,7 +671,7 @@ class TestSanitizerVaBienKichOffline(unittest.TestCase):
                 client=fake,  # type: ignore[arg-type]
                 thu_muc_du_lieu=Path(tmp),
             )
-            self.assertEqual(fake.so_lan_goi, 8)
+            self.assertEqual(fake.so_lan_goi, 9)
 
 
 class TestTinhFrameVaCacheAudio(unittest.TestCase):
@@ -814,12 +842,482 @@ class TestRenderChaptersVaLuoiKiemDinh(unittest.TestCase):
                 self.assertEqual(grid.size, (1496, 1772))
 
 
+class TestHeThongTuChuV05Offline(unittest.TestCase):
+    def test_google_search_grounding_payload_va_trich_nguon_voi_xoay_key(self) -> None:
+        payloads_ghi_nhan: list[dict[str, Any]] = []
+        keys_da_goi: list[str] = []
+        models_da_goi: list[str] = []
+
+        def fake_post(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            payloads_ghi_nhan.append(payload)
+            keys_da_goi.append(api_key)
+            model_name = url.split("/models/")[1].split(":")[0]
+            models_da_goi.append(model_name)
+
+            if len(keys_da_goi) == 1:
+                return 429, '{"error": {"status": "RESOURCE_EXHAUSTED"}}'
+            if len(keys_da_goi) == 2:
+                return 429, '{"error": {"status": "RESOURCE_EXHAUSTED"}}'
+
+            body = {
+                "candidates": [
+                    {
+                        "content": {
+                            "parts": [
+                                {"text": '```json\n{"suKien": "7 cay cau Konigsberg", "nam": 1736}\n```'}
+                            ]
+                        },
+                        "groundingMetadata": {
+                            "webSearchQueries": ["Euler seven bridges of Konigsberg 1736"],
+                            "groundingChunks": [
+                                {
+                                    "web": {
+                                        "uri": "https://en.wikipedia.org/wiki/Seven_Bridges_of_K%C3%B6nigsberg",
+                                        "title": "Seven Bridges of Konigsberg - Wikipedia",
+                                    }
+                                },
+                                {
+                                    "web": {
+                                        "uri": "https://mathshistory.st-andrews.ac.uk/Biographies/Euler/",
+                                        "title": "Leonhard Euler - MacTutor",
+                                    }
+                                },
+                                {
+                                    "web": {
+                                        "uri": "https://en.wikipedia.org/wiki/Seven_Bridges_of_K%C3%B6nigsberg",
+                                        "title": "Trung URL phai bi loai",
+                                    }
+                                },
+                            ],
+                        },
+                    }
+                ]
+            }
+            return 200, json.dumps(body)
+
+        client = GeminiClient(
+            api_keys=["key_1", "key_2"],
+            model="gemini-flash-latest",
+            fallback_models=["gemini-flash-latest", "gemini-pro-latest"],
+            http_caller=fake_post,
+            sleep_fn=lambda _: None,
+        )
+
+        du_lieu, nguon = client.tao_json(
+            "Tim thong tin ve Euler va 7 cay cau Konigsberg",
+            bat_tim_kiem_web=True,
+            tra_ve_nguon=True,
+        )
+        self.assertEqual(du_lieu, {"suKien": "7 cay cau Konigsberg", "nam": 1736})
+        # Moi request deu gan tools: [{"google_search": {}}] va khong gay xung dot responseMimeType
+        self.assertEqual(len(payloads_ghi_nhan), 3)
+        for pl in payloads_ghi_nhan:
+            self.assertEqual(pl.get("tools"), [{"google_search": {}}])
+            self.assertNotIn("responseMimeType", pl.get("generationConfig", {}))
+        # Xoay het key_1, key_2 o gemini-flash-latest -> tu chuyen sang gemini-pro-latest
+        self.assertEqual(
+            models_da_goi,
+            ["gemini-flash-latest", "gemini-flash-latest", "gemini-pro-latest"],
+        )
+        # Trich nguon khong trung lap tu groundingChunks
+        self.assertEqual(len(nguon), 2)
+        self.assertIn("Seven_Bridges", nguon[0]["url"])
+        self.assertEqual(client.nguon_tham_khao_gan_nhat, nguon)
+
+    def test_bo_nho_hoc_hoi_chong_trung_gioi_han_25_va_ngu_canh(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path_bn = Path(tmp) / "bo_nho_hoc_hoi.json"
+            bo_nho = tai_bo_nho(path_bn)
+            self.assertTrue(path_bn.exists())
+            for k in ("chu_de_da_lam", "hang_doi_chu_de", "bai_hoc_rut_ra", "phan_hoi_kenh"):
+                self.assertIn(k, bo_nho)
+
+            # Ghi nhan 1 tap da lam
+            ghi_nhan_tap_hoan_thanh(
+                bo_nho,
+                slug="pythagoras_vo_ti",
+                tieu_de="Pythagoras và Cú Sốc Số Vô Tỉ √2",
+                nhan_vat_chinh="Pythagoras, Hippasus",
+                tom_tat_1_cau="Hippasus chứng minh √2 không viết được thành phân số làm hội Pythagoras đứng hình.",
+                thoi_luong_giay=672.5,
+                nguon_tham_khao=["https://en.wikipedia.org/wiki/Hippasus"],
+            )
+            self.assertTrue(da_ton_tai_chu_de(bo_nho, "pythagoras_vo_ti"))
+            self.assertTrue(
+                da_ton_tai_chu_de(bo_nho, "khac_slug", "Pythagoras và cú sốc số vô tỉ √2")
+            )
+
+            # Them hang doi: 1 trung chu_de_da_lam, 2 moi, 1 trung trong cung luot
+            da_them = them_chu_de_hang_doi(
+                bo_nho,
+                [
+                    {"slug": "pythagoras_vo_ti", "tieuDe": "Pythagoras và số vô tỉ", "diemThuHut": 9.9, "doSauToanHoc": 9.9},
+                    {"slug": "euler_7_cay_cau", "tieuDe": "Euler và 7 Cây Cầu Königsberg", "diemThuHut": 9.4, "doSauToanHoc": 9.1},
+                    {"slug": "euler_7_cay_cau", "tieuDe": "Trùng slug Euler", "diemThuHut": 7.0, "doSauToanHoc": 7.0},
+                    {"slug": "ramanujan_so_tay", "tieuDe": "Ramanujan và Cuốn Sổ Tay Bí Ẩn", "diemThuHut": 9.1, "doSauToanHoc": 8.7},
+                ],
+            )
+            self.assertEqual([x["slug"] for x in da_them], ["euler_7_cay_cau", "ramanujan_so_tay"])
+            chon = chon_chu_de_tiep_theo(bo_nho)
+            self.assertIsNotNone(chon)
+            assert chon is not None
+            self.assertEqual(chon["slug"], "euler_7_cay_cau")
+
+            # Them 30 bai hoc khac biet ro rang + 1 bai trung -> phai gop bai trung va giu toi da 25 bai uu tien cao nhat
+            tu_khoa_khac_nhau = [
+                "tam giác vuông cổ đại", "phân số tối giản", "đồ thị cầu Konigsberg", "chuỗi vô hạn Euler",
+                "số ảo mặt phẳng phức", "hình học phi Euclid", "xác suất xúc xắc", "nguyên lý chuồng bồ câu",
+                "dãy Fibonacci tự nhiên", "tỉ lệ vàng kiến trúc", "logarit thiên văn", "tích phân diện tích",
+                "đạo hàm vận tốc tức thời", "nhóm đối xứng Galois", "số nguyên tố sàng Eratosthenes",
+                "nghịch lý khách sạn Hilbert", "tập hợp vô hạn Cantor", "định lý bốn màu bản đồ",
+                "ma trận biến đổi đồ họa", "mã hóa khóa công khai RSA", "hình học fractal tuyết",
+                "định lý Bayes suy luận", "hàm zeta Riemann", "phép đo bán kính Trái Đất",
+                "bàn tính cổ đại", "lịch sử số không Ấn Độ", "hệ nhị phân máy tính",
+                "đường cong cycloid nhanh nhất", "định lý Noether bảo toàn", "bài toán người bán hàng",
+            ]
+            for i, chu_de_bh in enumerate(tu_khoa_khac_nhau, start=1):
+                them_bai_hoc(
+                    bo_nho,
+                    loai="toan_hoc" if i % 2 == 0 else "hai_huoc",
+                    noi_dung=f"Khi minh họa chủ đề {chu_de_bh}, hãy kiểm tra kỹ ví dụ trực quan #{i}.",
+                    muc_do_uu_tien=5 if i > 20 else 2,
+                    ngay=f"2026-11-{(i % 28) + 1:02d}",
+                )
+            # Bai trung noi dung -> khong lam vuot gioi han va giu ban gop
+            them_bai_hoc(
+                bo_nho,
+                loai="toan_hoc",
+                noi_dung="Khi minh họa chủ đề bài toán người bán hàng, hãy kiểm tra kỹ ví dụ trực quan #30.",
+                muc_do_uu_tien=5,
+            )
+            self.assertEqual(len(bo_nho["bai_hoc_rut_ra"]), TOI_DA_BAI_HOC)
+            # Tat ca 10 bai uu tien 5 (21..30) phai duoc giu lai
+            uu_tien_5 = [b for b in bo_nho["bai_hoc_rut_ra"] if b["mucDoUuTien"] == 5]
+            self.assertEqual(len(uu_tien_5), 10)
+            luu_bo_nho(bo_nho, path_bn)
+
+            # Tiem ngu canh hoc hoi
+            ngu_canh = tao_ngu_canh_hoc_hoi(duong_dan=path_bn)
+            self.assertIn("Pythagoras", ngu_canh)
+            self.assertIn("callback", ngu_canh)
+            self.assertIn("uu tien 5/5", ngu_canh)
+
+            # Test --hoc-tu-phan-hoi voi mock Gemini
+            class FakeFeedbackGemini:
+                def tao_json(self, prompt: str, **kwargs: Any) -> Any:
+                    return {
+                        "baiHocMoi": [
+                            {
+                                "loai": "hai_huoc",
+                                "noiDung": "Tăng thêm 1 câu bình luận góc màn hình ở phút thứ 6 để giữ nhịp xem.",
+                                "mucDoUuTien": 5,
+                            }
+                        ]
+                    }
+
+            moi = hoc_tu_phan_hoi(
+                slug="pythagoras_vo_ti",
+                ghi_chu="Khán giả thích đoạn hài hước nhưng phút 6 hơi lắng.",
+                duong_dan=path_bn,
+                client=FakeFeedbackGemini(),  # type: ignore[arg-type]
+            )
+            self.assertEqual(len(moi), 1)
+            bo_nho_moi = tai_bo_nho(path_bn)
+            self.assertEqual(len(bo_nho_moi["phan_hoi_kenh"]), 1)
+            self.assertLessEqual(len(bo_nho_moi["bai_hoc_rut_ra"]), TOI_DA_BAI_HOC)
+
+    def test_san_tim_chu_de_va_nghien_cuu_web_wikipedia_offline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path_bn = root / "bo_nho_hoc_hoi.json"
+            bo_nho = tai_bo_nho(path_bn)
+            ghi_nhan_tap_hoan_thanh(
+                bo_nho,
+                slug="so_0_an_do",
+                tieu_de="Hành Trình Số 0 Ấn Độ",
+                nhan_vat_chinh="Brahmagupta",
+                tom_tat_1_cau="Số 0 từ dấu chấm nhỏ thành nền tảng đại số.",
+                thoi_luong_giay=650,
+            )
+            luu_bo_nho(bo_nho, path_bn)
+
+            goi_bat_search: list[bool] = []
+
+            class FakeResearchGemini:
+                def tao_json(self, prompt: str, **kwargs: Any) -> Any:
+                    goi_bat_search.append(bool(kwargs.get("bat_tim_kiem_web")))
+                    if "chuDeDeXuat" in prompt:
+                        return {
+                            "chuDeDeXuat": [
+                                {
+                                    "slug": "so_0_an_do",
+                                    "tieuDe": "Hành Trình Số 0 Ấn Độ",
+                                    "gocKhaiThac": "Trung lap phai bi loai",
+                                    "diemThuHut": 9.0,
+                                    "doSauToanHoc": 9.0,
+                                },
+                                {
+                                    "slug": "euler_7_cay_cau",
+                                    "tieuDe": "Euler và 7 Cây Cầu Königsberg",
+                                    "gocKhaiThac": "Từ trò đố đi dạo đến Lý thuyết Đồ thị và Google Maps.",
+                                    "diemThuHut": 9.4,
+                                    "doSauToanHoc": 9.0,
+                                },
+                                {
+                                    "slug": "cantor_vo_cuc",
+                                    "tieuDe": "Georg Cantor và Những Cấp Độ Vô Cực",
+                                    "gocKhaiThac": "Vô cực này lớn hơn vô cực kia như thế nào?",
+                                    "diemThuHut": 9.2,
+                                    "doSauToanHoc": 9.5,
+                                },
+                            ]
+                        }
+                    du_lieu = {
+                        "tieuDe": "Leonhard Euler và Bài Toán 7 Cây Cầu Königsberg",
+                        "tomTat1Cau": "Euler biến 7 cây cầu thành đồ thị điểm-cạnh năm 1736 và khai sinh Lý thuyết Đồ thị.",
+                        "nienDaiChuan": [{"nam": "1736", "suKien": "Euler trình bày lời giải tại Viện Hàn lâm St. Petersburg."}],
+                        "nhanVatThat": [
+                            {"ten": "Leonhard Euler", "vaiTro": "Nhà Toán học Thụy Sĩ", "nienDai": "1707-1783", "tinhCachDoiThuong": "Siêu năng suất và dí dỏm"}
+                        ],
+                        "giaiThoaiDoiThuong": [
+                            {"tieuDe": "Trò đố cuối tuần", "noiDung": "Người dân Königsberg thi nhau đi dạo qua 7 cây cầu.", "diemHaiHuoc": "Ai cũng kẹt ở cây cầu thứ 7!"},
+                            {"tieuDe": "Bức thư ban đầu", "noiDung": "Euler ban đầu tưởng đây chỉ là trò giải trí nhỏ.", "diemHaiHuoc": "Ai ngờ lại đẻ ra cả ngành Toán mới."},
+                            {"tieuDe": "Mảnh đất hóa điểm", "noiDung": "Euler vứt bỏ bản đồ rườm rà, chỉ giữ 4 chấm và 7 nét.", "diemHaiHuoc": "Thiết kế tối giản đi trước thời đại 300 năm."},
+                        ],
+                        "kienThucToanCotLoi": [
+                            {
+                                "tenKienThuc": "Định lý đường đi Euler",
+                                "giaiThichDeHieu": "Đồ thị liên thông có tối đa 2 đỉnh bậc lẻ mới đi qua mọi cạnh đúng 1 lần.",
+                                "congThucLatex": r"\sum_{v \in V} \deg(v) = 2|E|",
+                                "yNghia": "Khởi đầu Lý thuyết Đồ thị và Topo học.",
+                            }
+                        ],
+                        "ungDungHienDai": ["Dẫn đường GPS / Google Maps", "Tối ưu mạng máy tính"],
+                        "nguonThamKhao": ["https://mathshistory.st-andrews.ac.uk/Biographies/Euler/"],
+                    }
+                    nguon = [{"tieuDe": "MacTutor", "url": "https://mathshistory.st-andrews.ac.uk/Biographies/Euler/"}]
+                    if kwargs.get("tra_ve_nguon"):
+                        return du_lieu, nguon
+                    return du_lieu
+
+            def fake_wiki(url: str, timeout: int) -> tuple[int, str]:
+                if "vi.wikipedia.org/api/rest_v1/page/summary/" in url:
+                    return 200, json.dumps(
+                        {
+                            "title": "Bảy cây cầu ở Königsberg",
+                            "extract": "Bài toán bảy cây cầu ở Königsberg được Leonhard Euler giải quyết năm 1736.",
+                            "content_urls": {
+                                "desktop": {"page": "https://vi.wikipedia.org/wiki/Bay_cay_cau_o_Konigsberg"}
+                            },
+                        }
+                    )
+                return 404, ""
+
+            fake_gemini = FakeResearchGemini()
+            them = nap_hang_doi_chu_de(so_luong=5, duong_dan_bo_nho=path_bn, client=fake_gemini)  # type: ignore[arg-type]
+            self.assertEqual([t["slug"] for t in them], ["euler_7_cay_cau", "cantor_vo_cuc"])
+
+            wiki_res = tra_cuu_tom_tat_wikipedia("Euler", wiki_fetcher=fake_wiki)
+            self.assertEqual(len(wiki_res), 1)
+            self.assertEqual(wiki_res[0]["ngonNgu"], "vi")
+
+            file_tl, tl = nghien_cuu_chu_de(
+                slug="euler_7_cay_cau",
+                thu_muc_du_lieu=root,
+                duong_dan_bo_nho=path_bn,
+                client=fake_gemini,  # type: ignore[arg-type]
+                wiki_fetcher=fake_wiki,
+            )
+            self.assertTrue(file_tl.exists())
+            self.assertEqual(len(tl["giaiThoaiDoiThuong"]), 3)
+            self.assertIn("https://vi.wikipedia.org/wiki/Bay_cay_cau_o_Konigsberg", tl["nguonThamKhao"])
+            self.assertIn("https://mathshistory.st-andrews.ac.uk/Biographies/Euler/", tl["nguonThamKhao"])
+            self.assertEqual(goi_bat_search, [True, True])
+
+    def test_tu_kiem_dinh_sua_canh_va_luu_bai_hoc_moi(self) -> None:
+        du_lieu = _tao_kich_ban_gia_6_hoi(so_canh_moi_hoi=2)
+        with tempfile.TemporaryDirectory() as tmp:
+            path_bn = Path(tmp) / "bo_nho_hoc_hoi.json"
+            tai_bo_nho(path_bn)
+
+            class FakeCritiqueGemini:
+                def tao_json(self, prompt: str, **kwargs: Any) -> Any:
+                    self.prompt_da_nhan = prompt
+                    return {
+                        "diemTongThe": 8.4,
+                        "nhanXetChung": "Phát hiện 1 lỗi công thức cần chỉnh ở canh_001.",
+                        "canhCanSua": [
+                            {
+                                "id": "canh_001",
+                                "lyDo": "Sửa niên đại và bổ sung công thức LaTeX chuẩn.",
+                                "loiThoaiMoi": "Vào khoảng thế kỷ thứ 5 TCN, Hippasus phát hiện √2 không thể viết thành phân số tối giản p/q.",
+                                "congThucLatexMoi": [{"latex": r"\sqrt{2} \neq \frac{p}{q}", "nhan": "Vô tỉ", "noiBat": True}],
+                            }
+                        ],
+                        "baiHocMoi": [
+                            {
+                                "loai": "toan_hoc",
+                                "noiDung": "Luôn đối chiếu niên đại cổ đại trước Công nguyên với tư liệu nghiên cứu.",
+                                "mucDoUuTien": 5,
+                            }
+                        ],
+                    }
+
+            fake = FakeCritiqueGemini()
+            kb_sau, bao_cao, cb = tu_kiem_dinh_kich_ban(
+                kich_ban=du_lieu,
+                gemini=fake,  # type: ignore[arg-type]
+                tu_lieu_nghien_cuu={"tomTat1Cau": "Hippasus và √2 thế kỷ 5 TCN"},
+                duong_dan_bo_nho=path_bn,
+            )
+            self.assertEqual(cb, [])
+            self.assertEqual(len(bao_cao["canhDaSua"]), 1)
+            self.assertIn("thế kỷ thứ 5 TCN", kb_sau["chuong"][0]["canh"][0]["loiThoai"])
+            self.assertEqual(kb_sau["chuong"][0]["canh"][0]["congThucLatex"][0]["latex"], r"\sqrt{2} \neq \frac{p}{q}")
+
+            bo_nho_sau = tai_bo_nho(path_bn)
+            self.assertEqual(len(bo_nho_sau["bai_hoc_rut_ra"]), 1)
+            self.assertEqual(bo_nho_sau["bai_hoc_rut_ra"][0]["loai"], "toan_hoc")
+
+    def test_xuat_chapters_va_mo_ta_youtube(self) -> None:
+        du_lieu = _tao_kich_ban_gia_6_hoi(so_canh_moi_hoi=18)
+        thoi_luong = {f"canh_{i:03d}": 5.8 for i in range(1, 109)}
+        du_lieu_render, _ = tinh_toan_khung_hinh(du_lieu, thoi_luong, slug="pythagoras", fps=30)
+
+        tu_lieu = {
+            "tomTat1Cau": "Câu chuyện có thật về số vô tỉ √2 khiến hội Pythagoras phải bất ngờ.",
+            "ungDungHienDai": ["Thiết kế khổ giấy A4 tỉ lệ √2", "Đồ họa máy tính 3D"],
+            "nguonThamKhao": [
+                "https://en.wikipedia.org/wiki/Square_root_of_2",
+                "https://en.wikipedia.org/wiki/Hippasus",
+            ],
+        }
+        noi_dung = tao_chapters_va_mo_ta(du_lieu_render, tu_lieu_nghien_cuu=tu_lieu, fps=30)
+        self.assertIn("TIÊU ĐỀ GỢI Ý CHO YOUTUBE", noi_dung)
+        self.assertIn("ĐOẠN MÔ TẢ HẤP DẪN", noi_dung)
+        self.assertIn("00:00 1. Hồi thứ 1", noi_dung)
+        self.assertIn("NGUỒN THAM KHẢO", noi_dung)
+        self.assertIn("https://en.wikipedia.org/wiki/Square_root_of_2", noi_dung)
+        self.assertIn("Thiết kế khổ giấy A4", noi_dung)
+
+    def test_san_xuat_lien_tuc_nhieu_tap_tu_nap_va_xu_ly_loi_tung_tap(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path_bn = root / "bo_nho_hoc_hoi.json"
+            tai_bo_nho(path_bn)
+
+            so_lan_nap = {"dem": 0}
+            slugs_da_chay: list[str] = []
+            giay_da_ngu: list[float] = []
+
+            def fake_nap(so_luong: int = 5, duong_dan_bo_nho: Any = None, **kwargs: Any) -> list[dict[str, Any]]:
+                so_lan_nap["dem"] += 1
+                bn = tai_bo_nho(duong_dan_bo_nho)
+                them = them_chu_de_hang_doi(
+                    bn,
+                    [
+                        {"slug": "tap_1_ok", "tieuDe": "Tập 1 Euler", "diemThuHut": 9.8, "doSauToanHoc": 9.5},
+                        {"slug": "tap_2_loi", "tieuDe": "Tập 2 Galois (lỗi giả lập)", "diemThuHut": 9.5, "doSauToanHoc": 9.0},
+                        {"slug": "tap_3_ok", "tieuDe": "Tập 3 Ramanujan", "diemThuHut": 9.1, "doSauToanHoc": 8.9},
+                        {"slug": "tap_4_du", "tieuDe": "Tập 4 Cantor", "diemThuHut": 8.5, "doSauToanHoc": 8.5},
+                    ],
+                )
+                luu_bo_nho(bn, duong_dan_bo_nho)
+                return them
+
+            def fake_nghien_cuu(slug: str, chu_de: str, **kwargs: Any) -> tuple[Path, dict[str, Any]]:
+                slugs_da_chay.append(slug)
+                if slug == "tap_2_loi":
+                    raise RuntimeError("Gia lap loi mang o tap 2")
+                p = root / slug / "tu_lieu_nghien_cuu.json"
+                p.parent.mkdir(parents=True, exist_ok=True)
+                data = {
+                    "slug": slug,
+                    "tieuDe": chu_de,
+                    "tomTat1Cau": f"Tóm tắt {chu_de}",
+                    "nguonThamKhao": [f"https://example.org/{slug}"],
+                }
+                p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+                return p, data
+
+            def fake_bien_kich(chu_de: str, slug: str, **kwargs: Any) -> tuple[Path, Path, dict[str, Any]]:
+                p_json = root / slug / "nhap_kich_ban.json"
+                p_md = root / slug / "doc_duyet_kich_ban.md"
+                kb = {
+                    "tieuDe": chu_de,
+                    "chuDe": chu_de,
+                    "danhSachNhanVat": [{"id": "nv1", "ten": "Nhà Toán Học"}],
+                    "chuong": [],
+                }
+                p_json.write_text(json.dumps(kb, ensure_ascii=False), encoding="utf-8")
+                p_md.write_text("# Doc duyet\n", encoding="utf-8")
+                return p_json, p_md, kb
+
+            def fake_tts(slug: str, **kwargs: Any) -> tuple[Path, dict[str, Any]]:
+                p_render = root / slug / "du_lieu_render.json"
+                p_render.write_text("{}", encoding="utf-8")
+                return p_render, {"tongGiay": 665.0, "datTren10Phut": True}
+
+            def fake_render(slug: str, **kwargs: Any) -> dict[str, Path]:
+                return {
+                    "video": root / "out" / slug / "video_hoan_chinh.mp4",
+                    "chapters_va_mo_ta": root / "out" / slug / "chapters_va_mo_ta.txt",
+                    "luoi": root / "out" / slug / "luoi_kiem_dinh.png",
+                }
+
+            ket_qua = chay_san_xuat_lien_tuc(
+                so_tap=3,
+                nghi_giay=15.0,
+                duong_dan_bo_nho=path_bn,
+                thu_muc_du_lieu=root,
+                sleep_fn=lambda s: giay_da_ngu.append(s),
+                nap_hang_doi_fn=fake_nap,
+                nghien_cuu_fn=fake_nghien_cuu,
+                bien_kich_fn=fake_bien_kich,
+                tts_fn=fake_tts,
+                render_fn=fake_render,
+            )
+
+            # Da tu dong nap hang doi khi so chu de 'cho' < 3
+            self.assertGreaterEqual(so_lan_nap["dem"], 1)
+            # Tap 1 ok -> Tap 2 loi -> Tap 3 van tiep tuc thanh cong!
+            self.assertEqual([r["trangThai"] for r in ket_qua], ["thanh_cong", "loi", "thanh_cong"])
+            self.assertEqual(slugs_da_chay, ["tap_1_ok", "tap_2_loi", "tap_3_ok"])
+            self.assertEqual(giay_da_ngu, [15.0, 15.0])
+            self.assertTrue((root / "nhat_ky_san_xuat.log").exists())
+
+            # Kiem tra bo_nho_hoc_hoi.json da cap nhat 2 tap thanh cong va trang thai hang doi dung
+            bn_cuoi = tai_bo_nho(path_bn)
+            self.assertEqual([t["slug"] for t in bn_cuoi["chu_de_da_lam"]], ["tap_1_ok", "tap_3_ok"])
+            trang_thai_map = {item["slug"]: item["trangThai"] for item in bn_cuoi["hang_doi_chu_de"]}
+            self.assertEqual(trang_thai_map["tap_1_ok"], "xong")
+            self.assertEqual(trang_thai_map["tap_3_ok"], "xong")
+            # Tap 2 bi loi duoc tra ve 'cho' de khong ket mai o 'dang_lam'
+            self.assertEqual(trang_thai_map["tap_2_loi"], "cho")
+
+            # Test che do --chi-tao-kich-ban voi --chu-de dat hang rieng
+            kq_kb = chay_san_xuat_lien_tuc(
+                so_tap=1,
+                chu_de="Archimedes và chiếc vương miện",
+                chi_tao_kich_ban=True,
+                duong_dan_bo_nho=path_bn,
+                thu_muc_du_lieu=root,
+                sleep_fn=lambda _: None,
+                nghien_cuu_fn=fake_nghien_cuu,
+                bien_kich_fn=fake_bien_kich,
+                tts_fn=lambda **kw: (_ for _ in ()).throw(AssertionError("Khong duoc goi TTS khi --chi-tao-kich-ban")),
+                render_fn=lambda **kw: (_ for _ in ()).throw(AssertionError("Khong duoc goi Render khi --chi-tao-kich-ban")),
+            )
+            self.assertEqual(kq_kb[0]["trangThai"], "thanh_cong")
+            self.assertTrue(kq_kb[0]["chiTaoKichBan"])
+
+
 def main() -> int:
     suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
     runner = unittest.TextTestRunner(verbosity=2)
     res = runner.run(suite)
     if res.wasSuccessful():
-        print("\n[THANH CONG] Tat ca unit test offline pipeline v0.3 deu xanh!")
+        print("\n[THANH CONG] Tat ca unit test offline pipeline v0.5 deu xanh!")
         return 0
     return 1
 

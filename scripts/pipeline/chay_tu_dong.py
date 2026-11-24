@@ -130,6 +130,8 @@ def main(argv: list[str] | None = None) -> int:
     print("[HOAN TAT] Da xuat tron bo san pham:")
     print(f"  - Video cuoi cung   : {ket_qua['video']}")
     print(f"  - Moc chuong YouTube: {ket_qua['chapters']}")
+    if "chapters_va_mo_ta" in ket_qua:
+        print(f"  - Tron goi YouTube  : {ket_qua['chapters_va_mo_ta']}")
     print(f"  - Luoi kiem dinh 18 : {ket_qua['luoi']}")
     print("=" * 72)
     return 0

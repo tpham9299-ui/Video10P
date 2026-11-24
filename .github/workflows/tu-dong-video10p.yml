@@ -1,0 +1,139 @@
+name: Tu Dong San Xuat Video Toan Hoc >10 Phut
+
+on:
+  schedule:
+    # Chay tu dong moi thu 2 va thu 5 luc 02:00 UTC (09:00 gio Viet Nam)
+    - cron: '0 2 * * 1,4'
+  workflow_dispatch:
+    inputs:
+      so_tap:
+        description: 'So tap phim can san xuat lien tiep (mac dinh 1)'
+        required: false
+        default: '1'
+        type: string
+      chu_de_tuy_chon:
+        description: 'Chu de dat hang rieng (de trong de AI tu san & chon tu hang doi)'
+        required: false
+        default: ''
+        type: string
+      chi_tao_kich_ban:
+        description: 'Chi nghien cuu web + tao kich ban & tu kiem dinh (khong render MP4)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: san-xuat-video10p-main
+  cancel-in-progress: false
+
+jobs:
+  san-xuat-tu-dong:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Lay ma nguon tu repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cai dat Node.js 20 (co cache npm)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cai dat Python 3.11 (co cache pip)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'requirements.txt'
+
+      - name: Cai dat FFmpeg va font Unicode cho Pillow
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+
+      - name: Cai dat thu vien Node.js va Python
+        run: |
+          npm ci
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Cache Chromium / Playwright cho Remotion
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.remotion
+            ~/.cache/remotion
+            ~/.cache/ms-playwright
+          key: remotion-browser-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            remotion-browser-${{ runner.os }}-
+
+      - name: Dam bao trinh duyet Chromium cua Remotion san sang
+        if: ${{ inputs.chi_tao_kich_ban != true }}
+        run: npx remotion browser ensure
+
+      - name: Chay bo kiem thu offline truoc khi san xuat
+        run: npm run kiem-tra:all
+
+      - name: Chay he thong AI san xuat video tu chu
+        env:
+          GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-flash-latest' }}
+          GEMINI_FALLBACK_MODELS: ${{ vars.GEMINI_FALLBACK_MODELS || 'gemini-flash-latest,gemini-flash-lite-latest,gemini-pro-latest' }}
+          TTS_VOICE: ${{ vars.TTS_VOICE || 'vi-VN-NamMinhNeural' }}
+          SO_TAP: ${{ inputs.so_tap || '1' }}
+          CHU_DE_TUY_CHON: ${{ inputs.chu_de_tuy_chon || '' }}
+          CHI_TAO_KICH_BAN: ${{ inputs.chi_tao_kich_ban || false }}
+        run: |
+          ARGS=("--so-tap" "$SO_TAP" "--nghi-giay" "20" "--concurrency" "2")
+          if [ -n "$CHU_DE_TUY_CHON" ]; then
+            ARGS+=("--chu-de" "$CHU_DE_TUY_CHON")
+          fi
+          if [ "$CHI_TAO_KICH_BAN" = "true" ]; then
+            ARGS+=("--chi-tao-kich-ban")
+          fi
+          python -X utf8 scripts/pipeline/san_xuat_lien_tuc.py "${ARGS[@]}"
+
+      - name: Tai len artifact video, mo ta YouTube va luoi kiem dinh 18 khung hinh
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: san-pham-video10p-${{ github.run_number }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            out/*/video_hoan_chinh.mp4
+            out/*/chapters_va_mo_ta.txt
+            out/*/luoi_kiem_dinh.png
+            du_lieu/*/doc_duyet_kich_ban.md
+            du_lieu/*/tu_lieu_nghien_cuu.json
+            du_lieu/bo_nho_hoc_hoi.json
+
+      - name: Tu dong luu bo nho hoc hoi & kich ban nhe ve nhanh main
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [ -f du_lieu/bo_nho_hoc_hoi.json ]; then
+            git add du_lieu/bo_nho_hoc_hoi.json
+          fi
+
+          # Chi add cac file JSON / Markdown nhe trong du_lieu/, tuyet doi KHONG push mp4/mp3/out
+          find du_lieu -maxdepth 3 -type f \( -name "*.json" -o -name "*.md" \) -print0 | xargs -0 -r git add --
+
+          if [ -n "$(git status --porcelain du_lieu)" ]; then
+            git commit -m "chore(ai): cap nhat bo nho hoc hoi va tu lieu/kich ban tu dong [skip ci]"
+            git pull --rebase origin main || true
+            git push origin HEAD:main
+          else
+            echo "Khong co thay doi moi trong du_lieu/ de commit."
+          fi

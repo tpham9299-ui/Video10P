@@ -1,12 +1,13 @@
 {
   "name": "video-dai-nguoi-que-toan-hoc",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "private": true,
-  "description": "Du an Remotion 16:9 hoat hinh nguoi que ke chuyen lich su Toan hoc",
+  "description": "He thong AI tu chu san xuat phim hoat hinh 2D ke chuyen lich su Toan hoc >10 phut (Remotion + Python)",
   "scripts": {
     "dev": "remotion studio",
     "kiem-tra": "npx tsc --noEmit && node scripts/test_khung.mjs",
     "kiem-tra:all": "npm run kiem-tra && python -X utf8 scripts/test_pipeline.py",
+    "san-xuat:tu-dong": "python -X utf8 scripts/pipeline/san_xuat_lien_tuc.py",
     "render:mau": "remotion render src/index.ts VideoDaiNguoiQue out/mau_pythagoras.mp4 --props=du_lieu/mau_pythagoras.json"
   },
   "dependencies": {

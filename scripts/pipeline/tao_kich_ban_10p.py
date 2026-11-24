@@ -17,6 +17,13 @@ GOC_DU_AN = Path(__file__).resolve().parents[2]
 if str(GOC_DU_AN) not in sys.path:
     sys.path.insert(0, str(GOC_DU_AN))
 
+from scripts.pipeline.bo_nho_hoc_hoi import (
+    DUONG_DAN_BO_NHO_MAC_DINH,
+    luu_bo_nho,
+    tai_bo_nho,
+    tao_ngu_canh_hoc_hoi,
+    them_bai_hoc,
+)
 from scripts.pipeline.gemini_client import GeminiClient
 
 # ==============================================================================
@@ -164,13 +171,14 @@ KHUNG_6_HOI: list[dict[str, Any]] = [
         "soHoi": 1,
         "id": "chuong_1",
         "vaiTro": "Mo man to mo & Boi canh song dong",
-        "phutMucTieu": 1.5,
+        "phutMucTieu": 1.6,
         "tuToiThieu": 250,
-        "tuMucTieu": "270-320",
-        "soCanh": "15-18",
+        "tuMucTieu": "280-330",
+        "soCanh": "16-19",
         "yeuCauDacBiet": (
             "Dat nguoi xem NGAY giua khung canh thien nhien/lich su cu the cung mot tinh huong oai oam "
             "hoac nghich ly Toan hoc gay to mo. CAM chao hoi kieu 'Xin chao cac ban' hay xin like/subscribe. "
+            "Phong cach thien nhien + hai huoc di dom, TUYET DOI KHONG danh dam. "
             "Canh dau tien bat buoc dung boCuc='mo_dau' va chuyenCanh='vong_tron_hoat_hinh'."
         ),
     },
@@ -181,7 +189,7 @@ KHUNG_6_HOI: list[dict[str, Any]] = [
         "phutMucTieu": 2.0,
         "tuToiThieu": 280,
         "tuMucTieu": "300-360",
-        "soCanh": "16-21",
+        "soCanh": "16-22",
         "yeuCauDacBiet": (
             "Gioi thieu nhan vat chinh voi tinh cach doi thuong di dom, kem bai toan hoc bua "
             "lam ca gioi hoc gia dau dau. Xen ke canh doi_thoai va dong_thoi_gian."
@@ -208,7 +216,7 @@ KHUNG_6_HOI: list[dict[str, Any]] = [
         "phutMucTieu": 2.0,
         "tuToiThieu": 280,
         "tuMucTieu": "300-360",
-        "soCanh": "16-21",
+        "soCanh": "16-22",
         "yeuCauDacBiet": (
             "Giai thoai that thu vi, phan ung 'can loi' cua nguoi duong thoi. "
             "BAT BUOC co it nhat 2 canh boCuc='hai_huoc' (dung zoom_hai_huoc, giot_mo_hoi, "
@@ -222,7 +230,7 @@ KHUNG_6_HOI: list[dict[str, Any]] = [
         "phutMucTieu": 2.0,
         "tuToiThieu": 280,
         "tuMucTieu": "300-360",
-        "soCanh": "16-21",
+        "soCanh": "16-22",
         "yeuCauDacBiet": (
             "Mo rong ban chat dinh ly (them it nhat 1 canh boCuc='giai_thich_toan' co congThucLatex & minhHoaToan) "
             "va chung minh no dang am tham van hanh thu gi quanh ta hom nay (GPS, dien thoai, tro choi, thien van...)."
@@ -232,10 +240,10 @@ KHUNG_6_HOI: list[dict[str, Any]] = [
         "soHoi": 6,
         "id": "chuong_6",
         "vaiTro": "Du am cau chuyen & Cai ket di dom",
-        "phutMucTieu": 1.5,
+        "phutMucTieu": 1.6,
         "tuToiThieu": 250,
-        "tuMucTieu": "270-320",
-        "soCanh": "15-18",
+        "tuMucTieu": "280-330",
+        "soCanh": "16-19",
         "yeuCauDacBiet": (
             "Khep lai vong cung cau chuyen tren boi canh hoang_hon hoac bau_troi_dem_vu_tru + ban_dem, "
             "dong lai 3 y chinh + 1 cau ket co duyen, goi mo tap tiep theo. "
@@ -243,6 +251,9 @@ KHUNG_6_HOI: list[dict[str, Any]] = [
         ),
     },
 ]
+
+TONG_TU_TOI_THIEU = 1750
+TONG_TU_TOI_DA = 2150
 
 SYSTEM_BIEN_KICH = (
     "Ban la dao dien & bien kich phim hoat hinh 2D ke chuyen lich su Toan hoc phong cach "
@@ -730,20 +741,85 @@ def chuan_hoa_toan_bo_kich_ban(raw: dict[str, Any]) -> tuple[dict[str, Any], lis
 
 
 # ==============================================================================
-# 4. KIEN TRUC BIEN KICH 3 TANG (BLUEPRINT -> 6 HOI -> HAU KIEM & DUYET)
+# 4. KIEN TRUC BIEN KICH 3 TANG (BLUEPRINT -> 6 HOI -> TU KIEM DINH & HOC HOI)
 # ==============================================================================
 
-def tao_prompt_tang_1(chu_de: str, muc_tieu_phut: float, giong_ke: str) -> str:
+def dinh_dang_tu_lieu_nghien_cuu(tu_lieu: dict[str, Any] | None) -> str:
+    """Chuyen tu_lieu_nghien_cuu.json thanh doan ngu canh co dong cho prompt bien kich."""
+    if not isinstance(tu_lieu, dict) or not tu_lieu:
+        return ""
+
+    dong: list[str] = ["=== TU LIEU NGHIEN CUU DA KIEM CHUNG (BAT BUOC BAM SAT) ==="]
+    if tu_lieu.get("tomTat1Cau"):
+        dong.append(f"- Tom tat cot loi: {tu_lieu['tomTat1Cau']}")
+
+    nien_dai = tu_lieu.get("nienDaiChuan") or []
+    if nien_dai:
+        dong.append("- Nien dai chuan:")
+        for m in nien_dai[:8]:
+            if isinstance(m, dict):
+                dong.append(f"  * {m.get('nam', '')}: {m.get('suKien', '')}")
+
+    nhan_vat = tu_lieu.get("nhanVatThat") or []
+    if nhan_vat:
+        dong.append("- Nhan vat lich su that:")
+        for nv in nhan_vat[:6]:
+            if isinstance(nv, dict):
+                dong.append(
+                    f"  * {nv.get('ten', '')} ({nv.get('nienDai', '')}) - {nv.get('vaiTro', '')}: "
+                    f"{nv.get('tinhCachDoiThuong', '')}"
+                )
+
+    giai_thoai = tu_lieu.get("giaiThoaiDoiThuong") or []
+    if giai_thoai:
+        dong.append("- Giai thoai doi thuong / di dom co that:")
+        for gt in giai_thoai[:5]:
+            if isinstance(gt, dict):
+                dong.append(
+                    f"  * {gt.get('tieuDe', '')}: {gt.get('noiDung', '')} "
+                    f"(Diem hai: {gt.get('diemHaiHuoc', '')})"
+                )
+
+    kien_thuc = tu_lieu.get("kienThucToanCotLoi") or []
+    if kien_thuc:
+        dong.append("- Kien thuc & chung minh Toan cot loi:")
+        for kt in kien_thuc[:4]:
+            if isinstance(kt, dict):
+                dong.append(
+                    f"  * {kt.get('tenKienThuc', '')} | LaTeX: `{kt.get('congThucLatex', '')}` | "
+                    f"Giai thich: {kt.get('giaiThichDeHieu', '')}"
+                )
+
+    ung_dung = tu_lieu.get("ungDungHienDai") or []
+    if ung_dung:
+        dong.append("- Ung dung hien dai: " + "; ".join(str(x) for x in ung_dung[:5]))
+
+    return "\n".join(dong)
+
+
+def tao_prompt_tang_1(
+    chu_de: str,
+    muc_tieu_phut: float,
+    giong_ke: str,
+    tu_lieu_nghien_cuu: dict[str, Any] | None = None,
+    ngu_canh_hoc_hoi: str = "",
+) -> str:
     """Tang 1: Dan y 6 Hoi (Story Blueprint) khoa danhSachNhanVat va mach boiCanh/thoiTiet."""
     mo_ta_6_hoi = "\n".join(
         f"  {h['soHoi']}. Hoi {h['soHoi']} ({h['vaiTro']}, ~{h['phutMucTieu']} phut, muc tieu {h['tuMucTieu']} tu): {h['yeuCauDacBiet']}"
         for h in KHUNG_6_HOI
     )
-    return f"""
-Hay thiet ke DAN Y 6 HOI (Story Blueprint) cho 1 tap phim hoat hinh 2D ke chuyen lich su Toan hoc dai khoang {muc_tieu_phut:.1f} phut (CHAC CHAN > 10 phut).
-- Chu de: "{chu_de}"
-- Giong ke: "{giong_ke}" (di dom, gan gui, giai thich Toan de hieu, co chieu sau lich su, KHONG kho khan nhu sach giao khoa)
+    khoi_tu_lieu = dinh_dang_tu_lieu_nghien_cuu(tu_lieu_nghien_cuu)
+    khoi_bo_nho = ngu_canh_hoc_hoi.strip()
+    phan_phu = "\n\n".join(x for x in (khoi_tu_lieu, khoi_bo_nho) if x)
+    if phan_phu:
+        phan_phu = "\n\n" + phan_phu + "\n"
 
+    return f"""
+Hay thiet ke DAN Y 6 HOI (Story Blueprint) cho 1 tap phim hoat hinh 2D ke chuyen lich su Toan hoc dai khoang {muc_tieu_phut:.1f} phut (CHAC CHAN > 10 phut, tong 1.750-2.150 tu).
+- Chu de: "{chu_de}"
+- Giong ke: "{giong_ke}" (thien nhien + hai huoc di dom, KHONG danh dam bao luc, giai thich Toan de hieu, co chieu sau lich su)
+{phan_phu}
 CAU TRUC 6 HOI BAT BUOC:
 {mo_ta_6_hoi}
 
@@ -802,13 +878,21 @@ def tao_prompt_tang_2_hoi(
     khung_hoi: dict[str, Any],
     giong_ke: str,
     tom_tat_hoi_truoc: str,
+    tu_lieu_nghien_cuu: dict[str, Any] | None = None,
+    ngu_canh_hoc_hoi: str = "",
 ) -> str:
-    """Tang 2: Viet chi tiet 15-22 canh ngan cho 1 Hoi, noi mach voi Hoi truoc."""
+    """Tang 2: Viet chi tiet 16-22 canh ngan cho 1 Hoi, noi mach voi Hoi truoc."""
     nv_json = json.dumps(blueprint["danhSachNhanVat"], ensure_ascii=False)
+    khoi_tu_lieu = dinh_dang_tu_lieu_nghien_cuu(tu_lieu_nghien_cuu)
+    khoi_bo_nho = ngu_canh_hoc_hoi.strip()
+    phan_phu = "\n\n".join(x for x in (khoi_tu_lieu, khoi_bo_nho) if x)
+    if phan_phu:
+        phan_phu = "\n\n" + phan_phu + "\n"
+
     return f"""
 Ban dang viet CHI TIET HOI {khung_hoi['soHoi']}/6 cho phim hoat hinh Toan hoc:
 - Tieu de phim: "{blueprint['tieuDe']}"
-- Giong ke: "{giong_ke}"
+- Giong ke: "{giong_ke}" (phong cach thien nhien + hai huoc di dom, KHONG danh dam)
 - Ten hoi: "{thong_tin_hoi['tenChuong']}"
 - Vai tro hoi: {khung_hoi['vaiTro']}
 - Boi canh chu dao: {thong_tin_hoi['boiCanhChinh']} | Thoi tiet chu dao: {thong_tin_hoi['thoiTietChinh']}
@@ -817,10 +901,10 @@ Ban dang viet CHI TIET HOI {khung_hoi['soHoi']}/6 cho phim hoat hinh Toan hoc:
 - Kien thuc Toan trong tam: {thong_tin_hoi.get('kienThucToan', '')}
 - Mach noi tu hoi truoc: {tom_tat_hoi_truoc}
 - Danh sach nhan vat CO DINH (chi duoc dung dung id trong nay): {nv_json}
-
+{phan_phu}
 YEU CAU CHAT LUONG & DO DAI BAT BUOC:
-1. Sinh tu {khung_hoi['soCanh']} canh ngan (toi thieu 15 canh).
-2. Moi canh co `loiThoai` dai 18-35 tu tieng Viet tu nhien nhu dang ke chuyen. TONG SO TU cua hoi nay BAT BUOC dat {khung_hoi['tuMucTieu']} tu (khong duoc duoi 260 tu!).
+1. Sinh tu {khung_hoi['soCanh']} canh ngan (toi thieu 16 canh).
+2. Moi canh co `loiThoai` dai 18-35 tu tieng Viet tu nhien nhu dang ke chuyen. TONG SO TU cua hoi nay BAT BUOC dat {khung_hoi['tuMucTieu']} tu (khong duoc duoi 260 tu, ca tap dat 1.750-2.150 tu!).
 3. Cai 2-3 diem nhan hai huoc tu nhien (vi von hien dai, `loiBinhHaiHuoc` pha buc tuong thu 4, bieu cam `can_loi_mat_do` + hieu ung `giot_mo_hoi`/`co_lan_im_lang`/`nhan_chu_hai_huoc`).
 4. Yeu cau dac biet cua Hoi {khung_hoi['soHoi']}: {khung_hoi['yeuCauDacBiet']}
 5. Trong `congThucLatex`: dung LaTeX chuan KaTeX (NHAC LAI: thoat dau \\ thanh \\\\ trong JSON, khong boc dau $).
@@ -918,10 +1002,215 @@ Tra ve DUY NHAT JSON:
 """.strip()
 
 
+def tao_prompt_tu_kiem_dinh(
+    kich_ban: dict[str, Any],
+    tu_lieu_nghien_cuu: dict[str, Any] | None = None,
+    canh_bao_latex: list[str] | None = None,
+) -> str:
+    """Tang 3: Prompt Tu kiem dinh (Self-Critique) doi chieu Toan hoc/lich su, LaTeX va nhip hai."""
+    khoi_tu_lieu = dinh_dang_tu_lieu_nghien_cuu(tu_lieu_nghien_cuu)
+    canh_tom_tat: list[str] = []
+    for idx_ch, ch in enumerate(kich_ban.get("chuong") or [], start=1):
+        canh_tom_tat.append(f"## Hoi {idx_ch}: {ch.get('tenChuong', '')}")
+        for c in ch.get("canh") or []:
+            ct_str = ""
+            if c.get("congThucLatex"):
+                ds_ct = "; ".join(str(x.get("latex", "")) for x in c["congThucLatex"])
+                ct_str = f" | LaTeX: [{ds_ct}]"
+            lb_str = ""
+            if isinstance(c.get("loiBinhHaiHuoc"), dict):
+                lb_str = f" | Hai: {c['loiBinhHaiHuoc'].get('noiDung', '')}"
+            canh_tom_tat.append(
+                f"- {c.get('id')} ({c.get('boCuc')}): {c.get('loiThoai', '')}{ct_str}{lb_str}"
+            )
+
+    tom_tat_kich_ban = "\n".join(canh_tom_tat)
+    canh_bao_txt = "\n".join(f"- {cb}" for cb in (canh_bao_latex or [])) or "(Khong co canh bao cu phap LaTeX tu dong)"
+
+    return f"""
+Ban la tong bien tap kiem chuyen gia kiem dinh Toan hoc - Lich su (Tang 3: TU KIEM DINH / SELF-CRITIQUE).
+Hay ra soat toan bo kich ban phim hoat hinh duoi day theo 4 tieu chi:
+1. CHUAN XAC TOAN HOC & LICH SU: Doi chieu nien dai, ten nhan vat, dinh ly voi tu lieu nghien cuu (khong sai nien dai, khong sai cong thuc).
+2. CU PHAP LATEX: Kiem tra congThucLatex can bang ngoac {{}}, dung cu phap KaTeX, thoat \\\\ dung chuan JSON.
+3. PHONG CACH & NHIP HAI: Phim phong cach thien nhien + hai huoc di dom, KHONG danh dam bao luc, loi thoai noi tu nhien nhu dang ke chuyen.
+4. TU RUT KINH NGHIEM: Neu phat hien mau loi dang luu y (sai Toan, thieu nhip hai, loi LaTeX, do dai chua deu...), rut ra 1-2 quy tac ngan gon vao `baiHocMoi` de he thong ghi nho cho cac tap sau.
+
+{khoi_tu_lieu}
+
+CANH BAO LATEX TU DONG:
+{canh_bao_txt}
+
+TOM TAT KICH BAN CAN KIEM DINH:
+{tom_tat_kich_ban}
+
+Chi liet ke vao `canhCanSua` nhung canh THUC SU co loi (toi da 8 canh). Neu kich ban da tot, de `canhCanSua: []`.
+Tra ve DUY NHAT JSON hop le dung cau truc:
+{{
+  "diemTongThe": 8.8,
+  "nhanXetChung": "Nhan xet ngan gon 1-2 cau ve chat luong toan tap...",
+  "canhCanSua": [
+    {{
+      "id": "canh_012",
+      "lyDo": "Sua nien dai / sua cong thuc LaTeX / sua nhip hai...",
+      "loiThoaiMoi": "Loi thoai da sua chuan xac va tu nhien...",
+      "congThucLatexMoi": [
+        {{"latex": "a^2 + b^2 = c^2", "nhan": "Dinh ly Pythagoras", "noiBat": true}}
+      ],
+      "loiBinhHaiHuocMoi": {{"noiDung": "Cau binh luan di dom...", "viTri": "goc_phai"}}
+    }}
+  ],
+  "baiHocMoi": [
+    {{
+      "loai": "toan_hoc",
+      "noiDung": "Quy tac ngan gon rut ra tu dot kiem dinh nay...",
+      "mucDoUuTien": 4
+    }}
+  ]
+}}
+""".strip()
+
+
+def ap_dung_sua_tu_kiem_dinh(
+    kich_ban: dict[str, Any],
+    ket_qua_kiem_dinh: dict[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, str]], list[str]]:
+    """Ap dung danh sach canhCanSua tu Tang 3 vao kich ban, tai kiem tra LaTeX va uoc luong frame."""
+    ds_sua = ket_qua_kiem_dinh.get("canhCanSua") if isinstance(ket_qua_kiem_dinh, dict) else []
+    if not isinstance(ds_sua, list) or not ds_sua:
+        # Van kiem tra lai LaTeX toan bo
+        tat_ca_cb: list[str] = []
+        for ch in kich_ban.get("chuong") or []:
+            for c in ch.get("canh") or []:
+                for ct in c.get("congThucLatex") or []:
+                    if isinstance(ct, dict):
+                        clean, cbs = kiem_tra_latex(str(ct.get("latex") or ""))
+                        ct["latex"] = clean
+                        for cb in cbs:
+                            tat_ca_cb.append(f"[{c.get('id', '')}] {cb}")
+        return kich_ban, [], tat_ca_cb
+
+    ban_do_sua: dict[str, dict[str, Any]] = {}
+    for item in ds_sua:
+        if isinstance(item, dict) and str(item.get("id") or "").strip():
+            ban_do_sua[str(item["id"]).strip()] = item
+
+    da_sua: list[dict[str, str]] = []
+    tat_ca_cb = []
+
+    for ch in kich_ban.get("chuong") or []:
+        for c in ch.get("canh") or []:
+            cid = str(c.get("id") or "")
+            patch = ban_do_sua.get(cid)
+            if patch:
+                if isinstance(patch.get("loiThoaiMoi"), str) and patch["loiThoaiMoi"].strip():
+                    c["loiThoai"] = re.sub(r"\s+", " ", patch["loiThoaiMoi"].strip())
+                if isinstance(patch.get("congThucLatexMoi"), list):
+                    ct_moi: list[dict[str, Any]] = []
+                    for idx_ct, ct in enumerate(patch["congThucLatexMoi"][:5]):
+                        if not isinstance(ct, dict):
+                            continue
+                        lx_clean, _ = kiem_tra_latex(str(ct.get("latex") or ""))
+                        if not lx_clean:
+                            continue
+                        muc_ct: dict[str, Any] = {
+                            "latex": lx_clean,
+                            "tuFrame": int(_ep_so(ct.get("tuFrame"), idx_ct * 35, 0, 400)),
+                        }
+                        if ct.get("nhan"):
+                            muc_ct["nhan"] = str(ct["nhan"]).strip()[:85]
+                        if isinstance(ct.get("noiBat"), bool):
+                            muc_ct["noiBat"] = ct["noiBat"]
+                        ct_moi.append(muc_ct)
+                    if ct_moi:
+                        c["congThucLatex"] = ct_moi
+                if isinstance(patch.get("loiBinhHaiHuocMoi"), dict):
+                    nd_lb = str(patch["loiBinhHaiHuocMoi"].get("noiDung") or "").strip()
+                    if nd_lb:
+                        vi_tri = (
+                            patch["loiBinhHaiHuocMoi"].get("viTri")
+                            if patch["loiBinhHaiHuocMoi"].get("viTri") in ("goc_phai", "goc_trai")
+                            else "goc_phai"
+                        )
+                        c["loiBinhHaiHuoc"] = {
+                            "noiDung": nd_lb[:140],
+                            "viTri": vi_tri,
+                            "tuFrame": int(_ep_so(patch["loiBinhHaiHuocMoi"].get("tuFrame"), 14, 0, 240)),
+                        }
+                da_sua.append({"id": cid, "lyDo": str(patch.get("lyDo") or "Cap nhat tu kiem dinh").strip()})
+
+            for ct in c.get("congThucLatex") or []:
+                if isinstance(ct, dict):
+                    lx_clean, cbs = kiem_tra_latex(str(ct.get("latex") or ""))
+                    ct["latex"] = lx_clean
+                    for cb in cbs:
+                        tat_ca_cb.append(f"[{cid}] {cb}")
+
+    gan_frame_uoc_luong(kich_ban)
+    return kich_ban, da_sua, tat_ca_cb
+
+
+def tu_kiem_dinh_kich_ban(
+    kich_ban: dict[str, Any],
+    gemini: GeminiClient,
+    tu_lieu_nghien_cuu: dict[str, Any] | None = None,
+    canh_bao_latex: list[str] | None = None,
+    duong_dan_bo_nho: Path | str | None = None,
+) -> tuple[dict[str, Any], dict[str, Any], list[str]]:
+    """
+    Tang 3 - Tu kiem dinh (Self-Critique) & Tu rut kinh nghiem:
+    1. Kiem tra chuan xac Toan hoc/lich su doi chieu tu lieu + cu phap ngoac {} trong LaTeX.
+    2. Tu sua canh loi neu co.
+    3. Tu them quy tac moi vao bo_nho_hoc_hoi.json neu phat hien mau loi moi.
+    """
+    raw_critique = gemini.tao_json(
+        prompt=tao_prompt_tu_kiem_dinh(
+            kich_ban=kich_ban,
+            tu_lieu_nghien_cuu=tu_lieu_nghien_cuu,
+            canh_bao_latex=canh_bao_latex,
+        ),
+        system_instruction=(
+            "Ban la chuyen gia kiem dinh Toan hoc, lich su va bien tap phim hoat hinh hai huoc. "
+            "Tra ve DUY NHAT JSON hop le."
+        ),
+        nhiet_do=0.3,
+        max_output_tokens=4096,
+    )
+    if not isinstance(raw_critique, dict):
+        raw_critique = {}
+
+    kich_ban_sau, da_sua, canh_bao_moi = ap_dung_sua_tu_kiem_dinh(kich_ban, raw_critique)
+
+    bai_hoc_luu: list[dict[str, Any]] = []
+    raw_bai_hoc = raw_critique.get("baiHocMoi")
+    if isinstance(raw_bai_hoc, list) and raw_bai_hoc:
+        bo_nho = tai_bo_nho(duong_dan_bo_nho)
+        for bh in raw_bai_hoc[:4]:
+            if not isinstance(bh, dict):
+                continue
+            nd = str(bh.get("noiDung") or "").strip()
+            if not nd:
+                continue
+            loai = str(bh.get("loai") or "kich_ban").strip()
+            uu_tien = int(_ep_so(bh.get("mucDoUuTien"), 3, 1, 5))
+            them_bai_hoc(bo_nho, loai=loai, noi_dung=nd, muc_do_uu_tien=uu_tien)
+            bai_hoc_luu.append({"loai": loai, "noiDung": nd, "mucDoUuTien": uu_tien})
+        if bai_hoc_luu:
+            luu_bo_nho(bo_nho, duong_dan_bo_nho)
+
+    bao_cao = {
+        "diemTongThe": round(_ep_so(raw_critique.get("diemTongThe"), 8.5, 1.0, 10.0), 2),
+        "nhanXetChung": str(raw_critique.get("nhanXetChung") or "").strip(),
+        "canhDaSua": da_sua,
+        "baiHocMoi": bai_hoc_luu,
+    }
+    return kich_ban_sau, bao_cao, canh_bao_moi
+
+
 def tao_markdown_doc_duyet(
     du_lieu: dict[str, Any],
     canh_bao_latex: list[str] | None = None,
     tu_moi_giay: float = 2.65,
+    bao_cao_kiem_dinh: dict[str, Any] | None = None,
 ) -> str:
     """Tang 3: Xuat file doc_duyet_kich_ban.md trinh bay dep theo 6 hoi de duyet nhanh trong 3 phut."""
     canh_bao_latex = canh_bao_latex or []
@@ -969,7 +1258,7 @@ def tao_markdown_doc_duyet(
         "",
         "## Tổng quan nhanh",
         f"- **Số hồi:** {len(ds_chuong)} | **Tổng số cảnh:** {tong_canh}",
-        f"- **Tổng số từ lời thoại:** {tong_tu} từ",
+        f"- **Tổng số từ lời thoại:** {tong_tu} từ (mục tiêu {TONG_TU_TOI_THIEU}–{TONG_TU_TOI_DA} từ)",
         f"- **Thời lượng dự kiến:** ~{tong_phut_du_kien:.2f} phút (~{int(round(tong_giay_du_kien))} giây) — **{trang_thai_thoi_luong}**",
         f"- **Số cảnh có Toán / KaTeX:** {tong_canh_toan} | **Số cảnh có điểm nhấn hài:** {tong_canh_hai}",
         "",
@@ -984,6 +1273,28 @@ def tao_markdown_doc_duyet(
         dong.append(
             f"- **{nv.get('ten')}** (`{nv.get('id')}`): màu chủ đạo `{nv.get('mauChuDao')}`, phụ kiện `{nv.get('phuKien')}`"
         )
+
+    if bao_cao_kiem_dinh:
+        dong.extend(
+            [
+                "",
+                "## Tầng 3 — Tự kiểm định (Self-Critique)",
+                f"- **Điểm tự đánh giá:** {bao_cao_kiem_dinh.get('diemTongThe', 0)}/10",
+            ]
+        )
+        if bao_cao_kiem_dinh.get("nhanXetChung"):
+            dong.append(f"- **Nhận xét chung:** {bao_cao_kiem_dinh['nhanXetChung']}")
+        ds_sua = bao_cao_kiem_dinh.get("canhDaSua") or []
+        dong.append(f"- **Số cảnh đã tự sửa:** {len(ds_sua)}")
+        for s in ds_sua:
+            dong.append(f"  - `{s.get('id', '')}`: {s.get('lyDo', '')}")
+        ds_bh = bao_cao_kiem_dinh.get("baiHocMoi") or []
+        if ds_bh:
+            dong.append(f"- **Bài học mới lưu vào bộ nhớ:** {len(ds_bh)}")
+            for bh in ds_bh:
+                dong.append(
+                    f"  - `[{bh.get('loai', 'kich_ban')} | ưu tiên {bh.get('mucDoUuTien', 3)}/5]` {bh.get('noiDung', '')}"
+                )
 
     if canh_bao_latex:
         dong.extend(["", "## Cảnh báo hậu kiểm LaTeX"])
@@ -1048,12 +1359,35 @@ def bien_kich_3_tang(
     bo_cache: bool = False,
     client: GeminiClient | None = None,
     thu_muc_du_lieu: Path | None = None,
+    tu_lieu_nghien_cuu: dict[str, Any] | None = None,
+    duong_dan_bo_nho: Path | str | None = None,
+    bat_tu_kiem_dinh: bool = True,
 ) -> tuple[Path, Path, dict[str, Any]]:
-    """Chay tron ven 3 tang bien kich va xuat nhap_kich_ban.json + doc_duyet_kich_ban.md."""
+    """Chay tron ven 3 tang bien kich (tich hop tu lieu web + bo nho hoc hoi + tu kiem dinh) va xuat nhap_kich_ban.json + doc_duyet_kich_ban.md."""
     muc_tieu_thuc = max(10.5, float(muc_tieu_phut))
-    base_dir = (thu_muc_du_lieu or (GOC_DU_AN / "du_lieu")) / slug
+    goc_du_lieu = thu_muc_du_lieu or (GOC_DU_AN / "du_lieu")
+    base_dir = goc_du_lieu / slug
     cache_dir = base_dir / "cache_chuong"
     cache_dir.mkdir(parents=True, exist_ok=True)
+
+    # Tu dong nap tu_lieu_nghien_cuu.json neu ton tai trong du_lieu/<slug>/
+    tu_lieu_dung = tu_lieu_nghien_cuu
+    if tu_lieu_dung is None:
+        file_tu_lieu = base_dir / "tu_lieu_nghien_cuu.json"
+        if file_tu_lieu.exists():
+            try:
+                tu_lieu_dung = json.loads(file_tu_lieu.read_text(encoding="utf-8"))
+                print(f"[Bien kich] Da tu dong nap tu lieu nghien cuu: {file_tu_lieu}")
+            except json.JSONDecodeError:
+                tu_lieu_dung = None
+
+    # Nap ngu canh hoc hoi tu bo_nho_hoc_hoi.json
+    path_bo_nho = (
+        Path(duong_dan_bo_nho)
+        if duong_dan_bo_nho is not None
+        else (goc_du_lieu / "bo_nho_hoc_hoi.json" if thu_muc_du_lieu is not None else DUONG_DAN_BO_NHO_MAC_DINH)
+    )
+    ngu_canh_hoc_hoi = tao_ngu_canh_hoc_hoi(duong_dan=path_bo_nho) if path_bo_nho.exists() else ""
 
     gemini = client or GeminiClient()
 
@@ -1065,7 +1399,13 @@ def bien_kich_3_tang(
     else:
         print(f"[Tang 1] Dang lap Dan y 6 Hoi cho chu de: {chu_de} (~{muc_tieu_thuc:.1f} phut)...")
         raw_bp = gemini.tao_json(
-            prompt=tao_prompt_tang_1(chu_de, muc_tieu_thuc, giong_ke),
+            prompt=tao_prompt_tang_1(
+                chu_de=chu_de,
+                muc_tieu_phut=muc_tieu_thuc,
+                giong_ke=giong_ke,
+                tu_lieu_nghien_cuu=tu_lieu_dung,
+                ngu_canh_hoc_hoi=ngu_canh_hoc_hoi,
+            ),
             system_instruction=SYSTEM_BIEN_KICH,
             nhiet_do=0.75,
             max_output_tokens=4096,
@@ -1092,7 +1432,11 @@ def bien_kich_3_tang(
                     "kienThucToan": str(item.get("kienThucToan") or "").strip(),
                 }
             )
-        file_blueprint.write_text(json.dumps(blueprint, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        file_blueprint.write_text(
+            json.dumps(blueprint, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
 
     nv_ids = [nv["id"] for nv in blueprint["danhSachNhanVat"]]
 
@@ -1116,6 +1460,8 @@ def bien_kich_3_tang(
                     khung_hoi=khung,
                     giong_ke=giong_ke,
                     tom_tat_hoi_truoc=tom_tat_hoi_truoc,
+                    tu_lieu_nghien_cuu=tu_lieu_dung,
+                    ngu_canh_hoc_hoi=ngu_canh_hoc_hoi,
                 ),
                 system_instruction=SYSTEM_BIEN_KICH,
                 nhiet_do=0.75,
@@ -1178,12 +1524,13 @@ def bien_kich_3_tang(
             file_cache_hoi.write_text(
                 json.dumps(du_lieu_hoi, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
+                newline="\n",
             )
 
         tom_tat_hoi_truoc = str(du_lieu_hoi.get("tomTatKetHoi") or thong_tin_hoi["tomTat"])
         danh_sach_chuong_raw.append(du_lieu_hoi)
 
-    # --- TANG 3: HAU KIEM TOAN HOC & XUAT BAN DOC DUYET ---
+    # --- TANG 3: HAU KIEM LATEX + TU KIEM DINH (SELF-CRITIQUE) & TU RUT KINH NGHIEM ---
     raw_tong = {
         "tieuDe": blueprint["tieuDe"],
         "chuDe": blueprint["chuDe"],
@@ -1195,10 +1542,61 @@ def bien_kich_3_tang(
     }
     kich_ban_sach, canh_bao_latex = chuan_hoa_toan_bo_kich_ban(raw_tong)
 
+    bao_cao_kiem_dinh: dict[str, Any] | None = None
+    file_cache_kd = cache_dir / "tu_kiem_dinh.json"
+    if bat_tu_kiem_dinh:
+        if file_cache_kd.exists() and not bo_cache:
+            print(f"[Tang 3] Tai cache tu kiem dinh: {file_cache_kd.name}")
+            cache_kd = json.loads(file_cache_kd.read_text(encoding="utf-8"))
+            bao_cao_kiem_dinh = cache_kd.get("baoCao")
+            if isinstance(cache_kd.get("kichBanSauKiemDinh"), dict):
+                kich_ban_sach = cache_kd["kichBanSauKiemDinh"]
+                canh_bao_latex = list(cache_kd.get("canhBaoLatex") or [])
+        else:
+            print("[Tang 3] Dang chay Tu kiem dinh (Self-Critique) Toan hoc/lich su, LaTeX & nhip hai...")
+            kich_ban_sach, bao_cao_kiem_dinh, canh_bao_latex = tu_kiem_dinh_kich_ban(
+                kich_ban=kich_ban_sach,
+                gemini=gemini,
+                tu_lieu_nghien_cuu=tu_lieu_dung,
+                canh_bao_latex=canh_bao_latex,
+                duong_dan_bo_nho=path_bo_nho,
+            )
+            file_cache_kd.write_text(
+                json.dumps(
+                    {
+                        "baoCao": bao_cao_kiem_dinh,
+                        "canhBaoLatex": canh_bao_latex,
+                        "kichBanSauKiemDinh": kich_ban_sach,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+            print(
+                f"[Tang 3] Tu kiem dinh xong: {bao_cao_kiem_dinh['diemTongThe']}/10 | "
+                f"Da sua {len(bao_cao_kiem_dinh['canhDaSua'])} canh | "
+                f"Luu {len(bao_cao_kiem_dinh['baiHocMoi'])} bai hoc moi."
+            )
+
     file_json = base_dir / "nhap_kich_ban.json"
     file_md = base_dir / "doc_duyet_kich_ban.md"
-    file_json.write_text(json.dumps(kich_ban_sach, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    file_md.write_text(tao_markdown_doc_duyet(kich_ban_sach, canh_bao_latex), encoding="utf-8")
+    file_json.write_text(
+        json.dumps(kich_ban_sach, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    file_md.write_text(
+        tao_markdown_doc_duyet(
+            kich_ban_sach,
+            canh_bao_latex,
+            bao_cao_kiem_dinh=bao_cao_kiem_dinh,
+        ),
+        encoding="utf-8",
+        newline="\n",
+    )
 
     tong_tu = sum(
         dem_tu(c.get("loiThoai", ""))
@@ -1221,7 +1619,7 @@ def bien_kich_3_tang(
 
 def tao_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="AI bien kich phim hoat hinh ke chuyen lich su Toan hoc >10 phut (3 tang)."
+        description="AI bien kich phim hoat hinh ke chuyen lich su Toan hoc >10 phut (3 tang + tu kiem dinh)."
     )
     parser.add_argument("--chu-de", required=True, help="Chu de cau chuyen Toan hoc.")
     parser.add_argument(
@@ -1245,6 +1643,16 @@ def tao_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Bo qua cache_chuong va sinh lai toan bo 6 hoi.",
     )
+    parser.add_argument(
+        "--bo-tu-kiem-dinh",
+        action="store_true",
+        help="Bo qua luot AI Tu kiem dinh Tang 3.",
+    )
+    parser.add_argument(
+        "--bo-nho",
+        default="",
+        help="Duong dan tuy chinh toi bo_nho_hoc_hoi.json.",
+    )
     return parser
 
 
@@ -1257,6 +1665,8 @@ def main(argv: list[str] | None = None) -> int:
         muc_tieu_phut=args.muc_tieu_phut,
         giong_ke=args.giong_ke,
         bo_cache=args.bo_cache,
+        duong_dan_bo_nho=Path(args.bo_nho) if args.bo_nho else None,
+        bat_tu_kiem_dinh=not args.bo_tu_kiem_dinh,
     )
     return 0
 

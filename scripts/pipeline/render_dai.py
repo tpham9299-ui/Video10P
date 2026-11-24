@@ -74,6 +74,95 @@ def tao_noi_dung_chapters(du_lieu: dict[str, Any], fps: int = MAC_DINH_FPS) -> s
     return "\n".join(dong) + ("\n" if dong else "")
 
 
+def tao_chapters_va_mo_ta(
+    du_lieu: dict[str, Any],
+    tu_lieu_nghien_cuu: dict[str, Any] | None = None,
+    fps: int = MAC_DINH_FPS,
+) -> str:
+    """Xuat tron goi chapters_va_mo_ta.txt cho YouTube: tieu de goi y, mo ta hap dan, moc MM:SS va nguon tham khao."""
+    tieu_de = str(du_lieu.get("tieuDe") or "Câu Chuyện Lịch Sử Toán Học").strip()
+    chu_de = str(du_lieu.get("chuDe") or "").strip()
+    chapters_str = tao_noi_dung_chapters(du_lieu, fps=fps).strip()
+
+    pham_vi = tinh_pham_vi_frame_chuong(du_lieu)
+    tong_giay = (pham_vi[-1]["denFrame"] / float(fps)) if pham_vi else 0.0
+    thoi_luong_str = dinh_dang_thoi_gian_youtube(tong_giay)
+
+    nhan_vat = [
+        str(nv.get("ten")).strip()
+        for nv in (du_lieu.get("danhSachNhanVat") or [])
+        if isinstance(nv, dict) and str(nv.get("ten") or "").strip()
+    ]
+    chuoi_nv = ", ".join(nhan_vat) if nhan_vat else "các nhà Toán học huyền thoại"
+
+    tom_tat_tu_lieu = ""
+    ung_dung: list[str] = []
+    nguon_tham_khao: list[str] = []
+    if isinstance(tu_lieu_nghien_cuu, dict):
+        tom_tat_tu_lieu = str(tu_lieu_nghien_cuu.get("tomTat1Cau") or "").strip()
+        ung_dung = [
+            str(u).strip()
+            for u in (tu_lieu_nghien_cuu.get("ungDungHienDai") or [])
+            if str(u).strip()
+        ]
+        for u in tu_lieu_nghien_cuu.get("nguonThamKhao") or []:
+            s = str(u).strip()
+            if s and s not in nguon_tham_khao:
+                nguon_tham_khao.append(s)
+
+    mo_ta_chinh = tom_tat_tu_lieu or chu_de or (
+        f"Hành trình khám phá câu chuyện có thật đầy bất ngờ trong lịch sử Toán học cùng {chuoi_nv}."
+    )
+
+    dong: list[str] = [
+        "=== TIÊU ĐỀ GỢI Ý CHO YOUTUBE ===",
+        f"1. {tieu_de} | Hoạt Hình Kể Chuyện Lịch Sử Toán Học",
+        f"2. Chuyện Có Thật Đằng Sau: {tieu_de} (Giải Thích Siêu Dễ Hiểu)",
+        f"3. {tieu_de} — Khi Toán Học Đời Thường Lại Thay Đổi Cả Thế Giới",
+        "",
+        "=== ĐOẠN MÔ TẢ HẤP DẪN ===",
+        mo_ta_chinh,
+        "",
+        (
+            f"Trong tập phim hoạt hình kể chuyện dài {thoi_luong_str} này, chúng ta cùng theo chân {chuoi_nv} "
+            "bước vào những giai thoại đời thường dí dỏm, những khoảnh khắc 'Ơ-rê-ka!' bùng nổ và giải mã "
+            "bản chất Toán học bằng hình ảnh trực quan cực dễ hiểu."
+        ),
+    ]
+
+    if ung_dung:
+        dong.append("")
+        dong.append("Điều bất ngờ: Ý tưởng Toán học trong tập này đang âm thầm vận hành quanh ta mỗi ngày:")
+        for u in ung_dung[:4]:
+            dong.append(f"- {u}")
+
+    dong.extend(
+        [
+            "",
+            "Nếu bạn thích phong cách hoạt hình kể chuyện lịch sử Toán học hài hước và dễ hiểu, hãy bình luận chủ đề Toán học bạn muốn xem ở tập tiếp theo nhé!",
+            "",
+            "=== MỐC THỜI GIAN (YOUTUBE CHAPTERS) ===",
+            chapters_str or "00:00 Mở đầu",
+            "",
+            "=== NGUỒN THAM KHẢO ===",
+        ]
+    )
+
+    if nguon_tham_khao:
+        for idx, url in enumerate(nguon_tham_khao, start=1):
+            dong.append(f"{idx}. {url}")
+    else:
+        dong.append("- Tổng hợp từ tư liệu lịch sử Toán học phổ thông và bách khoa toàn thư mở.")
+
+    dong.extend(
+        [
+            "",
+            "#LichSuToanHoc #HoatHinhToanHoc #KeChuyenToanHoc #ToanHocThuVi #GiaoDuc",
+        ]
+    )
+    return "\n".join(dong).strip() + "\n"
+
+
 def tinh_hash_chuong(
     du_lieu: dict[str, Any],
     chuong_data: dict[str, Any],
@@ -470,15 +559,40 @@ def render_toan_bo_video(
             raise FileNotFoundError(f"Thieu file hoi da render: {p}")
         ds_file_hoi.append(p)
 
-    # 1. Ghep video tong (+ nhac nen neu co)
-    file_video_cuoi = out_root / f"{slug}.mp4"
+    # 1. Ghep video tong (+ nhac nen neu co) vao out/<slug>/video_hoan_chinh.mp4 va dong bo out/<slug>.mp4
+    file_video_cuoi = thu_muc_slug / "video_hoan_chinh.mp4"
     ghep_cac_hoi_ffmpeg(ds_file_hoi, file_video_cuoi, nhac_nen=nhac_nen)
     print(f"[OK] Video hoan chinh: {file_video_cuoi}")
 
-    # 2. Xuat chapters.txt cho YouTube
+    file_video_legacy = out_root / f"{slug}.mp4"
+    try:
+        if file_video_legacy.exists():
+            file_video_legacy.unlink()
+        os.link(file_video_cuoi, file_video_legacy)
+    except OSError:
+        shutil.copy2(file_video_cuoi, file_video_legacy)
+
+    # Nap tu_lieu_nghien_cuu.json neu co de bo sung nguon tham khao vao chapters_va_mo_ta.txt
+    tu_lieu_nghien_cuu: dict[str, Any] | None = None
+    file_tu_lieu = file_props.parent / "tu_lieu_nghien_cuu.json"
+    if file_tu_lieu.exists():
+        try:
+            tu_lieu_nghien_cuu = json.loads(file_tu_lieu.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            tu_lieu_nghien_cuu = None
+
+    # 2. Xuat chapters.txt (tuong thich cu) va out/<slug>/chapters_va_mo_ta.txt (tron goi YouTube)
     file_chapters = out_root / f"{slug}_chapters.txt"
-    file_chapters.write_text(tao_noi_dung_chapters(du_lieu, fps=fps), encoding="utf-8")
+    file_chapters.write_text(tao_noi_dung_chapters(du_lieu, fps=fps), encoding="utf-8", newline="\n")
     print(f"[OK] Moc chuong YouTube: {file_chapters}")
+
+    file_chapters_mo_ta = thu_muc_slug / "chapters_va_mo_ta.txt"
+    file_chapters_mo_ta.write_text(
+        tao_chapters_va_mo_ta(du_lieu, tu_lieu_nghien_cuu=tu_lieu_nghien_cuu, fps=fps),
+        encoding="utf-8",
+        newline="\n",
+    )
+    print(f"[OK] Tron goi YouTube (tieu de, mo ta, chapters, nguon): {file_chapters_mo_ta}")
 
     # 3. Xuat anh luoi kiem dinh 18 khung hinh
     file_luoi = thu_muc_slug / "luoi_kiem_dinh.png"
@@ -493,7 +607,9 @@ def render_toan_bo_video(
 
     return {
         "video": file_video_cuoi,
+        "video_legacy": file_video_legacy,
         "chapters": file_chapters,
+        "chapters_va_mo_ta": file_chapters_mo_ta,
         "luoi": file_luoi,
     }
 
