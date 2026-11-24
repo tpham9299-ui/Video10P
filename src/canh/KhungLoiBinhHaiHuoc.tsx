@@ -1,6 +1,7 @@
 import React from 'react';
-import { interpolate, useCurrentFrame } from 'remotion';
+import { useCurrentFrame } from 'remotion';
 import type { LoiBinhHaiHuoc } from '../kieu_dai';
+import { kepGiaTri, noiSuy, springTatDinh } from '../xuong/duong_cong';
 
 type KhungLoiBinhHaiHuocProps = {
   loiBinh?: LoiBinhHaiHuoc;
@@ -8,7 +9,7 @@ type KhungLoiBinhHaiHuocProps = {
 
 /**
  * The ghi chu hai huoc / pha vo buc tuong thu 4 cua nguoi dan chuyen o goc man hinh.
- * Khong dung blur, dung vien sac net va bong cung kieu truyen tranh hoat hinh.
+ * Bat ra bang lo xo springTatDinh, khong dung blur, vien sac net kieu hoat hinh.
  */
 export const KhungLoiBinhHaiHuoc: React.FC<KhungLoiBinhHaiHuocProps> = ({
   loiBinh,
@@ -25,25 +26,13 @@ export const KhungLoiBinhHaiHuoc: React.FC<KhungLoiBinhHaiHuocProps> = ({
   }
 
   const delta = frame - tuFrame;
-  const scale =
-    delta < 8
-      ? interpolate(delta, [0, 8], [0.65, 1.04], {
-          extrapolateLeft: 'clamp',
-          extrapolateRight: 'clamp',
-        })
-      : delta < 13
-        ? interpolate(delta, [8, 13], [1.04, 1], {
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp',
-          })
-        : 1;
-
-  const opacity = interpolate(delta, [0, 6], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
+  const loXo = springTatDinh(delta, 11, 215);
+  const scale = kepGiaTri(loXo, 0, 1.25);
+  const opacity = kepGiaTri(delta / 5, 0, 1);
 
   const benTrai = loiBinh.viTri === 'goc_trai';
+  const gocDich = benTrai ? -2 : 2;
+  const gocHienTai = noiSuy(benTrai ? -9 : 9, gocDich, kepGiaTri(loXo, 0, 1.12));
 
   return (
     <div
@@ -54,7 +43,7 @@ export const KhungLoiBinhHaiHuoc: React.FC<KhungLoiBinhHaiHuocProps> = ({
         right: benTrai ? undefined : 52,
         maxWidth: 430,
         opacity,
-        transform: `rotate(${benTrai ? -2 : 2}deg) scale(${scale.toFixed(3)})`,
+        transform: `rotate(${gocHienTai.toFixed(2)}deg) scale(${scale.toFixed(3)})`,
         transformOrigin: benTrai ? 'top left' : 'top right',
         pointerEvents: 'none',
         zIndex: 20,

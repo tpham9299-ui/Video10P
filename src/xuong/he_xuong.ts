@@ -1,12 +1,27 @@
 import type { HuongNhanVat, LoaiHanhDong } from '../kieu_dai';
+import { tinhGocKhopDongTac } from './dong_tac.ts';
+import { baoToanCoGian, kepGiaTri } from './duong_cong.ts';
 
 export type Diem2D = {
   x: number;
   y: number;
 };
 
+export type DoTrePhuKien = {
+  dx: number;
+  dy: number;
+  gocTre: number;
+  doRung: number;
+};
+
+export type TuyChonKhungXuong = {
+  dangNoi?: boolean;
+  vanTocDiChuyenX?: number;
+};
+
 export type TuTheKhungXuong = {
   hong: Diem2D;
+  diemUonThan: Diem2D;
   co: Diem2D;
   dau: Diem2D;
   vaiTrai: Diem2D;
@@ -21,333 +36,197 @@ export type TuTheKhungXuong = {
   banChanPhai: Diem2D;
   diemCamVat: Diem2D;
   gocDau: number;
+  gocCangTayPhai: number;
   doCaoNhay: number;
   dichNgangNoiBo: number;
+  offsetX: number;
+  offsetY: number;
+  squashX: number;
+  squashY: number;
+  vanTocThan: Diem2D;
+  doTrePhuKien: DoTrePhuKien;
+  coVetBui: boolean;
+  huongNhinX: number;
+  huongNhinY: number;
 };
 
+// Chieu dai cac doan xuong co dinh (px) de giu ty le hoat hinh nhat quan
+const HONG_Y_GOC = -88;
+const DAI_THAN_GOC = 72;
+const DAI_CO_DAU = 28;
+const DAI_CANH_TAY_TREN = 31;
+const DAI_CANG_TAY = 29;
+const DAI_DUI = 46;
+const DAI_CANG_CHAN = 45;
+
+const DO_SANG_RAD = Math.PI / 180;
+
+/** Buoc FK: tu khop cha + goc theo huong nhin (0 = thang xuong, + = ve truoc/len) + do dai */
+function buocFK(cha: Diem2D, gocDo: number, doDai: number, dir: number): Diem2D {
+  const rad = gocDo * DO_SANG_RAD;
+  return {
+    x: cha.x + Math.sin(rad) * doDai * dir,
+    y: cha.y + Math.cos(rad) * doDai,
+  };
+}
+
 /**
- * Tinh khung xuong nguoi que dien xuat hoat hinh (v0.2).
- * He toa do cuc bo: (0, 0) la mat dat giua hai ban chan, truc Y am huong len tren.
- * Tat dinh 100% theo frameCucBo, khong bao gio tra ve NaN.
+ * Giai IK 2 xuong cuc nhe khi ban chan bi cham mat dat (y > 0) de khong bao gio xuyen san
+ * ma van giu nguyen do dai dui & cang chan, dau goi gap tu nhien ve truoc.
  */
-export function tinhKhungXuongCoBan(
+function kepChanTrenMatDat(
+  hong: Diem2D,
+  goi: Diem2D,
+  banChan: Diem2D,
+  dir: number,
+): { goi: Diem2D; banChan: Diem2D } {
+  if (banChan.y <= 0) {
+    return { goi, banChan };
+  }
+
+  const chanKep: Diem2D = { x: banChan.x, y: 0 };
+  const dx = chanKep.x - hong.x;
+  const dy = chanKep.y - hong.y;
+  const khoangCach = Math.hypot(dx, dy);
+  const tongDai = DAI_DUI + DAI_CANG_CHAN;
+
+  if (khoangCach < 1e-3 || khoangCach >= tongDai - 0.5) {
+    const tiLe = khoangCach > 1e-3 ? DAI_DUI / khoangCach : 0.5;
+    return {
+      goi: {
+        x: hong.x + dx * tiLe + 3 * dir,
+        y: Math.min(0, hong.y + dy * tiLe),
+      },
+      banChan: chanKep,
+    };
+  }
+
+  // Dinh ly cosin tim diem goi gap ve phia truoc (+dir)
+  const cosGoc = kepGiaTri(
+    (DAI_DUI * DAI_DUI + khoangCach * khoangCach - DAI_CANG_CHAN * DAI_CANG_CHAN) /
+      (2 * DAI_DUI * khoangCach),
+    -1,
+    1,
+  );
+  const a = DAI_DUI * cosGoc;
+  const h = Math.sqrt(Math.max(0, DAI_DUI * DAI_DUI - a * a));
+  const ux = dx / khoangCach;
+  const uy = dy / khoangCach;
+  // Phap tuyen huong ve phia truoc (+dir) khi dy > 0
+  const px = uy * dir;
+  const py = -ux * dir;
+
+  const goiMoi: Diem2D = {
+    x: hong.x + ux * a + px * h,
+    y: Math.min(0, hong.y + uy * a + py * h),
+  };
+
+  return { goi: goiMoi, banChan: chanKep };
+}
+
+type KetQuaNoiBo = Omit<TuTheKhungXuong, 'vanTocThan' | 'doTrePhuKien'>;
+
+/** Giai khung xuong FK phan cap tai dung mot thoi diem frame */
+function giaiKhungXuongTaiFrame(
   hanhDong: LoaiHanhDong,
-  frameCucBo: number,
+  frame: number,
   huong: HuongNhanVat,
-): TuTheKhungXuong {
-  const f = Number.isFinite(frameCucBo) ? frameCucBo : 0;
+  dangNoi: boolean,
+): KetQuaNoiBo {
   const dir = huong === 'trai' ? -1 : 1;
+  const p = tinhGocKhopDongTac(hanhDong, frame, dangNoi);
+  const { squashX, squashY } = baoToanCoGian(p.squashY);
 
-  const nhipTho = Math.sin(f * 0.13) * 2.6;
-  const lacTay = Math.sin(f * 0.16) * 5;
+  const chieuDaiThan = DAI_THAN_GOC * squashY;
 
-  let hongY = -88 + nhipTho * 0.45;
-  let hongX = 0;
-  let nghiengThanX = 0;
-  let chieuDaiThan = 72;
-  let nhayY = 0;
-  let gocDau = 0;
-  let dichNgangNoiBo = 0;
+  // 1. Goc hong ban dau
+  let hongX = p.offsetX * dir;
+  let hongY = HONG_Y_GOC + p.offsetY;
 
-  let tayTruocDX = 26 * dir;
-  let tayTruocDY = 24;
-  let taySauDX = -22 * dir;
-  let taySauDY = 26;
-  let khuyuTruocLechX = -4 * dir;
-  let khuyuTruocLechY = 12;
-  let khuyuSauLechX = 4 * dir;
-  let khuyuSauLechY = 12;
+  // 2. Giai chuoi chan FK: hong -> goi -> banChan
+  const hongTam: Diem2D = { x: hongX, y: hongY };
+  let goiPhai = buocFK(hongTam, p.duiPhaiGoc, DAI_DUI, dir);
+  let banChanPhai = buocFK(goiPhai, p.duiPhaiGoc + p.goiPhaiGoc, DAI_CANG_CHAN, dir);
 
-  let chanPhaiX = 18 * dir;
-  let chanPhaiY = 0;
-  let chanTraiX = -18 * dir;
-  let chanTraiY = 0;
-  let goiPhaiLechX = 5 * dir;
-  let goiTraiLechX = -5 * dir;
+  let goiTrai = buocFK(hongTam, p.duiTraiGoc, DAI_DUI, dir);
+  let banChanTrai = buocFK(goiTrai, p.duiTraiGoc + p.goiTraiGoc, DAI_CANG_CHAN, dir);
 
-  switch (hanhDong) {
-    case 'di_bo': {
-      const pha = f * 0.24;
-      const buoc = Math.sin(pha);
-      const nhun = Math.abs(Math.sin(pha)) * 6;
-      hongY = -88 - nhun;
-      nghiengThanX = 5 * dir;
-      chanPhaiX = (6 + buoc * 26) * dir;
-      chanTraiX = (-6 - buoc * 26) * dir;
-      chanPhaiY = Math.min(0, -Math.cos(pha) * 10);
-      chanTraiY = Math.min(0, Math.cos(pha) * 10);
-      tayTruocDX = (18 - buoc * 22) * dir;
-      tayTruocDY = 24 - Math.abs(buoc) * 4;
-      taySauDX = (-18 + buoc * 22) * dir;
-      taySauDY = 24 - Math.abs(buoc) * 4;
-      break;
-    }
-
-    case 'chay_voi_va': {
-      const pha = f * 0.44;
-      const buoc = Math.sin(pha);
-      const nhun = Math.abs(Math.sin(pha)) * 12;
-      hongY = -86 - nhun;
-      nhayY = -nhun * 0.6;
-      nghiengThanX = 16 * dir;
-      chanPhaiX = (8 + buoc * 36) * dir;
-      chanTraiX = (-8 - buoc * 36) * dir;
-      chanPhaiY = Math.min(0, -Math.cos(pha) * 18);
-      chanTraiY = Math.min(0, Math.cos(pha) * 18);
-      goiPhaiLechX = 12 * dir;
-      goiTraiLechX = 6 * dir;
-      tayTruocDX = (24 - buoc * 28) * dir;
-      tayTruocDY = 8;
-      taySauDX = (-24 + buoc * 28) * dir;
-      taySauDY = 10;
-      gocDau = 6 * dir;
-      break;
-    }
-
-    case 'ngoi_doc_sach': {
-      hongY = -50 + nhipTho * 0.3;
-      hongX = -10 * dir;
-      nghiengThanX = 8 * dir;
-      chieuDaiThan = 66;
-      chanPhaiX = 28 * dir;
-      chanTraiX = 14 * dir;
-      goiPhaiLechX = 24 * dir;
-      goiTraiLechX = 18 * dir;
-      tayTruocDX = 34 * dir;
-      tayTruocDY = 10 + Math.sin(f * 0.1) * 2;
-      taySauDX = 22 * dir;
-      taySauDY = 12 + Math.sin(f * 0.1) * 2;
-      gocDau = 14 * dir;
-      break;
-    }
-
-    case 'chi_tro_giai_thich': {
-      nghiengThanX = 6 * dir;
-      tayTruocDX = 56 * dir;
-      tayTruocDY = -18 + Math.sin(f * 0.22) * 7;
-      khuyuTruocLechY = 6;
-      taySauDX = -18 * dir;
-      taySauDY = 20 + Math.cos(f * 0.18) * 4;
-      gocDau = Math.sin(f * 0.16) * 3 * dir;
-      break;
-    }
-
-    case 'nhin_len_troi': {
-      nghiengThanX = -6 * dir;
-      tayTruocDX = 38 * dir;
-      tayTruocDY = -34 + Math.sin(f * 0.14) * 4;
-      taySauDX = -20 * dir;
-      taySauDY = 24;
-      gocDau = -18 * dir;
-      break;
-    }
-
-    case 'gat_gu_dong_tinh': {
-      const gat = Math.sin(f * 0.26);
-      gocDau = (6 + gat * 10) * dir;
-      nghiengThanX = (2 + gat * 3) * dir;
-      tayTruocDX = 30 * dir;
-      tayTruocDY = 4 + gat * 6;
-      taySauDX = -18 * dir;
-      taySauDY = 24;
-      break;
-    }
-
-    case 'gai_dau_kho_hieu': {
-      const gai = Math.sin(f * 0.38) * 3;
-      nghiengThanX = -5 * dir;
-      gocDau = -8 * dir;
-      tayTruocDX = (6 + gai) * dir;
-      tayTruocDY = -40;
-      khuyuTruocLechX = 22 * dir;
-      khuyuTruocLechY = -8;
-      taySauDX = -14 * dir;
-      taySauDY = 32;
-      khuyuSauLechX = -16 * dir;
-      break;
-    }
-
-    case 'giat_minh_nhay_dung': {
-      // 3 pha hai huoc: nhun (0..6) -> bat nhay cao (6..24) -> roi xuong dat (24..42)
-      const c = ((f % 42) + 42) % 42;
-      if (c < 6) {
-        const t = c / 6;
-        hongY = -88 + t * 18;
-        chieuDaiThan = 72 - t * 6;
-        tayTruocDX = 22 * dir;
-        tayTruocDY = 14;
-        taySauDX = -22 * dir;
-        taySauDY = 14;
-      } else if (c < 26) {
-        const t = (c - 6) / 20;
-        const arc = Math.sin(t * Math.PI);
-        nhayY = -arc * 68;
-        hongY = -88 + nhayY;
-        tayTruocDX = 42 * dir;
-        tayTruocDY = -36 - arc * 12;
-        taySauDX = -42 * dir;
-        taySauDY = -32 - arc * 12;
-        chanPhaiX = (22 + arc * 14) * dir;
-        chanTraiX = (-22 - arc * 14) * dir;
-        chanPhaiY = nhayY * 0.72;
-        chanTraiY = nhayY * 0.72;
-        gocDau = -6 * dir;
-      } else {
-        const t = (c - 26) / 16;
-        const settle = Math.sin(t * Math.PI) * 10;
-        hongY = -88 + settle;
-        tayTruocDX = 30 * dir;
-        tayTruocDY = -6;
-        taySauDX = -28 * dir;
-        taySauDY = -4;
-      }
-      break;
-    }
-
-    case 'bo_tay_can_loi': {
-      // Dua tay len vo tran, vai hoi xiu xuong kieu can loi
-      nghiengThanX = -4 * dir;
-      hongY = -86 + nhipTho * 0.3;
-      gocDau = 8 * dir;
-      tayTruocDX = 10 * dir;
-      tayTruocDY = -26;
-      khuyuTruocLechX = 20 * dir;
-      khuyuTruocLechY = 4;
-      taySauDX = -16 * dir;
-      taySauDY = 34;
-      khuyuSauLechX = -10 * dir;
-      break;
-    }
-
-    case 'khoanh_tay_tu_man': {
-      // Khoanh tay truoc nguc, uon nguc, ngua nhe dau tu man
-      nghiengThanX = -7 * dir;
-      gocDau = -12 * dir;
-      tayTruocDX = -6 * dir;
-      tayTruocDY = 20;
-      khuyuTruocLechX = 20 * dir;
-      khuyuTruocLechY = 18;
-      taySauDX = 16 * dir;
-      taySauDY = 22;
-      khuyuSauLechX = -18 * dir;
-      khuyuSauLechY = 18;
-      chanPhaiX = 20 * dir;
-      chanTraiX = -20 * dir;
-      break;
-    }
-
-    case 'ho_het_sung_suong': {
-      const arc = Math.abs(Math.sin(f * 0.24));
-      nhayY = -arc * 32;
-      hongY = -88 + nhayY;
-      tayTruocDX = 36 * dir;
-      tayTruocDY = -48 - arc * 6;
-      taySauDX = -36 * dir;
-      taySauDY = -48 - arc * 6;
-      khuyuTruocLechY = 4;
-      khuyuSauLechY = 4;
-      chanPhaiY = nhayY * 0.55;
-      chanTraiY = nhayY * 0.55;
-      gocDau = -8 * dir;
-      break;
-    }
-
-    case 'di_qua_di_lai': {
-      const phaDi = f * 0.055;
-      dichNgangNoiBo = Math.sin(phaDi) * 58;
-      const buoc = Math.sin(f * 0.24);
-      const nhun = Math.abs(buoc) * 5;
-      hongY = -88 - nhun;
-      nghiengThanX = 4 * dir;
-      chanPhaiX = (5 + buoc * 22) * dir;
-      chanTraiX = (-5 - buoc * 22) * dir;
-      chanPhaiY = Math.min(0, -Math.cos(f * 0.24) * 8);
-      chanTraiY = Math.min(0, Math.cos(f * 0.24) * 8);
-      // Tay chap sau lung suy tu khi di qua di lai
-      tayTruocDX = -14 * dir;
-      tayTruocDY = 32;
-      taySauDX = -18 * dir;
-      taySauDY = 34;
-      gocDau = 8 * dir;
-      break;
-    }
-
-    case 'sup_do_tuyet_vong': {
-      // Guc nguoi xuong san hai huoc (quy goi, tay chong dat, dau cui ru)
-      hongY = -36;
-      hongX = -18 * dir;
-      nghiengThanX = 34 * dir;
-      chieuDaiThan = 52;
-      chanPhaiX = -26 * dir;
-      chanTraiX = -42 * dir;
-      goiPhaiLechX = 12 * dir;
-      goiTraiLechX = 6 * dir;
-      tayTruocDX = 26 * dir;
-      tayTruocDY = 48;
-      taySauDX = 10 * dir;
-      taySauDY = 50;
-      khuyuTruocLechX = 4 * dir;
-      khuyuTruocLechY = 8;
-      gocDau = 28 * dir;
-      break;
-    }
-
-    case 'dung_tho':
-    default:
-      tayTruocDY = 24 + lacTay * 0.35;
-      taySauDY = 26 - lacTay * 0.35;
-      break;
+  // Tu kep ban chan sat mat dat (y = 0) khi dung/di de khong bi troi truot hay lo lung
+  if (p.khoaMatDat) {
+    const chanThapNhatY = Math.max(banChanPhai.y, banChanTrai.y);
+    const buTruY = -chanThapNhatY;
+    // Cho phep dich nhe than de ban chan cham san y=0 nhung van giu tu the ngoi/quy
+    const buTruGioiHan = kepGiaTri(buTruY, -28, 18);
+    hongY += buTruGioiHan;
+    goiPhai = { x: goiPhai.x, y: goiPhai.y + buTruGioiHan };
+    banChanPhai = { x: banChanPhai.x, y: banChanPhai.y + buTruGioiHan };
+    goiTrai = { x: goiTrai.x, y: goiTrai.y + buTruGioiHan };
+    banChanTrai = { x: banChanTrai.x, y: banChanTrai.y + buTruGioiHan };
   }
 
   const hong: Diem2D = { x: hongX, y: hongY };
+
+  // Khong bao gio cho ban chan xuyen xuong duoi san y = 0
+  const chanPhaiKep = kepChanTrenMatDat(hong, goiPhai, banChanPhai, dir);
+  goiPhai = chanPhaiKep.goi;
+  banChanPhai = chanPhaiKep.banChan;
+
+  const chanTraiKep = kepChanTrenMatDat(hong, goiTrai, banChanTrai, dir);
+  goiTrai = chanTraiKep.goi;
+  banChanTrai = chanTraiKep.banChan;
+
+  // 3. Cot song cong Quadratic Bezier: hong -> diemUonThan -> co
+  const radThan = p.gocThan * DO_SANG_RAD;
   const co: Diem2D = {
-    x: hong.x + nghiengThanX,
-    y: hong.y - chieuDaiThan + nhipTho * 0.5,
+    x: hong.x + Math.sin(radThan) * chieuDaiThan * dir,
+    y: hong.y - Math.cos(radThan) * chieuDaiThan,
   };
+
+  const tx = co.x - hong.x;
+  const ty = co.y - hong.y;
+  const daiThanThuc = Math.max(1, Math.hypot(tx, ty));
+  // Phap tuyen vuong goc truc than huong ve truoc (+dir)
+  const phapX = (-ty / daiThanThuc) * dir;
+  const phapY = (tx / daiThanThuc) * dir;
+
+  const diemUonThan: Diem2D = {
+    x: (hong.x + co.x) * 0.5 + phapX * p.doCongThan * squashX,
+    y: (hong.y + co.y) * 0.5 + phapY * p.doCongThan * squashX,
+  };
+
+  // 4. Dau giai theo FK tu co, bam theo do nghieng cot song
+  const gocCoDauRad = (p.gocThan * 0.55 + p.gocDau * 0.3) * DO_SANG_RAD;
   const dau: Diem2D = {
-    x: co.x + 2 * dir + (hanhDong === 'sup_do_tuyet_vong' ? 12 * dir : 0),
-    y: co.y - 28 + (hanhDong === 'sup_do_tuyet_vong' ? 10 : 0),
+    x: co.x + Math.sin(gocCoDauRad) * DAI_CO_DAU * dir,
+    y: co.y - Math.cos(gocCoDauRad) * DAI_CO_DAU,
   };
 
-  const vaiPhai: Diem2D = { x: co.x + 11 * dir, y: co.y + 6 };
-  const banTayPhai: Diem2D = {
-    x: vaiPhai.x + tayTruocDX,
-    y: vaiPhai.y + tayTruocDY,
+  // 5. Chuoi canh tay FK: hong -> co -> vai -> khuyu -> banTay -> diemCamVat
+  const rongVai = 10.5 * squashX;
+  const vaiPhai: Diem2D = {
+    x: co.x + rongVai * dir,
+    y: co.y + 6 - p.nhunVai,
   };
-  const khuyuPhai: Diem2D = {
-    x: (vaiPhai.x + banTayPhai.x) / 2 + khuyuTruocLechX,
-    y: (vaiPhai.y + banTayPhai.y) / 2 + khuyuTruocLechY,
-  };
-
-  const vaiTrai: Diem2D = { x: co.x - 11 * dir, y: co.y + 6 };
-  const banTayTrai: Diem2D = {
-    x: vaiTrai.x + taySauDX,
-    y: vaiTrai.y + taySauDY,
-  };
-  const khuyuTrai: Diem2D = {
-    x: (vaiTrai.x + banTayTrai.x) / 2 + khuyuSauLechX,
-    y: (vaiTrai.y + banTayTrai.y) / 2 + khuyuSauLechY,
+  const vaiTrai: Diem2D = {
+    x: co.x - rongVai * dir,
+    y: co.y + 6 - p.nhunVai,
   };
 
-  const banChanPhai: Diem2D = { x: chanPhaiX, y: chanPhaiY };
-  const goiPhai: Diem2D = {
-    x: (hong.x + banChanPhai.x) / 2 + goiPhaiLechX,
-    y: (hong.y + banChanPhai.y) / 2 - 4,
-  };
+  const gocCanhTayPhai = p.gocThan * 0.35 + p.vaiPhaiGoc;
+  const gocCangTayPhai = gocCanhTayPhai + p.khuyuPhaiGoc;
+  const khuyuPhai = buocFK(vaiPhai, gocCanhTayPhai, DAI_CANH_TAY_TREN, dir);
+  const banTayPhai = buocFK(khuyuPhai, gocCangTayPhai, DAI_CANG_TAY, dir);
 
-  const banChanTrai: Diem2D = { x: chanTraiX, y: chanTraiY };
-  const goiTrai: Diem2D = {
-    x: (hong.x + banChanTrai.x) / 2 + goiTraiLechX,
-    y: (hong.y + banChanTrai.y) / 2 - 4,
-  };
+  const gocCanhTayTrai = p.gocThan * 0.35 + p.vaiTraiGoc;
+  const gocCangTayTrai = gocCanhTayTrai + p.khuyuTraiGoc;
+  const khuyuTrai = buocFK(vaiTrai, gocCanhTayTrai, DAI_CANH_TAY_TREN, dir);
+  const banTayTrai = buocFK(khuyuTrai, gocCangTayTrai, DAI_CANG_TAY, dir);
 
-  const diemCamVat: Diem2D = {
-    x: banTayPhai.x + 3 * dir,
-    y: banTayPhai.y - 2,
-  };
+  const diemCamVat = buocFK(banTayPhai, gocCangTayPhai, 4.5, dir);
 
   return {
     hong,
+    diemUonThan,
     co,
     dau,
     vaiTrai,
@@ -361,8 +240,68 @@ export function tinhKhungXuongCoBan(
     goiPhai,
     banChanPhai,
     diemCamVat,
-    gocDau,
-    doCaoNhay: Math.max(0, -nhayY),
-    dichNgangNoiBo,
+    gocDau: p.gocDau * dir,
+    gocCangTayPhai: gocCangTayPhai * dir,
+    doCaoNhay: Math.max(0, -p.nhayY),
+    dichNgangNoiBo: p.dichNgangNoiBo,
+    offsetX: hong.x,
+    offsetY: hong.y - HONG_Y_GOC,
+    squashX,
+    squashY,
+    coVetBui: p.coVetBui,
+    huongNhinX: p.huongNhinX,
+    huongNhinY: p.huongNhinY,
+  };
+}
+
+/**
+ * Bo giai xuong khop FK mem phan cap theo goc khop + chuyen dong thu cap co do tre (v0.4).
+ * He toa do cuc bo: (0, 0) la mat dat giua hai ban chan, truc Y am huong len tren.
+ * Tat dinh 100% theo frameCucBo, khong bao gio tra ve NaN hoac Infinity.
+ */
+export function tinhKhungXuongCoBan(
+  hanhDong: LoaiHanhDong,
+  frameCucBo: number,
+  huong: HuongNhanVat,
+  tuyChon?: TuyChonKhungXuong,
+): TuTheKhungXuong {
+  const f = Number.isFinite(frameCucBo) ? frameCucBo : 0;
+  const dangNoi = Boolean(tuyChon?.dangNoi);
+  const vanTocNgoaiX = Number.isFinite(tuyChon?.vanTocDiChuyenX)
+    ? (tuyChon?.vanTocDiChuyenX ?? 0)
+    : 0;
+
+  const hienTai = giaiKhungXuongTaiFrame(hanhDong, f, huong, dangNoi);
+  const truoc1 = giaiKhungXuongTaiFrame(hanhDong, f - 1, huong, dangNoi);
+  const tre3 = giaiKhungXuongTaiFrame(hanhDong, f - 3, huong, dangNoi);
+
+  const vanTocThan: Diem2D = {
+    x:
+      hienTai.co.x +
+      hienTai.dichNgangNoiBo -
+      (truoc1.co.x + truoc1.dichNgangNoiBo) +
+      vanTocNgoaiX,
+    y: hienTai.co.y - truoc1.co.y,
+  };
+
+  // Do tre phu kien (frame - 3) + quan tinh di chuyen ngang
+  const doTrePhuKien: DoTrePhuKien = {
+    dx: kepGiaTri(
+      tre3.co.x +
+        tre3.dichNgangNoiBo -
+        (hienTai.co.x + hienTai.dichNgangNoiBo) -
+        vanTocNgoaiX * 3,
+      -42,
+      42,
+    ),
+    dy: kepGiaTri(tre3.co.y - hienTai.co.y, -32, 32),
+    gocTre: kepGiaTri(tre3.gocDau - hienTai.gocDau, -24, 24),
+    doRung: Math.sin((f - 3) * 0.22),
+  };
+
+  return {
+    ...hienTai,
+    vanTocThan,
+    doTrePhuKien,
   };
 }

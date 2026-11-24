@@ -2,6 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tinhKhungXuongCoBan } from '../src/xuong/he_xuong.ts';
+import {
+  easeInBack,
+  easeInOutCubic,
+  easeOutBack,
+  springTatDinh,
+} from '../src/xuong/duong_cong.ts';
 import { bamTatDinh, bamChuoiTatDinh } from '../src/vfx/tat_dinh.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -111,6 +117,7 @@ const LOAI_MINH_HOA_TOAN_HOP_LE = new Set([
 
 const KHOP_XUONG_BAT_BUOC = [
   'hong',
+  'diemUonThan',
   'co',
   'dau',
   'vaiTrai',
@@ -247,34 +254,92 @@ if (!fs.existsSync(duongDanMau)) {
   );
 }
 
-// 2. Kiem tra tinh tat dinh & khong NaN cho 14 hanh dong trong he_xuong.ts
+// 2. Kiem tra bo duong cong & lo xo vat ly tat dinh (src/xuong/duong_cong.ts)
+for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+  const c1 = easeInOutCubic(t);
+  const c2 = easeOutBack(t);
+  const c3 = easeInBack(t);
+  if (!Number.isFinite(c1) || !Number.isFinite(c2) || !Number.isFinite(c3)) {
+    baoLoi(`duong_cong.ts tra ve gia tri khong huu han tai t=${t}`);
+  }
+}
+for (const fr of [-5, 0, 5, 10, 20, 60]) {
+  const s1 = springTatDinh(fr, 11, 200);
+  const s2 = springTatDinh(fr, 11, 200);
+  if (!Number.isFinite(s1) || s1 !== s2) {
+    baoLoi(`springTatDinh(${fr}) khong hop le hoac khong tat dinh`);
+  }
+}
+if (springTatDinh(0) !== 0 || Math.abs(springTatDinh(90, 12, 180) - 1) > 0.02) {
+  baoLoi('springTatDinh khong hoi tu dung tu 0 -> 1');
+} else {
+  console.log('[OK] src/xuong/duong_cong.ts: easeInOutCubic, easeOutBack, easeInBack & springTatDinh tat dinh 100%.');
+}
+
+// 3. Kiem tra bo giai FK cho du 14 LoaiHanhDong tai cac moc frame (0, 15, 45, 90)
+const MOC_FRAME_FK = [0, 15, 45, 90];
 for (const hd of LOAI_HANH_DONG_HOP_LE) {
-  for (const frame of [0, 12, 35, 94]) {
-    const kq1 = tinhKhungXuongCoBan(hd, frame, 'phai');
-    const kq2 = tinhKhungXuongCoBan(hd, frame, 'phai');
-    if (JSON.stringify(kq1) !== JSON.stringify(kq2)) {
-      baoLoi(`tinhKhungXuongCoBan("${hd}", ${frame}) khong tat dinh!`);
-      break;
-    }
-    for (const khop of KHOP_XUONG_BAT_BUOC) {
-      const diem = kq1[khop];
-      if (!diem || !Number.isFinite(diem.x) || !Number.isFinite(diem.y)) {
-        baoLoi(`tinhKhungXuongCoBan("${hd}", ${frame}): khop "${khop}" bi NaN/thieu`);
-        break;
+  for (const frame of MOC_FRAME_FK) {
+    for (const huong of ['phai', 'trai']) {
+      for (const dangNoi of [false, true]) {
+        const kq1 = tinhKhungXuongCoBan(hd, frame, huong, { dangNoi });
+        const kq2 = tinhKhungXuongCoBan(hd, frame, huong, { dangNoi });
+        if (JSON.stringify(kq1) !== JSON.stringify(kq2)) {
+          baoLoi(`tinhKhungXuongCoBan("${hd}", ${frame}, "${huong}", dangNoi=${dangNoi}) khong tat dinh!`);
+          break;
+        }
+        for (const khop of KHOP_XUONG_BAT_BUOC) {
+          const diem = kq1[khop];
+          if (!diem || !Number.isFinite(diem.x) || !Number.isFinite(diem.y)) {
+            baoLoi(`tinhKhungXuongCoBan("${hd}", ${frame}): khop "${khop}" bi NaN/Infinity/thieu`);
+            break;
+          }
+        }
+        const cacSoKiemTra = [
+          kq1.offsetX,
+          kq1.offsetY,
+          kq1.squashX,
+          kq1.squashY,
+          kq1.gocDau,
+          kq1.doCaoNhay,
+          kq1.dichNgangNoiBo,
+          kq1.vanTocThan?.x,
+          kq1.vanTocThan?.y,
+          kq1.doTrePhuKien?.dx,
+          kq1.doTrePhuKien?.dy,
+          kq1.doTrePhuKien?.gocTre,
+          kq1.doTrePhuKien?.doRung,
+        ];
+        if (cacSoKiemTra.some((v) => typeof v !== 'number' || !Number.isFinite(v))) {
+          baoLoi(`tinhKhungXuongCoBan("${hd}", ${frame}): truong FK/thu cap co NaN hoac Infinity`);
+        }
+        if (
+          kq1.squashX < 0.7 ||
+          kq1.squashX > 1.45 ||
+          kq1.squashY < 0.7 ||
+          kq1.squashY > 1.45 ||
+          Math.abs(kq1.squashX * kq1.squashY - 1) > 0.02
+        ) {
+          baoLoi(
+            `tinhKhungXuongCoBan("${hd}", ${frame}): squash khong hop le (squashX=${kq1.squashX}, squashY=${kq1.squashY})`,
+          );
+        }
       }
     }
   }
 }
-console.log(`[OK] src/xuong/he_xuong.ts: 14/14 hanh dong tat dinh, du ${KHOP_XUONG_BAT_BUOC.length} khop, khong NaN.`);
+console.log(
+  `[OK] src/xuong/he_xuong.ts (FK): 14/14 hanh dong x frames [${MOC_FRAME_FK.join(', ')}] x 2 huong x dangNoi tat dinh 100%, du ${KHOP_XUONG_BAT_BUOC.length} khop, squash bao toan dien tich, khong NaN/Infinity.`,
+);
 
-// 3. Kiem tra bamTatDinh & bamChuoiTatDinh
+// 4. Kiem tra bamTatDinh & bamChuoiTatDinh
 if (bamTatDinh(42) !== bamTatDinh(42) || bamChuoiTatDinh('pythagoras') !== bamChuoiTatDinh('pythagoras')) {
   baoLoi('src/vfx/tat_dinh.ts khong tat dinh!');
 } else {
   console.log('[OK] src/vfx/tat_dinh.ts: ham bam seed tat dinh 100%.');
 }
 
-// 4. Quet quy tac cam blur va Math.random() trong src/
+// 5. Quet quy tac cam blur va Math.random() trong src/
 const quyTacCam = [
   { ten: 'backdrop-filter: blur', regex: /backdrop-?filter\s*[:=][^;\n]*blur/i },
   { ten: 'filter: blur', regex: /\bfilter\s*[:=][^;\n]*blur/i },
@@ -309,4 +374,4 @@ if (loi.length > 0) {
   process.exit(1);
 }
 
-console.log('\n[THANH CONG] Tat ca kiem tra khung v0.2 (Phim hoat hinh ke chuyen Toan hoc) deu xanh!');
+console.log('\n[THANH CONG] Tat ca kiem tra khung v0.4 (Chuyen dong hoat hinh 2D FK + Parallax + Chuyen canh) deu xanh!');
