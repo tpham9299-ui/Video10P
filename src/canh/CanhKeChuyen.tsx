@@ -1,11 +1,11 @@
 import React from 'react';
-import { interpolate, useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
+import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
 import { DaoCu } from '../daocu/DaoCu';
-import { CongThucMath } from '../daocu/CongThucMath';
 import { MayQuayDong } from '../vfx/MayQuayDong';
-import { HieuUngTanCong } from '../vfx/HieuUngTanCong';
+import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
+import { KhungLoiBinhHaiHuoc } from './KhungLoiBinhHaiHuoc';
 
 type Props = {
   canh: Canh;
@@ -20,110 +20,91 @@ export const CanhKeChuyen: React.FC<Props> = ({
   bangMau,
   banDoNhanVat,
 }) => {
-  const frame = useCurrentFrame();
-  const doMo = interpolate(frame, [0, 12], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
+  const thoiLuong = Math.max(1, canh.denFrame - canh.tuFrame);
 
   return (
-    <MayQuayDong camera={canh.camera} hieuUngTanCong={canh.hieuUngTanCong}>
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <MayQuayDong
+        camera={canh.camera}
+        chuyenCanh={canh.chuyenCanh}
+        nhanVat={canh.nhanVat}
+        thoiLuongCanh={thoiLuong}
+      >
+        <BoiCanhHoatHinh loai={canh.boiCanh} thoiTiet={canh.thoiTiet} />
+
+        <svg
+          width={1920}
+          height={1080}
+          viewBox="0 0 1920 1080"
+          style={{ position: 'absolute', inset: 0 }}
+        >
+          {canh.daoCu?.map((dc, idx) => (
+            <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
+          ))}
+          {canh.nhanVat.map((nv, idx) => {
+            const tt = banDoNhanVat[nv.id];
+            if (!tt) return null;
+            return (
+              <NguoiQueDong
+                key={`${nv.id}-${idx}`}
+                thongTin={tt}
+                trangThai={nv}
+                tiLe={1.25}
+                thoiLuongCanh={thoiLuong}
+              />
+            );
+          })}
+          <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
+        </svg>
+      </MayQuayDong>
+
+      {/* The chuong & tieu de nho o goc trai tren */}
       <div
         style={{
           position: 'absolute',
-          top: 72,
-          left: 88,
-          right: 88,
+          top: 60,
+          left: 52,
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          opacity: doMo,
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 8,
+          pointerEvents: 'none',
         }}
       >
-        <div>
-          <div
-            style={{
-              color: bangMau.nhanManh,
-              fontSize: 20,
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: 1.5,
-            }}
-          >
-            {tenChuong}
-          </div>
-          {canh.tieuDeNho && (
-            <div
-              style={{
-                color: bangMau.chuChinh,
-                fontSize: 40,
-                fontWeight: 800,
-                marginTop: 6,
-              }}
-            >
-              {canh.tieuDeNho}
-            </div>
-          )}
+        <div
+          style={{
+            padding: '5px 16px',
+            borderRadius: 999,
+            backgroundColor: '#FEF08A',
+            border: '2.5px solid #1E293B',
+            color: '#1E293B',
+            fontSize: 16,
+            fontWeight: 900,
+            letterSpacing: 0.6,
+            boxShadow: '3px 3px 0px #1E293B',
+          }}
+        >
+          {tenChuong}
+          {canh.namMoc ? ` • ${canh.namMoc}` : ''}
         </div>
-        {canh.namMoc && (
+        {canh.tieuDeNho && (
           <div
             style={{
               padding: '8px 20px',
-              borderRadius: 12,
-              backgroundColor: bangMau.nenPhu,
-              border: `2px solid ${bangMau.luoi}`,
-              color: bangMau.chuChinh,
-              fontSize: 24,
-              fontWeight: 700,
+              borderRadius: 14,
+              backgroundColor: 'rgba(15, 23, 42, 0.84)',
+              border: `2.5px solid ${bangMau.nhanManh}`,
+              color: '#FFFFFF',
+              fontSize: 32,
+              fontWeight: 800,
             }}
           >
-            {canh.namMoc}
+            {canh.tieuDeNho}
           </div>
         )}
       </div>
 
-      {canh.congThucLatex && canh.congThucLatex.length > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 205,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '16px 32px',
-            borderRadius: 16,
-            backgroundColor: bangMau.nenPhu,
-            border: `2px solid ${bangMau.nhanManh}`,
-          }}
-        >
-          <CongThucMath latex={canh.congThucLatex[0].latex} fontSize={36} mau={bangMau.chuChinh} />
-        </div>
-      )}
-
-      <svg
-        width={1920}
-        height={1080}
-        viewBox="0 0 1920 1080"
-        style={{ position: 'absolute', inset: 0 }}
-      >
-        <line
-          x1={120}
-          y1={830}
-          x2={1800}
-          y2={830}
-          stroke={bangMau.luoi}
-          strokeWidth={4}
-          strokeLinecap="round"
-        />
-        {canh.daoCu?.map((dc, idx) => (
-          <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
-        ))}
-        {canh.nhanVat.map((nv, idx) => {
-          const tt = banDoNhanVat[nv.id];
-          if (!tt) return null;
-          return <NguoiQueDong key={`${nv.id}-${idx}`} thongTin={tt} trangThai={nv} tiLe={1.2} />;
-        })}
-        <HieuUngTanCong danhSach={canh.hieuUngTanCong} />
-      </svg>
-    </MayQuayDong>
+      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
+    </div>
   );
 };

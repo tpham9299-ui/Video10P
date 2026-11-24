@@ -9,10 +9,11 @@ import {
 } from 'remotion';
 import type { Canh, DuLieuVideoDai, ThongTinNhanVat } from './kieu_dai';
 import { layDuongDanSfxNeuCoSan } from './amthanh/sfx';
+import { BoiCanhHoatHinh } from './boicanh/BoiCanhHoatHinh';
 import { CanhMoDau } from './canh/CanhMoDau';
 import { CanhKeChuyen } from './canh/CanhKeChuyen';
 import { CanhDoiThoai } from './canh/CanhDoiThoai';
-import { CanhHanhDong } from './canh/CanhHanhDong';
+import { CanhHaiHuoc } from './canh/CanhHaiHuoc';
 import { CanhGiaiThichToan } from './canh/CanhGiaiThichToan';
 import { CanhDongThoiGian } from './canh/CanhDongThoiGian';
 import { CanhKet } from './canh/CanhKet';
@@ -23,9 +24,9 @@ type CanhKemChuong = {
   chuongId: string;
 };
 
-const PhuDeCanh: React.FC<{ canh: Canh; mauChu: string; mauVien: string }> = ({
+/** Phu de 16:9 de doc tren ca nen sang (troi xanh/giay kem) lan nen toi (troi dem) */
+const PhuDeCanh: React.FC<{ canh: Canh; mauVien: string }> = ({
   canh,
-  mauChu,
   mauVien,
 }) => {
   const frame = useCurrentFrame();
@@ -46,26 +47,27 @@ const PhuDeCanh: React.FC<{ canh: Canh; mauChu: string; mauVien: string }> = ({
     <div
       style={{
         position: 'absolute',
-        left: 160,
-        right: 160,
-        bottom: 44,
+        left: 140,
+        right: 140,
+        bottom: 36,
         display: 'flex',
         justifyContent: 'center',
         pointerEvents: 'none',
+        zIndex: 30,
       }}
     >
       <div
         style={{
-          padding: '14px 28px',
-          borderRadius: 14,
-          backgroundColor: 'rgba(2, 6, 23, 0.88)',
-          border: `2px solid ${mauVien}`,
-          color: mauChu,
+          padding: '14px 30px',
+          borderRadius: 16,
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          border: `2.5px solid ${mauVien}`,
+          color: '#FFFFFF',
           fontSize: 28,
-          fontWeight: 600,
+          fontWeight: 700,
           lineHeight: 1.35,
           textAlign: 'center',
-          maxWidth: 1480,
+          maxWidth: 1520,
           fontFamily: 'Segoe UI, Arial, sans-serif',
         }}
       >
@@ -153,9 +155,9 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
             banDoNhanVat={banDoNhanVat}
           />
         );
-      case 'hanh_dong':
+      case 'hai_huoc':
         return (
-          <CanhHanhDong
+          <CanhHaiHuoc
             canh={canh}
             bangMau={bangMau}
             banDoNhanVat={banDoNhanVat}
@@ -193,22 +195,13 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: bangMau.nenChinh || '#0B1120',
+        backgroundColor: bangMau.nenChinh || '#0EA5E9',
         fontFamily: 'Segoe UI, Arial, sans-serif',
         overflow: 'hidden',
       }}
     >
-      {/* Luoi toa do manh tren nen toi #0B1120 (khong dung blur) */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `linear-gradient(to right, ${bangMau.luoi} 1px, transparent 1px), linear-gradient(to bottom, ${bangMau.luoi} 1px, transparent 1px)`,
-          backgroundSize: '64px 64px',
-          opacity: 0.25,
-          pointerEvents: 'none',
-        }}
-      />
+      {/* Nen mac dinh du phong */}
+      <BoiCanhHoatHinh loai="bo_bien_hy_lap" thoiTiet="nang_dep" />
 
       {/* Chuoi canh noi tiep bang Sequence */}
       {tatCaCanh.map((muc) => {
@@ -225,8 +218,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
             {batPhuDe && (
               <PhuDeCanh
                 canh={muc.canh}
-                mauChu={bangMau.chuChinh}
-                mauVien={bangMau.luoi}
+                mauVien={bangMau.nhanManh || '#FACC15'}
               />
             )}
 
@@ -235,7 +227,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
             )}
 
             {batSfx &&
-              muc.canh.hieuUngTanCong?.map((hu, idx) => {
+              muc.canh.hieuUngHoatHinh?.map((hu, idx) => {
                 const duongDan = layDuongDanSfxNeuCoSan(hu.loai);
                 if (!duongDan) {
                   return null;
@@ -254,21 +246,22 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
         );
       })}
 
-      {/* Thanh tien do chuong manh o mep tren */}
+      {/* Thanh tien do chuong gon dep o mep tren */}
       <div
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          height: 36,
-          backgroundColor: 'rgba(2, 6, 23, 0.85)',
-          borderBottom: `1px solid ${bangMau.luoi}`,
+          height: 38,
+          backgroundColor: 'rgba(15, 23, 42, 0.86)',
+          borderBottom: `2px solid ${bangMau.nhanManh || '#FACC15'}`,
           display: 'flex',
           alignItems: 'center',
           padding: '0 24px',
-          gap: 10,
+          gap: 12,
           boxSizing: 'border-box',
+          zIndex: 40,
         }}
       >
         {thongKeChuong.map((ch) => {
@@ -295,7 +288,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
                 style={{
                   fontSize: 13,
                   fontWeight: dangPhat ? 800 : 600,
-                  color: dangPhat ? bangMau.nhanManh : bangMau.chuPhu,
+                  color: dangPhat ? '#FEF08A' : '#CBD5E1',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -307,7 +300,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
                 style={{
                   height: 4,
                   width: '100%',
-                  backgroundColor: bangMau.luoi,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
                   borderRadius: 999,
                   overflow: 'hidden',
                 }}
@@ -316,7 +309,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
                   style={{
                     height: '100%',
                     width: `${tienDoChuong * 100}%`,
-                    backgroundColor: dangPhat ? bangMau.nhanManh : '#64748B',
+                    backgroundColor: dangPhat ? '#FACC15' : '#94A3B8',
                   }}
                 />
               </div>

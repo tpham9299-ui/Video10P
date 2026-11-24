@@ -1,338 +1,427 @@
 {
-  "tieuDe": "Nghịch lý √2: Ngày thế giới số hữu tỉ sụp đổ",
-  "chuDe": "Lịch sử Toán học qua hoạt hình người que",
-  "bangMau": {
-    "nenChinh": "#0B1120",
-    "nenPhu": "#111C33",
-    "luoi": "#1E293B",
-    "chuChinh": "#F8FAFC",
-    "chuPhu": "#94A3B8",
-    "nhanManh": "#38BDF8",
-    "canhBao": "#F59E0B"
-  },
+  "tieuDe": "Pythagoras & Bí Mật Số Vô Tỉ √2",
+  "chuDe": "Khi đường chéo hình vuông làm lung lay cả một niềm tin Toán học",
   "batSfx": false,
   "batPhuDe": true,
+  "bangMau": {
+    "nenChinh": "#0EA5E9",
+    "nenPhu": "#FEF3C7",
+    "luoi": "#CBD5E1",
+    "chuChinh": "#FFFFFF",
+    "chuPhu": "#FEF08A",
+    "nhanManh": "#FACC15",
+    "canhBao": "#FB923C"
+  },
   "danhSachNhanVat": [
     {
       "id": "pythagoras",
       "ten": "Pythagoras",
-      "mauThan": "#F8FAFC",
-      "mauNangLuong": "#FACC15",
+      "mauThan": "#1E293B",
+      "mauChuDao": "#2563EB",
+      "mauDa": "#FFFDF7",
       "phuKien": "vong_nguyet_que"
     },
     {
       "id": "hippasus",
       "ten": "Hippasus",
-      "mauThan": "#E2E8F0",
-      "mauNangLuong": "#38BDF8",
-      "phuKien": "khan_choang_bay"
-    },
-    {
-      "id": "nguoi_dan",
-      "ten": "Người Kể Chuyện",
-      "mauThan": "#CBD5E1",
-      "mauNangLuong": "#34D399",
+      "mauThan": "#1E293B",
+      "mauChuDao": "#EA580C",
+      "mauDa": "#FFFDF7",
       "phuKien": "kinh_tron"
     }
   ],
   "chuong": [
     {
       "id": "chuong_1",
-      "tenChuong": "1. Giáo phái số hữu tỉ",
+      "tenChuong": "1. Niềm tin hoàn hảo",
       "canh": [
         {
-          "id": "canh_01_mo_dau",
+          "id": "canh_01",
           "boCuc": "mo_dau",
+          "boiCanh": "bo_bien_hy_lap",
+          "thoiTiet": "nang_dep",
+          "chuyenCanh": "vong_tron_hoat_hinh",
           "tuFrame": 0,
           "denFrame": 90,
-          "tieuDeNho": "Pythagoras & Bí mật của √2",
-          "namMoc": "~500 TCN • Hy Lạp Cổ Đại",
-          "loiThoai": "Chào mừng đến với giai thoại kịch tính nhất lịch sử số học: cuộc đối đầu giữa Pythagoras và Hippasus.",
-          "phuDe": [
-            "Khoảng 500 TCN, một phát hiện nhỏ đã làm rung chuyển toàn bộ nền Toán học Hy Lạp."
-          ],
-          "nhanVat": [
-            {
-              "id": "pythagoras",
-              "x": 640,
-              "y": 830,
-              "huong": "phai",
-              "hanhDong": "dung_tho",
-              "bieuCam": "tram_tu"
-            },
-            {
-              "id": "hippasus",
-              "x": 1280,
-              "y": 830,
-              "huong": "trai",
-              "hanhDong": "suy_nghi_gai_dau",
-              "bieuCam": "tinh_quai"
-            }
-          ],
-          "daoCu": [
-            {
-              "loai": "thuoc_compa",
-              "x": 960,
-              "y": 650,
-              "tiLe": 1.1,
-              "nhan": "Hình học cổ đại"
-            }
-          ]
-        },
-        {
-          "id": "canh_02_ke_chuyen",
-          "boCuc": "ke_chuyen",
-          "tuFrame": 90,
-          "denFrame": 180,
-          "tieuDeNho": "Tín điều: Vạn vật đều là số hữu tỉ",
-          "namMoc": "~530 TCN",
-          "loiThoai": "Trường phái Pythagoras tin rằng mọi độ dài trong vũ trụ đều viết được thành tỉ số giữa hai số nguyên.",
-          "phuDe": [
-            "Pythagoras khẳng định: mọi đại lượng đều biểu diễn được dưới dạng phân số p/q."
-          ],
-          "congThucLatex": [
-            {
-              "latex": "x = \\frac{p}{q}, \\quad p, q \\in \\mathbb{Z}"
-            }
-          ],
+          "namMoc": "HY LẠP CỔ ĐẠI • ~500 TCN",
+          "tieuDeNho": "Pythagoras & Bí Mật Số Vô Tỉ √2",
+          "loiThoai": "Trên bờ biển Địa Trung Hải nắng vàng, một câu chuyện nhỏ sắp thay đổi lịch sử Toán học mãi mãi.",
+          "camera": {
+            "kieu": "zoom_cham",
+            "zoom": 1.05
+          },
           "nhanVat": [
             {
               "id": "pythagoras",
               "x": 760,
-              "y": 830,
+              "y": 810,
               "huong": "phai",
-              "hanhDong": "giang_bai",
-              "bieuCam": "vui",
-              "dangNoi": true
+              "hanhDong": "dung_tho",
+              "vatCamTay": "cuon_giay",
+              "bieuCam": "vui_tuoi"
+            },
+            {
+              "id": "hippasus",
+              "x": 1160,
+              "y": 810,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "vatCamTay": "que_chi_bang",
+              "bieuCam": "binh_thuong"
             }
           ],
-          "daoCu": [
+          "hieuUngHoatHinh": [
             {
-              "loai": "cuon_giay",
-              "x": 1240,
-              "y": 680,
-              "tiLe": 1.2,
-              "nhan": "Tín điều Pythagoras"
+              "loai": "sao_lap_lanh",
+              "x": 960,
+              "y": 420,
+              "tuFrame": 18,
+              "thoiLuong": 65
             }
           ]
         },
         {
-          "id": "canh_03_doi_thoai",
-          "boCuc": "doi_thoai",
-          "tuFrame": 180,
-          "denFrame": 270,
-          "tieuDeNho": "Đường chéo hình vuông cạnh 1 dài bao nhiêu?",
-          "loiThoai": "Pythagoras khẳng định mọi số đều hữu tỉ, nhưng Hippasus đặt câu hỏi về đường chéo hình vuông cạnh 1.",
+          "id": "canh_02",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bo_bien_hy_lap",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 90,
+          "denFrame": 195,
+          "namMoc": "~530 TCN",
+          "tieuDeNho": "Tuyên ngôn của Pythagoras",
+          "loiThoai": "Pythagoras tự tin tuyên bố: Mọi thứ trong vũ trụ này đều có thể viết thành phân số gọn gàng đẹp đẽ!",
           "phuDe": [
-            "Hippasus thách thức: đường chéo hình vuông cạnh 1 không thể viết thành p/q!"
+            "Pythagoras cực kỳ tự tin: Mọi thứ trong vũ trụ đều là những phân số đẹp đẽ!",
+            "Từ âm nhạc đến bầu trời, tất cả đều nằm gọn trong tỉ lệ p/q!"
           ],
+          "camera": {
+            "kieu": "pan_nhe"
+          },
           "nhanVat": [
             {
               "id": "pythagoras",
-              "x": 580,
-              "y": 830,
+              "x": 860,
+              "y": 808,
               "huong": "phai",
-              "hanhDong": "giang_bai",
-              "bieuCam": "tuc_gian",
+              "hanhDong": "khoanh_tay_tu_man",
+              "vatCamTay": "cuon_giay",
+              "bieuCam": "tu_man",
               "dangNoi": true,
-              "bongBongThoai": "Mọi số đều là p/q!"
-            },
-            {
-              "id": "hippasus",
-              "x": 1340,
-              "y": 830,
-              "huong": "trai",
-              "hanhDong": "chi_bang",
-              "bieuCam": "tinh_quai",
-              "dangNoi": true,
-              "bongBongThoai": "Còn √2 thì sao?"
+              "bongBongThoai": "Mọi thứ đều là phân số đẹp đẽ!"
             }
           ],
-          "daoCu": [
+          "hieuUngHoatHinh": [
             {
-              "loai": "dau_hoi_cham",
-              "x": 960,
-              "y": 540,
-              "tiLe": 1.1,
-              "mau": "#F59E0B"
+              "loai": "sao_lap_lanh",
+              "x": 760,
+              "y": 565,
+              "tuFrame": 12,
+              "thoiLuong": 85
+            },
+            {
+              "loai": "sao_lap_lanh",
+              "x": 970,
+              "y": 590,
+              "tuFrame": 22,
+              "thoiLuong": 75,
+              "tiLe": 0.85
             }
-          ]
+          ],
+          "loiBinhHaiHuoc": {
+            "noiDung": "Spoiler: Chỉ 5 phút nữa thôi, cụ sẽ ước mình chưa từng nói câu này...",
+            "viTri": "goc_phai",
+            "tuFrame": 14
+          }
         }
       ]
     },
     {
       "id": "chuong_2",
-      "tenChuong": "2. Cú chém √2 & Chứng minh",
+      "tenChuong": "2. Câu hỏi chấn động",
       "canh": [
         {
-          "id": "canh_04_hanh_dong",
-          "boCuc": "hanh_dong",
-          "tuFrame": 270,
-          "denFrame": 390,
-          "tieuDeNho": "Kiếm √2 phá vỡ Khiên Số Nguyên",
-          "loiThoai": "Hippasus rút thanh kiếm căn bậc hai của 2, tung nhát chém làm rung chuyển chiếc khiên số nguyên của Pythagoras!",
-          "phuDe": [
-            "Hippasus tung nhát chém √2 đánh thẳng vào Khiên Số Nguyên của Pythagoras!"
-          ],
+          "id": "canh_03",
+          "boCuc": "doi_thoai",
+          "boiCanh": "bo_bien_hy_lap",
+          "thoiTiet": "hoang_hon",
+          "tuFrame": 195,
+          "denFrame": 275,
+          "tieuDeNho": "Câu hỏi từ hình vuông cạnh 1",
+          "loiThoai": "Hippasus bước tới cùng một hình vuông cạnh 1 và hỏi: Thưa thầy, đường chéo √2 viết thành phân số nào ạ?",
           "camera": {
-            "zoom": 1.04,
-            "panX": 0,
-            "panY": -10
+            "kieu": "tinh"
           },
           "nhanVat": [
             {
               "id": "hippasus",
-              "x": 680,
-              "y": 830,
+              "x": 540,
+              "diChuyenDenX": 680,
+              "y": 810,
               "huong": "phai",
-              "hanhDong": "chem_kiem_toan",
-              "vuKhiToan": "kiem_can2",
-              "bieuCam": "tuc_gian",
-              "frameRaDon": 18
+              "hanhDong": "di_bo",
+              "vatCamTay": "que_chi_bang",
+              "bieuCam": "tinh_quai",
+              "dangNoi": true,
+              "bongBongThoai": "Thưa thầy, vậy đường chéo √2 là phân số nào?"
             },
             {
               "id": "pythagoras",
-              "x": 1220,
-              "y": 830,
+              "x": 1260,
+              "y": 810,
               "huong": "trai",
-              "hanhDong": "do_don_khien",
-              "vuKhiToan": "khien_so_nguyen",
+              "hanhDong": "gai_dau_kho_hieu",
+              "vatCamTay": "cuon_giay",
               "bieuCam": "ngac_nhien"
             }
           ],
-          "hieuUngTanCong": [
+          "hieuUngHoatHinh": [
             {
-              "loai": "vet_chem",
-              "tuX": 740,
-              "tuY": 650,
-              "denX": 1150,
-              "denY": 690,
-              "mau": "#38BDF8",
-              "tuFrame": 16,
-              "thoiLuong": 32,
-              "kyHieuToan": "√2"
-            },
-            {
-              "loai": "song_xung_kich",
-              "tuX": 1150,
-              "tuY": 690,
-              "mau": "#FACC15",
-              "tuFrame": 24,
-              "thoiLuong": 36,
-              "hitstopFrames": 3,
-              "impactFrame": true,
-              "cuongDoRung": 14
+              "loai": "dau_cham_hoi",
+              "x": 1255,
+              "y": 505,
+              "tuFrame": 18,
+              "thoiLuong": 58
             }
           ]
         },
         {
-          "id": "canh_05_giai_thich_toan",
-          "boCuc": "giai_thich_toan",
-          "tuFrame": 390,
-          "denFrame": 540,
-          "tieuDeNho": "Chứng minh phản chứng √2 vô tỉ",
-          "namMoc": "Phản chứng kinh điển",
-          "loiThoai": "Giả sử căn 2 bằng phân số tối giản p trên q. Bình phương hai vế dẫn tới cả p và q đều chẵn, mâu thuẫn!",
-          "phuDe": [
-            "Giả sử √2 = p/q tối giản → suy ra cả p và q đều chia hết cho 2.",
-            "Điều này mâu thuẫn với giả thiết tối giản → √2 là số vô tỉ!"
-          ],
+          "id": "canh_04",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "chuyenCanh": "quet_ngang",
+          "tuFrame": 275,
+          "denFrame": 375,
+          "tieuDeNho": "KHOẢNH KHẮC ĐỨNG HÌNH",
+          "loiThoai": "Không gian bỗng im phăng phắc... Không một phân số nào khớp với √2 cả!",
+          "camera": {
+            "kieu": "zoom_hai_huoc",
+            "zoom": 1.38,
+            "mucTieuX": 960,
+            "mucTieuY": 640
+          },
           "nhanVat": [
             {
-              "id": "hippasus",
-              "x": 310,
-              "y": 700,
+              "id": "pythagoras",
+              "x": 960,
+              "y": 768,
               "huong": "phai",
-              "hanhDong": "chi_bang",
-              "bieuCam": "vui",
-              "dangNoi": true
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "can_loi_mat_do"
             }
           ],
-          "daoCu": [
+          "hieuUngHoatHinh": [
             {
-              "loai": "bong_den",
-              "x": 470,
-              "y": 240,
-              "tiLe": 0.9
+              "loai": "giot_mo_hoi",
+              "x": 1034,
+              "y": 465,
+              "tuFrame": 8,
+              "thoiLuong": 88,
+              "tiLe": 1.15
+            },
+            {
+              "loai": "co_lan_im_lang",
+              "x": 960,
+              "y": 730,
+              "tuFrame": 10,
+              "thoiLuong": 86,
+              "tiLe": 1.05
+            },
+            {
+              "loai": "nhan_chu_hai_huoc",
+              "x": 705,
+              "y": 485,
+              "tuFrame": 15,
+              "thoiLuong": 82,
+              "chuHienThi": "Ủa... khoan đã?!",
+              "mau": "#FDE047"
             }
           ],
-          "congThucLatex": [
-            {
-              "nhan": "Bước 1: Giả sử phân số tối giản",
-              "latex": "\\sqrt{2} = \\frac{p}{q}, \\quad \\gcd(p, q) = 1",
-              "tuFrame": 0
-            },
-            {
-              "nhan": "Bước 2: Bình phương hai vế",
-              "latex": "2q^2 = p^2 \\implies p = 2k",
-              "tuFrame": 35
-            },
-            {
-              "nhan": "Bước 3: Mâu thuẫn tất yếu",
-              "latex": "q^2 = 2k^2 \\implies \\gcd(p, q) \\ge 2 \\quad (\\text{Vô lý!})",
-              "tuFrame": 75,
-              "noiBat": true
-            }
-          ]
+          "loiBinhHaiHuoc": {
+            "noiDung": "Não bộ Pythagoras đã tạm ngừng phản hồi (Lỗi 404: Không tìm thấy phân số p/q).",
+            "viTri": "goc_phai",
+            "tuFrame": 10
+          }
         }
       ]
     },
     {
       "id": "chuong_3",
-      "tenChuong": "3. Di sản số vô tỉ",
+      "tenChuong": "3. Giải mã trên bảng xanh",
       "canh": [
         {
-          "id": "canh_06_dong_thoi_gian",
-          "boCuc": "dong_thoi_gian",
-          "tuFrame": 540,
-          "denFrame": 645,
-          "tieuDeNho": "Bước ngoặt của trục số thực",
-          "namMoc": "530 TCN → 300 TCN",
-          "loiThoai": "Từ cú sốc của Hippasus, nhân loại mở ra cánh cửa bước vào thế giới số vô tỉ và số thực.",
+          "id": "canh_05",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "nang_dep",
+          "chuyenCanh": "mo_dan",
+          "tuFrame": 375,
+          "denFrame": 555,
+          "namMoc": "CHỨNG MINH PHẢN CHỨNG",
+          "tieuDeNho": "Vì sao √2 là số vô tỉ?",
+          "loiThoai": "Hãy thử giả sử √2 viết được dưới dạng phân số tối giản p/q: cả p lẫn q đều phải chẵn — mâu thuẫn hoàn toàn!",
           "phuDe": [
-            "Từ cú sốc √2, Toán học Hy Lạp chuyển hướng mạnh mẽ sang hình học và chứng minh chặt chẽ."
+            "Bước 1: Giả sử đường chéo √2 viết được thành phân số tối giản p/q.",
+            "Bước 2: Bình phương hai vế ta có p² = 2q², suy ra p bắt buộc là số chẵn.",
+            "Bước 3: Thay p = 2k vào, ta lại thấy q² = 2k², nên q cũng chẵn luôn!",
+            "Kết luận: Cả p và q cùng chia hết cho 2 — mâu thuẫn! Vậy √2 là số vô tỉ!"
           ],
+          "camera": {
+            "kieu": "tinh"
+          },
           "nhanVat": [
             {
-              "id": "nguoi_dan",
-              "x": 960,
-              "y": 830,
+              "id": "hippasus",
+              "x": 255,
+              "y": 808,
               "huong": "phai",
-              "hanhDong": "giang_bai",
-              "bieuCam": "vui",
+              "hanhDong": "chi_tro_giai_thich",
+              "vatCamTay": "que_chi_bang",
+              "bieuCam": "vui_tuoi",
               "dangNoi": true
             }
           ],
-          "daoCu": [
+          "hieuUngHoatHinh": [
             {
-              "loai": "dong_ho_cat",
-              "x": 1440,
-              "y": 690,
-              "tiLe": 1.0,
-              "nhan": "Dòng chảy lịch sử"
+              "loai": "bong_den_nay_so",
+              "x": 255,
+              "y": 468,
+              "tuFrame": 105,
+              "thoiLuong": 95,
+              "tiLe": 1.05
+            }
+          ],
+          "congThucLatex": [
+            {
+              "nhan": "1. Giả sử √2 là phân số tối giản",
+              "latex": "\\sqrt{2} = \\frac{p}{q}, \\quad \\gcd(p, q) = 1",
+              "tuFrame": 0
+            },
+            {
+              "nhan": "2. Bình phương hai vế ⇒ p chẵn",
+              "latex": "p^2 = 2q^2 \\implies p = 2k",
+              "tuFrame": 35
+            },
+            {
+              "nhan": "3. Thế ngược lại ⇒ q cũng chẵn",
+              "latex": "4k^2 = 2q^2 \\implies q^2 = 2k^2",
+              "tuFrame": 75
+            },
+            {
+              "nhan": "4. Mâu thuẫn tối giản ⇒ Số vô tỉ!",
+              "latex": "\\sqrt{2} \\notin \\mathbb{Q}",
+              "tuFrame": 115,
+              "noiBat": true
+            }
+          ],
+          "minhHoaToan": {
+            "loai": "tam_giac_vuong",
+            "tieuDe": "Tam giác vuông 1 - 1 - √2",
+            "thamSo": {
+              "canhA": 1,
+              "canhB": 1,
+              "nhanCanhHuyen": "√2"
+            }
+          }
+        },
+        {
+          "id": "canh_06",
+          "boCuc": "dong_thoi_gian",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 555,
+          "denFrame": 655,
+          "namMoc": "530 TCN → 300 TCN",
+          "tieuDeNho": "Hành trình của một phát hiện vĩ đại",
+          "loiThoai": "Từ nỗi bối rối ở trường phái Pythagoras, số vô tỉ đã mở ra cả cánh cửa cho tập số thực hiện đại.",
+          "camera": {
+            "kieu": "zoom_cham",
+            "zoom": 1.06
+          },
+          "mocThoiGian": [
+            {
+              "nam": "~530 TCN",
+              "moTa": "Pythagoras tôn vinh số hữu tỉ"
+            },
+            {
+              "nam": "~500 TCN",
+              "moTa": "Hippasus khám phá số vô tỉ √2",
+              "noiBat": true
+            },
+            {
+              "nam": "~300 TCN",
+              "moTa": "Euclid chuẩn hóa phép chứng minh"
+            }
+          ],
+          "nhanVat": [
+            {
+              "id": "hippasus",
+              "x": 960,
+              "y": 812,
+              "huong": "phai",
+              "hanhDong": "ngoi_doc_sach",
+              "vatCamTay": "cuon_giay",
+              "bieuCam": "tram_tu"
+            }
+          ],
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 1100,
+              "y": 640,
+              "tuFrame": 12,
+              "thoiLuong": 60
             }
           ]
         },
         {
-          "id": "canh_07_ket_thuc",
+          "id": "canh_07",
           "boCuc": "ket_thuc",
-          "tuFrame": 645,
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "chuyenCanh": "mo_dan",
+          "tuFrame": 655,
           "denFrame": 750,
-          "tieuDeNho": "Hẹn gặp lại ở giai thoại Toán học tiếp theo!",
-          "loiThoai": "Cảm ơn bạn đã theo dõi. Hãy đón xem tập tiếp theo về cuộc chiến giải tích Newton và Leibniz!",
-          "phuDe": [
-            "Bấm đăng ký để theo dõi tập tiếp theo của series Lịch sử Toán học!"
-          ],
+          "tieuDeNho": "Toán học lớn lên từ những câu hỏi dám nghi ngờ!",
+          "loiThoai": "Hẹn gặp lại bạn ở tập tiếp theo: Quả táo của Newton có thật sự rơi trúng đầu cụ không?",
+          "camera": {
+            "kieu": "zoom_cham",
+            "zoom": 1.05
+          },
           "nhanVat": [
             {
-              "id": "nguoi_dan",
-              "x": 960,
-              "y": 840,
+              "id": "pythagoras",
+              "x": 790,
+              "y": 815,
               "huong": "phai",
-              "hanhDong": "an_mung_nhay",
-              "bieuCam": "vui"
+              "hanhDong": "nhin_len_troi",
+              "vatCamTay": "den_long",
+              "bieuCam": "vui_tuoi"
+            },
+            {
+              "id": "hippasus",
+              "x": 1130,
+              "y": 815,
+              "huong": "trai",
+              "hanhDong": "ho_het_sung_suong",
+              "vatCamTay": "ly_ca_phe",
+              "bieuCam": "vui_tuoi"
             }
-          ]
+          ],
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 960,
+              "y": 540,
+              "tuFrame": 10,
+              "thoiLuong": 70
+            }
+          ],
+          "loiBinhHaiHuoc": {
+            "noiDung": "Tập sau: Isaac Newton và bí ẩn quả táo dưới gốc cây!",
+            "viTri": "goc_phai",
+            "tuFrame": 16
+          }
         }
       ]
     }

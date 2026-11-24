@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tinhKhungXuongCoBan } from '../src/xuong/he_xuong.ts';
+import { bamTatDinh, bamChuoiTatDinh } from '../src/vfx/tat_dinh.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,11 +12,102 @@ const LOAI_BO_CUC_BAT_BUOC = [
   'mo_dau',
   'ke_chuyen',
   'doi_thoai',
-  'hanh_dong',
+  'hai_huoc',
   'giai_thich_toan',
   'dong_thoi_gian',
   'ket_thuc',
 ];
+
+const LOAI_BOI_CANH_HOP_LE = new Set([
+  'bo_bien_hy_lap',
+  'vuon_tao_dong_que',
+  'pho_co_chau_au',
+  'rung_nui_thien_nhien',
+  'thu_vien_co_dien',
+  'lop_hoc_bang_xanh',
+  'bau_troi_dem_vu_tru',
+  'phong_nen_hai_huoc',
+]);
+
+const LOAI_THOI_TIET_HOP_LE = new Set([
+  'khong',
+  'nang_dep',
+  'hoang_hon',
+  'ban_dem',
+  'mua_nhe',
+  'la_roi',
+  'tuyet_roi',
+]);
+
+const LOAI_HANH_DONG_HOP_LE = [
+  'dung_tho',
+  'di_bo',
+  'chay_voi_va',
+  'ngoi_doc_sach',
+  'chi_tro_giai_thich',
+  'nhin_len_troi',
+  'gat_gu_dong_tinh',
+  'gai_dau_kho_hieu',
+  'giat_minh_nhay_dung',
+  'bo_tay_can_loi',
+  'khoanh_tay_tu_man',
+  'ho_het_sung_suong',
+  'di_qua_di_lai',
+  'sup_do_tuyet_vong',
+];
+
+const LOAI_BIEU_CAM_HOP_LE = new Set([
+  'binh_thuong',
+  'vui_tuoi',
+  'ngac_nhien',
+  'tuc_gian',
+  'hoang_mang',
+  'tinh_quai',
+  'tram_tu',
+  'can_loi_mat_do',
+  'tu_man',
+]);
+
+const LOAI_PHU_KIEN_HOP_LE = new Set([
+  'khong',
+  'vong_nguyet_que',
+  'toc_gia_17',
+  'kinh_tron',
+  'mu_noi_phap',
+  'ao_choang',
+  'khan_choang',
+  'mu_tham_tu',
+]);
+
+const LOAI_VAT_CAM_TAY_HOP_LE = new Set([
+  'khong',
+  'cuon_giay',
+  'qua_tao',
+  'kinh_lup',
+  'but_long_ngong',
+  'que_chi_bang',
+  'den_long',
+  'ly_ca_phe',
+]);
+
+const LOAI_HIEU_UNG_HOP_LE = new Set([
+  'bong_den_nay_so',
+  'giot_mo_hoi',
+  'dau_cham_hoi',
+  'soc_set_danh',
+  'sao_lap_lanh',
+  'khoi_chay_tron',
+  'co_lan_im_lang',
+  'nhan_chu_hai_huoc',
+]);
+
+const LOAI_MINH_HOA_TOAN_HOP_LE = new Set([
+  'tam_giac_vuong',
+  'truc_so_vo_ti',
+  'do_thi_ham_so',
+  'hinh_hoc_chung_minh',
+  'chuoi_suy_luan',
+]);
 
 const KHOP_XUONG_BAT_BUOC = [
   'hong',
@@ -30,7 +123,7 @@ const KHOP_XUONG_BAT_BUOC = [
   'banChanTrai',
   'goiPhai',
   'banChanPhai',
-  'diemCamVuKhi',
+  'diemCamVat',
 ];
 
 const loi = [];
@@ -45,9 +138,15 @@ if (!fs.existsSync(duongDanMau)) {
   baoLoi('Khong tim thay du_lieu/mau_pythagoras.json');
 } else {
   const duLieu = JSON.parse(fs.readFileSync(duongDanMau, 'utf8'));
-  const tapNhanVat = new Set(
-    (duLieu.danhSachNhanVat ?? []).map((nv) => nv.id),
-  );
+  const tapNhanVat = new Set();
+
+  for (const nv of duLieu.danhSachNhanVat ?? []) {
+    tapNhanVat.add(nv.id);
+    if (!LOAI_PHU_KIEN_HOP_LE.has(nv.phuKien)) {
+      baoLoi(`Nhan vat ${nv.id}: phuKien "${nv.phuKien}" khong hop le`);
+    }
+  }
+
   const tatCaCanh = [];
   for (const ch of duLieu.chuong ?? []) {
     for (const c of ch.canh ?? []) {
@@ -66,7 +165,12 @@ if (!fs.existsSync(duongDanMau)) {
     }
   }
 
+  const tapHanhDongHopLe = new Set(LOAI_HANH_DONG_HOP_LE);
   let frameTruoc = 0;
+  let soCanhCoMinhHoa = 0;
+  let soHieuUng = 0;
+  let soLoiBinh = 0;
+
   for (let i = 0; i < tatCaCanh.length; i++) {
     const c = tatCaCanh[i];
     if (typeof c.tuFrame !== 'number' || typeof c.denFrame !== 'number') {
@@ -77,50 +181,100 @@ if (!fs.existsSync(duongDanMau)) {
       baoLoi(`Canh ${c.id}: tuFrame (${c.tuFrame}) >= denFrame (${c.denFrame})`);
     }
     if (c.tuFrame < frameTruoc) {
-      baoLoi(`Canh ${c.id}: bi chong de frame (tuFrame=${c.tuFrame} < ${frameTruoc})`);
+      baoLoi(`Canh ${c.id}: bi chong de frame (${c.tuFrame} < ${frameTruoc})`);
     }
     if (i > 0 && c.tuFrame !== frameTruoc) {
       baoLoi(`Canh ${c.id}: khong noi tiep sat frame truoc (${frameTruoc} -> ${c.tuFrame})`);
     }
     frameTruoc = c.denFrame;
 
+    if (!LOAI_BOI_CANH_HOP_LE.has(c.boiCanh)) {
+      baoLoi(`Canh ${c.id}: boiCanh "${c.boiCanh}" khong hop le`);
+    }
+    if (c.thoiTiet !== undefined && !LOAI_THOI_TIET_HOP_LE.has(c.thoiTiet)) {
+      baoLoi(`Canh ${c.id}: thoiTiet "${c.thoiTiet}" khong hop le`);
+    }
+
+    if (c.minhHoaToan !== undefined) {
+      if (!LOAI_MINH_HOA_TOAN_HOP_LE.has(c.minhHoaToan.loai)) {
+        baoLoi(`Canh ${c.id}: minhHoaToan.loai "${c.minhHoaToan.loai}" khong hop le`);
+      } else {
+        soCanhCoMinhHoa++;
+      }
+    }
+
+    if (c.loiBinhHaiHuoc?.noiDung) {
+      soLoiBinh++;
+    }
+
+    for (const hu of c.hieuUngHoatHinh ?? []) {
+      if (!LOAI_HIEU_UNG_HOP_LE.has(hu.loai)) {
+        baoLoi(`Canh ${c.id}: hieuUngHoatHinh.loai "${hu.loai}" khong hop le`);
+      } else {
+        soHieuUng++;
+      }
+    }
+
     for (const nv of c.nhanVat ?? []) {
       if (!tapNhanVat.has(nv.id)) {
         baoLoi(`Canh ${c.id}: nhanVat.id "${nv.id}" khong ton tai trong danhSachNhanVat`);
       }
+      if (!tapHanhDongHopLe.has(nv.hanhDong)) {
+        baoLoi(`Canh ${c.id}: hanhDong "${nv.hanhDong}" khong hop le`);
+      }
+      if (!LOAI_BIEU_CAM_HOP_LE.has(nv.bieuCam)) {
+        baoLoi(`Canh ${c.id}: bieuCam "${nv.bieuCam}" khong hop le`);
+      }
+      if (nv.vatCamTay !== undefined && !LOAI_VAT_CAM_TAY_HOP_LE.has(nv.vatCamTay)) {
+        baoLoi(`Canh ${c.id}: vatCamTay "${nv.vatCamTay}" khong hop le`);
+      }
     }
+  }
+
+  if (soCanhCoMinhHoa < 1) {
+    baoLoi('mau_pythagoras.json: can it nhat 1 canh co minhHoaToan');
+  }
+  if (soHieuUng < 3) {
+    baoLoi('mau_pythagoras.json: can it nhat 3 hieuUngHoatHinh');
+  }
+  if (soLoiBinh < 1) {
+    baoLoi('mau_pythagoras.json: can it nhat 1 canh co loiBinhHaiHuoc');
   }
 
   const tongFrames = frameTruoc;
-  const thoiLuongGiay = (tongFrames / 30).toFixed(2);
   console.log(
-    `[OK] mau_pythagoras.json: ${tatCaCanh.length} canh, ${tapBoCuc.size}/7 boCuc, tong ${tongFrames} frames (${thoiLuongGiay}s @ 30fps).`,
+    `[OK] mau_pythagoras.json: ${tatCaCanh.length} canh, ${tapBoCuc.size}/7 boCuc, ${soHieuUng} hieuUng, ${soLoiBinh} loiBinh, ${soCanhCoMinhHoa} minhHoaToan, tong ${tongFrames} frames (${(tongFrames / 30).toFixed(2)}s @ 30fps).`,
   );
 }
 
-// 2. Kiem tra cau truc src/xuong/he_xuong.ts
-const duongDanXuong = path.join(gocDuAn, 'src', 'xuong', 'he_xuong.ts');
-if (!fs.existsSync(duongDanXuong)) {
-  baoLoi('Khong tim thay src/xuong/he_xuong.ts');
-} else {
-  const noiDungXuong = fs.readFileSync(duongDanXuong, 'utf8');
-  if (!noiDungXuong.includes('export type TuTheKhungXuong')) {
-    baoLoi('src/xuong/he_xuong.ts thieu export type TuTheKhungXuong');
-  }
-  if (!noiDungXuong.includes('export function tinhKhungXuongCoBan')) {
-    baoLoi('src/xuong/he_xuong.ts thieu export function tinhKhungXuongCoBan');
-  }
-  for (const khop of KHOP_XUONG_BAT_BUOC) {
-    if (!noiDungXuong.includes(`${khop}:`)) {
-      baoLoi(`src/xuong/he_xuong.ts thieu khop "${khop}" trong TuTheKhungXuong`);
+// 2. Kiem tra tinh tat dinh & khong NaN cho 14 hanh dong trong he_xuong.ts
+for (const hd of LOAI_HANH_DONG_HOP_LE) {
+  for (const frame of [0, 12, 35, 94]) {
+    const kq1 = tinhKhungXuongCoBan(hd, frame, 'phai');
+    const kq2 = tinhKhungXuongCoBan(hd, frame, 'phai');
+    if (JSON.stringify(kq1) !== JSON.stringify(kq2)) {
+      baoLoi(`tinhKhungXuongCoBan("${hd}", ${frame}) khong tat dinh!`);
+      break;
+    }
+    for (const khop of KHOP_XUONG_BAT_BUOC) {
+      const diem = kq1[khop];
+      if (!diem || !Number.isFinite(diem.x) || !Number.isFinite(diem.y)) {
+        baoLoi(`tinhKhungXuongCoBan("${hd}", ${frame}): khop "${khop}" bi NaN/thieu`);
+        break;
+      }
     }
   }
-  console.log(
-    `[OK] src/xuong/he_xuong.ts: hop le (${KHOP_XUONG_BAT_BUOC.length} khop + tinhKhungXuongCoBan).`,
-  );
+}
+console.log(`[OK] src/xuong/he_xuong.ts: 14/14 hanh dong tat dinh, du ${KHOP_XUONG_BAT_BUOC.length} khop, khong NaN.`);
+
+// 3. Kiem tra bamTatDinh & bamChuoiTatDinh
+if (bamTatDinh(42) !== bamTatDinh(42) || bamChuoiTatDinh('pythagoras') !== bamChuoiTatDinh('pythagoras')) {
+  baoLoi('src/vfx/tat_dinh.ts khong tat dinh!');
+} else {
+  console.log('[OK] src/vfx/tat_dinh.ts: ham bam seed tat dinh 100%.');
 }
 
-// 3. Quet quy tac cam blur va Math.random() trong src/
+// 4. Quet quy tac cam blur va Math.random() trong src/
 const quyTacCam = [
   { ten: 'backdrop-filter: blur', regex: /backdrop-?filter\s*[:=][^;\n]*blur/i },
   { ten: 'filter: blur', regex: /\bfilter\s*[:=][^;\n]*blur/i },
@@ -155,4 +309,4 @@ if (loi.length > 0) {
   process.exit(1);
 }
 
-console.log('\n[THANH CONG] Tat ca kiem tra khung v0.1 deu xanh!');
+console.log('\n[THANH CONG] Tat ca kiem tra khung v0.2 (Phim hoat hinh ke chuyen Toan hoc) deu xanh!');

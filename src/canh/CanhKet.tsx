@@ -1,8 +1,12 @@
 import React from 'react';
+import { interpolate, useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
+import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
+import { DaoCu } from '../daocu/DaoCu';
 import { MayQuayDong } from '../vfx/MayQuayDong';
-import { HieuUngTanCong } from '../vfx/HieuUngTanCong';
+import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
+import { KhungLoiBinhHaiHuoc } from './KhungLoiBinhHaiHuoc';
 
 type Props = {
   canh: Canh;
@@ -11,106 +15,105 @@ type Props = {
   banDoNhanVat: Record<string, ThongTinNhanVat>;
 };
 
-/**
- * Canh ket thuc: chua san 2 khung End Screen chuan ty le 16:9 cho YouTube.
- */
 export const CanhKet: React.FC<Props> = ({
   canh,
   tieuDeVideo,
   bangMau,
   banDoNhanVat,
 }) => {
-  return (
-    <MayQuayDong camera={canh.camera} hieuUngTanCong={canh.hieuUngTanCong}>
-      <div
-        style={{
-          position: 'absolute',
-          top: 84,
-          left: 96,
-          right: 96,
-          textAlign: 'center',
-        }}
-      >
-        <div
-          style={{
-            color: bangMau.nhanManh,
-            fontSize: 22,
-            fontWeight: 700,
-            letterSpacing: 2,
-          }}
-        >
-          CẢM ƠN ĐÃ THEO DÕI
-        </div>
-        <div
-          style={{
-            marginTop: 10,
-            color: bangMau.chuChinh,
-            fontSize: 52,
-            fontWeight: 800,
-          }}
-        >
-          {canh.tieuDeNho ?? tieuDeVideo}
-        </div>
-      </div>
+  const frame = useCurrentFrame();
+  const thoiLuong = Math.max(1, canh.denFrame - canh.tuFrame);
+  const doMo = interpolate(frame, [0, 18], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
-      {/* 2 khung End Screen ty le 16:9 (512 x 288) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 280,
-          left: 160,
-          right: 160,
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: 64,
-        }}
+  return (
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <MayQuayDong
+        camera={canh.camera}
+        chuyenCanh={canh.chuyenCanh}
+        nhanVat={canh.nhanVat}
+        thoiLuongCanh={thoiLuong}
       >
-        {[1, 2].map((so) => (
+        <BoiCanhHoatHinh loai={canh.boiCanh} thoiTiet={canh.thoiTiet} />
+
+        <div
+          style={{
+            position: 'absolute',
+            top: 96,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            opacity: doMo,
+            pointerEvents: 'none',
+          }}
+        >
           <div
-            key={so}
             style={{
-              width: 512,
-              height: 288,
-              borderRadius: 18,
-              border: `3px dashed ${bangMau.nhanManh}`,
-              backgroundColor: 'rgba(15, 23, 42, 0.72)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: bangMau.chuPhu,
+              padding: '22px 46px',
+              borderRadius: 24,
+              backgroundColor: 'rgba(15, 23, 42, 0.86)',
+              border: `3.5px solid ${bangMau.nhanManh}`,
+              textAlign: 'center',
+              maxWidth: 1320,
+              boxShadow: '8px 8px 0px rgba(15, 23, 42, 0.45)',
             }}
           >
-            <div style={{ fontSize: 24, fontWeight: 800, color: bangMau.chuChinh }}>
-              End Screen 16:9 #{so}
+            <div
+              style={{
+                color: bangMau.nhanManh,
+                fontSize: 21,
+                fontWeight: 900,
+                letterSpacing: 1.8,
+                marginBottom: 10,
+                textTransform: 'uppercase',
+              }}
+            >
+              Cảm ơn bạn đã theo dõi!
             </div>
-            <div style={{ fontSize: 18, marginTop: 8 }}>Vùng gắn video đề xuất</div>
+            <div
+              style={{
+                color: '#FFFFFF',
+                fontSize: 50,
+                fontWeight: 900,
+                lineHeight: 1.2,
+              }}
+            >
+              {canh.tieuDeNho ?? tieuDeVideo}
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <svg
-        width={1920}
-        height={1080}
-        viewBox="0 0 1920 1080"
-        style={{ position: 'absolute', inset: 0 }}
-      >
-        <line
-          x1={220}
-          y1={840}
-          x2={1700}
-          y2={840}
-          stroke={bangMau.luoi}
-          strokeWidth={4}
-          strokeLinecap="round"
-        />
-        {canh.nhanVat.map((nv, idx) => {
-          const tt = banDoNhanVat[nv.id];
-          if (!tt) return null;
-          return <NguoiQueDong key={`${nv.id}-${idx}`} thongTin={tt} trangThai={nv} tiLe={1.1} />;
-        })}
-        <HieuUngTanCong danhSach={canh.hieuUngTanCong} />
-      </svg>
-    </MayQuayDong>
+        <svg
+          width={1920}
+          height={1080}
+          viewBox="0 0 1920 1080"
+          style={{ position: 'absolute', inset: 0 }}
+        >
+          {canh.daoCu?.map((dc, idx) => (
+            <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
+          ))}
+          {canh.nhanVat.map((nv, idx) => {
+            const tt = banDoNhanVat[nv.id];
+            if (!tt) return null;
+            return (
+              <NguoiQueDong
+                key={`${nv.id}-${idx}`}
+                thongTin={tt}
+                trangThai={nv}
+                tiLe={1.2}
+                thoiLuongCanh={thoiLuong}
+              />
+            );
+          })}
+          <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
+        </svg>
+      </MayQuayDong>
+
+      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
+    </div>
   );
 };

@@ -1,10 +1,12 @@
 import React from 'react';
 import { interpolate, useCurrentFrame } from 'remotion';
-import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
+import type { BangMau, Canh, MocThoiGianItem, ThongTinNhanVat } from '../kieu_dai';
+import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
 import { DaoCu } from '../daocu/DaoCu';
 import { MayQuayDong } from '../vfx/MayQuayDong';
-import { HieuUngTanCong } from '../vfx/HieuUngTanCong';
+import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
+import { KhungLoiBinhHaiHuoc } from './KhungLoiBinhHaiHuoc';
 
 type Props = {
   canh: Canh;
@@ -12,10 +14,10 @@ type Props = {
   banDoNhanVat: Record<string, ThongTinNhanVat>;
 };
 
-const MOC_THOI_GIAN = [
-  { nam: '~530 TCN', moTa: 'Trường phái Pythagoras' },
-  { nam: '~500 TCN', moTa: 'Phát hiện số vô tỉ √2' },
-  { nam: '~300 TCN', moTa: 'Euclid chuẩn hóa chứng minh' },
+const MOC_MAC_DINH: MocThoiGianItem[] = [
+  { nam: '~530 TCN', moTa: 'Trường phái Pythagoras tôn thờ số hữu tỉ' },
+  { nam: '~500 TCN', moTa: 'Hippasus phát hiện √2 vô tỉ', noiBat: true },
+  { nam: '~300 TCN', moTa: 'Euclid hoàn thiện chứng minh kinh điển' },
 ];
 
 export const CanhDongThoiGian: React.FC<Props> = ({
@@ -24,109 +26,143 @@ export const CanhDongThoiGian: React.FC<Props> = ({
   banDoNhanVat,
 }) => {
   const frame = useCurrentFrame();
-  const chieuDaiTruc = interpolate(frame, [0, 30], [0, 1440], {
+  const thoiLuong = Math.max(1, canh.denFrame - canh.tuFrame);
+  const danhSachMoc =
+    canh.mocThoiGian && canh.mocThoiGian.length > 0
+      ? canh.mocThoiGian
+      : MOC_MAC_DINH;
+
+  const chieuDaiTruc = interpolate(frame, [0, 26], [0, 1440], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
   return (
-    <MayQuayDong camera={canh.camera} hieuUngTanCong={canh.hieuUngTanCong}>
-      <div
-        style={{
-          position: 'absolute',
-          top: 76,
-          left: 96,
-          right: 96,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'baseline',
-        }}
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <MayQuayDong
+        camera={canh.camera}
+        chuyenCanh={canh.chuyenCanh}
+        nhanVat={canh.nhanVat}
+        thoiLuongCanh={thoiLuong}
       >
-        <div style={{ color: bangMau.chuChinh, fontSize: 44, fontWeight: 800 }}>
-          {canh.tieuDeNho ?? 'Dòng thời gian lịch sử'}
-        </div>
-        {canh.namMoc && (
-          <div style={{ color: bangMau.nhanManh, fontSize: 28, fontWeight: 800 }}>
-            {canh.namMoc}
-          </div>
-        )}
-      </div>
+        <BoiCanhHoatHinh loai={canh.boiCanh} thoiTiet={canh.thoiTiet} />
 
-      <svg
-        width={1920}
-        height={1080}
-        viewBox="0 0 1920 1080"
-        style={{ position: 'absolute', inset: 0 }}
-      >
-        {/* Truc dong thoi gian */}
-        <line
-          x1={240}
-          y1={360}
-          x2={240 + chieuDaiTruc}
-          y2={360}
-          stroke={bangMau.nhanManh}
-          strokeWidth={6}
-          strokeLinecap="round"
-        />
+        {/* Bang dong thoi gian sac net o nua tren */}
+        <svg
+          width={1920}
+          height={1080}
+          viewBox="0 0 1920 1080"
+          style={{ position: 'absolute', inset: 0 }}
+        >
+          <rect
+            x={140}
+            y={150}
+            width={1640}
+            height={330}
+            rx={26}
+            fill="#FFFDF7"
+            fillOpacity={0.93}
+            stroke="#1E293B"
+            strokeWidth={4}
+          />
 
-        {MOC_THOI_GIAN.map((moc, idx) => {
-          const x = 360 + idx * 600;
-          const noiBat = idx === 1;
-          return (
-            <g key={moc.nam} transform={`translate(${x}, 360)`}>
-              <circle
-                cx={0}
-                cy={0}
-                r={noiBat ? 22 : 15}
-                fill={noiBat ? bangMau.canhBao : bangMau.nenPhu}
-                stroke={noiBat ? '#FEF08A' : bangMau.nhanManh}
-                strokeWidth={5}
+          <text
+            x={190}
+            y={210}
+            fill="#0F172A"
+            fontSize={34}
+            fontWeight={900}
+            fontFamily="Segoe UI, Arial, sans-serif"
+          >
+            {canh.tieuDeNho ?? 'Dòng thời gian lịch sử Toán học'}
+          </text>
+
+          {canh.namMoc && (
+            <text
+              x={1730}
+              y={210}
+              textAnchor="end"
+              fill="#B45309"
+              fontSize={26}
+              fontWeight={800}
+              fontFamily="Segoe UI, Arial, sans-serif"
+            >
+              {canh.namMoc}
+            </text>
+          )}
+
+          {/* Truc ngang */}
+          <line
+            x1={240}
+            y1={335}
+            x2={240 + chieuDaiTruc}
+            y2={335}
+            stroke={bangMau.nhanManh || '#F59E0B'}
+            strokeWidth={8}
+            strokeLinecap="round"
+          />
+
+          {danhSachMoc.map((moc, idx) => {
+            const buocX = danhSachMoc.length > 1 ? 1160 / (danhSachMoc.length - 1) : 0;
+            const x = 380 + idx * buocX;
+            const noiBat = Boolean(moc.noiBat);
+            return (
+              <g key={`${moc.nam}-${idx}`} transform={`translate(${x}, 335)`}>
+                <circle
+                  cx={0}
+                  cy={0}
+                  r={noiBat ? 22 : 16}
+                  fill={noiBat ? '#EF4444' : '#0EA5E9'}
+                  stroke="#1E293B"
+                  strokeWidth={4}
+                />
+                <text
+                  x={0}
+                  y={-36}
+                  textAnchor="middle"
+                  fill={noiBat ? '#B91C1C' : '#0F172A'}
+                  fontSize={26}
+                  fontWeight={900}
+                  fontFamily="Segoe UI, Arial, sans-serif"
+                >
+                  {moc.nam}
+                </text>
+                <text
+                  x={0}
+                  y={52}
+                  textAnchor="middle"
+                  fill="#334155"
+                  fontSize={20}
+                  fontWeight={700}
+                  fontFamily="Segoe UI, Arial, sans-serif"
+                >
+                  {moc.moTa}
+                </text>
+              </g>
+            );
+          })}
+
+          {canh.daoCu?.map((dc, idx) => (
+            <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
+          ))}
+          {canh.nhanVat.map((nv, idx) => {
+            const tt = banDoNhanVat[nv.id];
+            if (!tt) return null;
+            return (
+              <NguoiQueDong
+                key={`${nv.id}-${idx}`}
+                thongTin={tt}
+                trangThai={nv}
+                tiLe={1.2}
+                thoiLuongCanh={thoiLuong}
               />
-              <text
-                x={0}
-                y={-42}
-                textAnchor="middle"
-                fill={noiBat ? '#FEF08A' : bangMau.chuChinh}
-                fontSize={28}
-                fontWeight={800}
-                fontFamily="Segoe UI, Arial, sans-serif"
-              >
-                {moc.nam}
-              </text>
-              <text
-                x={0}
-                y={54}
-                textAnchor="middle"
-                fill={bangMau.chuPhu}
-                fontSize={22}
-                fontWeight={600}
-                fontFamily="Segoe UI, Arial, sans-serif"
-              >
-                {moc.moTa}
-              </text>
-            </g>
-          );
-        })}
+            );
+          })}
+          <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
+        </svg>
+      </MayQuayDong>
 
-        <line
-          x1={140}
-          y1={830}
-          x2={1780}
-          y2={830}
-          stroke={bangMau.luoi}
-          strokeWidth={4}
-          strokeLinecap="round"
-        />
-        {canh.daoCu?.map((dc, idx) => (
-          <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
-        ))}
-        {canh.nhanVat.map((nv, idx) => {
-          const tt = banDoNhanVat[nv.id];
-          if (!tt) return null;
-          return <NguoiQueDong key={`${nv.id}-${idx}`} thongTin={tt} trangThai={nv} tiLe={1.15} />;
-        })}
-        <HieuUngTanCong danhSach={canh.hieuUngTanCong} />
-      </svg>
-    </MayQuayDong>
+      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
+    </div>
   );
 };

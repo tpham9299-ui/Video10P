@@ -1,12 +1,12 @@
 import type { LoaiHanhDong } from '../kieu_dai';
 
-// TODO(v0.2): nang cap xuong khop & VFX
+export type NhomDongTac = 'dien_xuat' | 'di_chuyen' | 'hai_huoc';
 
 export type ThongTinDongTac = {
   ma: LoaiHanhDong;
   tenHienThi: string;
+  nhom: NhomDongTac;
   doDaiGoiY: number;
-  laDonTanCong: boolean;
   moTa: string;
 };
 
@@ -14,99 +14,99 @@ export const BANG_DONG_TAC: Record<LoaiHanhDong, ThongTinDongTac> = {
   dung_tho: {
     ma: 'dung_tho',
     tenHienThi: 'Đứng thở',
+    nhom: 'dien_xuat',
     doDaiGoiY: 60,
-    laDonTanCong: false,
-    moTa: 'Tư thế nghỉ cơ bản, nhún thở nhẹ theo chu kỳ.',
+    moTa: 'Tư thế đứng tự nhiên, nhún thở và đung đưa tay nhẹ.',
   },
-  giang_bai: {
-    ma: 'giang_bai',
-    tenHienThi: 'Giảng bài',
+  di_bo: {
+    ma: 'di_bo',
+    tenHienThi: 'Đi bộ',
+    nhom: 'di_chuyen',
     doDaiGoiY: 75,
-    laDonTanCong: false,
-    moTa: 'Đưa tay thuyết trình nhấn mạnh luận điểm.',
+    moTa: 'Chu kỳ bước chân và đánh tay đối xứng kèm nhún hông nhẹ.',
   },
-  chi_bang: {
-    ma: 'chi_bang',
-    tenHienThi: 'Chỉ bảng',
+  chay_voi_va: {
+    ma: 'chay_voi_va',
+    tenHienThi: 'Chạy vội vã',
+    nhom: 'di_chuyen',
+    doDaiGoiY: 48,
+    moTa: 'Nghiêng thân về trước, sải chân nhanh đầy năng lượng.',
+  },
+  ngoi_doc_sach: {
+    ma: 'ngoi_doc_sach',
+    tenHienThi: 'Ngồi đọc sách',
+    nhom: 'dien_xuat',
+    doDaiGoiY: 90,
+    moTa: 'Ngồi gọn gàng, hai tay nâng cuộn giấy/sách chăm chú đọc.',
+  },
+  chi_tro_giai_thich: {
+    ma: 'chi_tro_giai_thich',
+    tenHienThi: 'Chỉ trỏ giải thích',
+    nhom: 'dien_xuat',
+    doDaiGoiY: 90,
+    moTa: 'Vươn tay chỉ bảng hoặc nhấn mạnh luận điểm Toán học.',
+  },
+  nhin_len_troi: {
+    ma: 'nhin_len_troi',
+    tenHienThi: 'Nhìn lên trời',
+    nhom: 'dien_xuat',
     doDaiGoiY: 75,
-    laDonTanCong: false,
-    moTa: 'Vươn tay chỉ về phía công thức trên bảng đen.',
+    moTa: 'Ngước nhìn bầu trời/chòm sao đầy trầm trồ và cảm hứng.',
   },
-  suy_nghi_gai_dau: {
-    ma: 'suy_nghi_gai_dau',
-    tenHienThi: 'Suy nghĩ gãi đầu',
+  gat_gu_dong_tinh: {
+    ma: 'gat_gu_dong_tinh',
+    tenHienThi: 'Gật gù đồng tình',
+    nhom: 'dien_xuat',
     doDaiGoiY: 60,
-    laDonTanCong: false,
-    moTa: 'Đưa tay lên đầu suy tư trước nghịch lý toán học.',
+    moTa: 'Gật đầu nhịp nhàng tỏ ý tán thành và thích thú.',
   },
-  soc_lui_lai: {
-    ma: 'soc_lui_lai',
-    tenHienThi: 'Sốc lùi lại',
-    doDaiGoiY: 45,
-    laDonTanCong: false,
-    moTa: 'Ngả thân về sau vì bất ngờ trước phát hiện mới.',
+  gai_dau_kho_hieu: {
+    ma: 'gai_dau_kho_hieu',
+    tenHienThi: 'Gãi đầu khó hiểu',
+    nhom: 'hai_huoc',
+    doDaiGoiY: 60,
+    moTa: 'Đưa tay gãi đầu bối rối trước bài toán hóc búa.',
   },
-  an_mung_nhay: {
-    ma: 'an_mung_nhay',
-    tenHienThi: 'Ăn mừng nhảy',
-    doDaiGoiY: 45,
-    laDonTanCong: false,
-    moTa: 'Bật nhảy giơ hai tay mừng chứng minh thành công.',
+  giat_minh_nhay_dung: {
+    ma: 'giat_minh_nhay_dung',
+    tenHienThi: 'Giật mình nhảy dựng',
+    nhom: 'hai_huoc',
+    doDaiGoiY: 42,
+    moTa: 'Nhún nhẹ rồi bật nhảy dựng lên đầy bất ngờ rồi rơi xuống.',
   },
-  chay_nuoc_rut: {
-    ma: 'chay_nuoc_rut',
-    tenHienThi: 'Chạy nước rút',
-    doDaiGoiY: 45,
-    laDonTanCong: false,
-    moTa: 'Nghiêng thân về trước, sải chân di chuyển nhanh.',
+  bo_tay_can_loi: {
+    ma: 'bo_tay_can_loi',
+    tenHienThi: 'Bó tay cạn lời',
+    nhom: 'hai_huoc',
+    doDaiGoiY: 70,
+    moTa: 'Đưa tay vỗ trán bất lực theo phong cách hài hoạt hình.',
   },
-  luot_nhanh_dash: {
-    ma: 'luot_nhanh_dash',
-    tenHienThi: 'Lướt nhanh (Dash)',
-    doDaiGoiY: 24,
-    laDonTanCong: false,
-    moTa: 'Lao vụt về phía trước tạo đà tiếp cận đối thủ.',
+  khoanh_tay_tu_man: {
+    ma: 'khoanh_tay_tu_man',
+    tenHienThi: 'Khoanh tay tự mãn',
+    nhom: 'hai_huoc',
+    doDaiGoiY: 75,
+    moTa: 'Khoanh tay trước ngực, ngửa nhẹ đầu đầy tự tin kiêu hãnh.',
   },
-  nhay_xoay_dap_dat: {
-    ma: 'nhay_xoay_dap_dat',
-    tenHienThi: 'Nhảy xoay đáp đất',
-    doDaiGoiY: 36,
-    laDonTanCong: true,
-    moTa: 'Bật cao xoay người rồi giáng lực xuống mặt đất.',
+  ho_het_sung_suong: {
+    ma: 'ho_het_sung_suong',
+    tenHienThi: 'Hò hét sung sướng',
+    nhom: 'hai_huoc',
+    doDaiGoiY: 54,
+    moTa: 'Nhảy cẫng giơ hai tay lên trời ăn mừng phát hiện mới.',
   },
-  dam_cuong_luc: {
-    ma: 'dam_cuong_luc',
-    tenHienThi: 'Đấm cường lực',
-    doDaiGoiY: 30,
-    laDonTanCong: true,
-    moTa: 'Thu tay tích lực và tung cú đấm mạnh về trước.',
+  di_qua_di_lai: {
+    ma: 'di_qua_di_lai',
+    tenHienThi: 'Đi qua đi lại',
+    nhom: 'di_chuyen',
+    doDaiGoiY: 90,
+    moTa: 'Chắp tay sau lưng đi qua đi lại suy tư tìm lời giải.',
   },
-  chem_kiem_toan: {
-    ma: 'chem_kiem_toan',
-    tenHienThi: 'Chém kiếm Toán',
-    doDaiGoiY: 32,
-    laDonTanCong: true,
-    moTa: 'Vung vũ khí toán học tạo đường chém sắc nét.',
-  },
-  ban_tia_nang_luong: {
-    ma: 'ban_tia_nang_luong',
-    tenHienThi: 'Bắn tia năng lượng',
-    doDaiGoiY: 40,
-    laDonTanCong: true,
-    moTa: 'Đưa hai tay phóng tia năng lượng công thức.',
-  },
-  do_don_khien: {
-    ma: 'do_don_khien',
-    tenHienThi: 'Đỡ đòn khiên',
-    doDaiGoiY: 36,
-    laDonTanCong: false,
-    moTa: 'Nâng khiên số nguyên chắn trước thân chống đỡ.',
-  },
-  bi_danh_vang: {
-    ma: 'bi_danh_vang',
-    tenHienThi: 'Bị đánh văng',
-    doDaiGoiY: 30,
-    laDonTanCong: false,
-    moTa: 'Bật ngược ra sau khi trúng đòn phản chứng.',
+  sup_do_tuyet_vong: {
+    ma: 'sup_do_tuyet_vong',
+    tenHienThi: 'Sụp đổ tuyệt vọng',
+    nhom: 'hai_huoc',
+    doDaiGoiY: 75,
+    moTa: 'Gục người xuống sàn kịch tính khi lý thuyết bị lung lay.',
   },
 };

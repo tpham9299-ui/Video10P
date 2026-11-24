@@ -1,21 +1,22 @@
-import type { LoaiHieuUngTanCong } from '../kieu_dai';
+import type { LoaiHieuUngHoatHinh } from '../kieu_dai';
 
 export type TenFileSfx =
+  | 'pop.mp3'
+  | 'ding.mp3'
+  | 'boing.mp3'
+  | 'crickets.mp3'
   | 'whoosh.mp3'
-  | 'impact.mp3'
-  | 'clash.mp3'
-  | 'laser.mp3'
-  | 'dash.mp3'
-  | 'powerup.mp3';
+  | 'dramatic.mp3';
 
-export const BAN_DO_SFX_HIEU_UNG: Record<LoaiHieuUngTanCong, TenFileSfx> = {
-  vet_chem: 'whoosh.mp3',
-  song_xung_kich: 'impact.mp3',
-  tia_lua_va_cham: 'clash.mp3',
-  tia_laser_toan: 'laser.mp3',
-  nem_ky_hieu: 'powerup.mp3',
-  duong_toc_do: 'dash.mp3',
-  bui_dat: 'impact.mp3',
+export const BAN_DO_SFX_HIEU_UNG: Record<LoaiHieuUngHoatHinh, TenFileSfx> = {
+  bong_den_nay_so: 'ding.mp3',
+  giot_mo_hoi: 'pop.mp3',
+  dau_cham_hoi: 'boing.mp3',
+  soc_set_danh: 'dramatic.mp3',
+  sao_lap_lanh: 'ding.mp3',
+  khoi_chay_tron: 'whoosh.mp3',
+  co_lan_im_lang: 'crickets.mp3',
+  nhan_chu_hai_huoc: 'pop.mp3',
 };
 
 /**
@@ -24,7 +25,7 @@ export const BAN_DO_SFX_HIEU_UNG: Record<LoaiHieuUngTanCong, TenFileSfx> = {
  */
 export const DANH_SACH_SFX_CO_SAN: readonly TenFileSfx[] = [];
 
-export function layDuongDanSfxNeuCoSan(loai: LoaiHieuUngTanCong): string | null {
+export function layDuongDanSfxNeuCoSan(loai: LoaiHieuUngHoatHinh): string | null {
   const tenFile = BAN_DO_SFX_HIEU_UNG[loai];
   if (!DANH_SACH_SFX_CO_SAN.includes(tenFile)) {
     return null;
