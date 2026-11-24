@@ -23,8 +23,12 @@ from scripts.pipeline.chuanbi_dai import (
 )
 from scripts.pipeline.gemini_client import (
     GeminiClient,
+    GeminiQuotaError,
+    MAC_DINH_FALLBACK_MODELS,
+    MAC_DINH_MODEL,
     lam_sach_json,
     lay_cau_hinh_gemini,
+    lay_fallback_models,
     parse_json_an_toan,
 )
 from scripts.pipeline.render_dai import (
@@ -186,20 +190,41 @@ class TestGeminiClientOffline(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             env1 = Path(tmp) / ".env.multi"
             env1.write_text(
-                "GEMINI_API_KEYS=keyA, keyB , keyC\nGEMINI_MODEL=gemini-2.5-pro\n",
+                (
+                    "GEMINI_API_KEYS=keyA, keyB , keyC\n"
+                    "GEMINI_MODEL=gemini-2.5-pro\n"
+                    "GEMINI_FALLBACK_MODELS=gemini-flash-latest, gemini-pro-latest , gemini-flash-latest\n"
+                ),
                 encoding="utf-8",
             )
-            keys, model = lay_cau_hinh_gemini(duong_dan_env=env1, env_override={"GEMINI_API_KEYS": "k1,k2", "GEMINI_MODEL": "gemini-2.5-flash"})
+            keys, model = lay_cau_hinh_gemini(
+                duong_dan_env=env1,
+                env_override={"GEMINI_API_KEYS": "k1,k2", "GEMINI_MODEL": "gemini-flash-latest"},
+            )
             self.assertEqual(keys, ["k1", "k2"])
-            self.assertEqual(model, "gemini-2.5-flash")
+            self.assertEqual(model, "gemini-flash-latest")
 
-            # Test fallback GEMINI_API_KEY
+            fb1 = lay_fallback_models(duong_dan_env=env1, env_override={})
+            self.assertEqual(fb1, ["gemini-flash-latest", "gemini-pro-latest"])
+
+            # Test fallback GEMINI_API_KEY + model mac dinh moi (gemini-flash-latest) + fallback mac dinh
             keys2, model2 = lay_cau_hinh_gemini(
                 duong_dan_env=Path(tmp) / "khong_ton_tai",
                 env_override={"GEMINI_API_KEYS": "", "GEMINI_API_KEY": "single_key", "GEMINI_MODEL": ""},
             )
             self.assertEqual(keys2, ["single_key"])
-            self.assertEqual(model2, "gemini-2.5-flash")
+            self.assertEqual(model2, MAC_DINH_MODEL)
+            self.assertEqual(model2, "gemini-flash-latest")
+
+            fb2 = lay_fallback_models(
+                duong_dan_env=Path(tmp) / "khong_ton_tai",
+                env_override={"GEMINI_FALLBACK_MODELS": ""},
+            )
+            self.assertEqual(fb2, list(MAC_DINH_FALLBACK_MODELS))
+            self.assertEqual(
+                fb2,
+                ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
+            )
 
     def test_xoay_vong_key_khi_429_503_va_thu_lai_json(self) -> None:
         lich_su_keys: list[str] = []
@@ -234,7 +259,7 @@ class TestGeminiClientOffline(unittest.TestCase):
 
         client = GeminiClient(
             api_keys=["key_1", "key_2", "key_3"],
-            model="gemini-2.5-flash",
+            model="gemini-flash-latest",
             http_caller=fake_http,
             sleep_fn=lambda _: None,
         )
@@ -242,6 +267,203 @@ class TestGeminiClientOffline(unittest.TestCase):
         self.assertEqual(ket_qua, {"ok": True, "so": 42})
         # Key 1 gap 429 -> xoay sang key 2 gap 503 -> xoay sang key 3 tra JSON loi -> retry tren key 3 thanh cong
         self.assertEqual(lich_su_keys, ["key_1", "key_2", "key_3", "key_3"])
+
+    def test_tu_do_model_khi_404_va_ghi_nho_trong_phien(self) -> None:
+        lich_su_post: list[str] = []
+        lich_su_get: list[str] = []
+
+        def fake_post(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            lich_su_post.append(url)
+            if "/models/gemini-1.5-flash-cu:generateContent" in url:
+                return 404, '{"error": {"code": 404, "message": "models/gemini-1.5-flash-cu is not found"}}'
+            if "/models/gemini-flash-latest:generateContent" in url:
+                return (
+                    200,
+                    json.dumps(
+                        {"candidates": [{"content": {"parts": [{"text": "OK tu gemini-flash-latest"}]}}]}
+                    ),
+                )
+            return 500, "Unexpected model"
+
+        def fake_get(url: str, timeout: int) -> tuple[int, str]:
+            lich_su_get.append(url)
+            danh_sach = {
+                "models": [
+                    {
+                        "name": "models/text-embedding-004",
+                        "supportedGenerationMethods": ["embedContent", "generateContent"],
+                    },
+                    {
+                        "name": "models/aqa",
+                        "supportedGenerationMethods": ["generateAnswer", "generateContent"],
+                    },
+                    {
+                        "name": "models/gemini-2.5-flash-preview-tts",
+                        "supportedGenerationMethods": ["generateContent"],
+                    },
+                    {
+                        "name": "models/gemini-2.0-flash-exp-image-generation",
+                        "supportedGenerationMethods": ["generateContent"],
+                    },
+                    {
+                        "name": "models/gemini-2.5-flash-khong-ho-tro",
+                        "supportedGenerationMethods": ["countTokens"],
+                    },
+                    {
+                        "name": "models/gemini-2.0-flash",
+                        "supportedGenerationMethods": ["generateContent"],
+                    },
+                    {
+                        "name": "models/gemini-2.5-flash",
+                        "supportedGenerationMethods": ["generateContent"],
+                    },
+                    {
+                        "name": "models/gemini-flash-latest",
+                        "supportedGenerationMethods": ["generateContent"],
+                    },
+                    {
+                        "name": "models/gemini-2.5-pro",
+                        "supportedGenerationMethods": ["generateContent"],
+                    },
+                ]
+            }
+            return 200, json.dumps(danh_sach)
+
+        client = GeminiClient(
+            api_keys=["key_1", "key_2"],
+            model="gemini-1.5-flash-cu",
+            fallback_models=["gemini-1.5-flash-cu"],
+            http_caller=fake_post,
+            http_get_caller=fake_get,
+            sleep_fn=lambda _: None,
+        )
+
+        # Luot 1: 404 -> tu do qua GET /v1beta/models?key=key_1 -> chuyen sang gemini-flash-latest
+        kq1 = client.tao_van_ban("Xin chao lan 1")
+        self.assertEqual(kq1, "OK tu gemini-flash-latest")
+        self.assertEqual(client.model, "gemini-flash-latest")
+        self.assertEqual(
+            lich_su_get,
+            ["https://generativelanguage.googleapis.com/v1beta/models?key=key_1"],
+        )
+
+        # Luot 2: da ghi nho gemini-flash-latest -> goi thang, khong goi lai model cu hay GET /models
+        kq2 = client.tao_van_ban("Xin chao lan 2")
+        self.assertEqual(kq2, "OK tu gemini-flash-latest")
+        self.assertEqual(len(lich_su_get), 1)
+        self.assertEqual(len(lich_su_post), 3)
+        self.assertIn("/models/gemini-1.5-flash-cu:generateContent", lich_su_post[0])
+        self.assertIn("/models/gemini-flash-latest:generateContent", lich_su_post[1])
+        self.assertIn("/models/gemini-flash-latest:generateContent", lich_su_post[2])
+
+    def test_tu_do_model_khi_400_sai_ten_chon_flash_moi_nhat(self) -> None:
+        def fake_post(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            if "/models/model-sai-ten:generateContent" in url:
+                return 400, '{"error": {"code": 400, "message": "Unexpected model name format"}}'
+            if "/models/gemini-2.5-flash:generateContent" in url:
+                return (
+                    200,
+                    json.dumps({"candidates": [{"content": {"parts": [{"text": "OK 2.5 flash"}]}}]}),
+                )
+            return 500, f"Unexpected URL: {url}"
+
+        def fake_get(url: str, timeout: int) -> tuple[int, str]:
+            # Khong co gemini-flash-latest -> phai loc bo embedding/tts/image/aqa va chon flash moi nhat (2.5)
+            danh_sach = {
+                "models": [
+                    {"name": "models/gemini-embedding-001", "supportedGenerationMethods": ["generateContent"]},
+                    {"name": "models/gemini-2.5-flash-tts", "supportedGenerationMethods": ["generateContent"]},
+                    {"name": "models/gemini-2.5-flash-image", "supportedGenerationMethods": ["generateContent"]},
+                    {"name": "models/aqa", "supportedGenerationMethods": ["generateContent"]},
+                    {"name": "models/gemini-1.5-flash", "supportedGenerationMethods": ["generateContent"]},
+                    {"name": "models/gemini-2.0-flash", "supportedGenerationMethods": ["generateContent"]},
+                    {"name": "models/gemini-2.5-flash-preview-05-20", "supportedGenerationMethods": ["generateContent"]},
+                    {"name": "models/gemini-2.5-flash", "supportedGenerationMethods": ["generateContent"]},
+                    {"name": "models/gemini-2.5-pro", "supportedGenerationMethods": ["generateContent"]},
+                ]
+            }
+            return 200, json.dumps(danh_sach)
+
+        client = GeminiClient(
+            api_keys=["key_1"],
+            model="model-sai-ten",
+            fallback_models=["model-sai-ten"],
+            http_caller=fake_post,
+            http_get_caller=fake_get,
+            sleep_fn=lambda _: None,
+        )
+        kq = client.tao_van_ban("Thu 400 sai ten model")
+        self.assertEqual(kq, "OK 2.5 flash")
+        self.assertEqual(client.model, "gemini-2.5-flash")
+
+    def test_xoay_het_key_429_tu_chuyen_fallback_model(self) -> None:
+        lich_su_goi: list[tuple[str, str]] = []
+
+        def fake_post(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            model_name = url.split("/models/")[1].split(":")[0]
+            lich_su_goi.append((model_name, api_key))
+            if model_name == "gemini-flash-latest":
+                return 429, '{"error": {"status": "RESOURCE_EXHAUSTED"}}'
+            if model_name == "gemini-flash-lite-latest" and api_key == "key_1":
+                return 429, '{"error": {"status": "RESOURCE_EXHAUSTED"}}'
+            if model_name == "gemini-flash-lite-latest" and api_key == "key_2":
+                return (
+                    200,
+                    json.dumps({"candidates": [{"content": {"parts": [{"text": "OK tu flash-lite"}]}}]}),
+                )
+            return 429, '{"error": {"status": "RESOURCE_EXHAUSTED"}}'
+
+        client = GeminiClient(
+            api_keys=["key_1", "key_2"],
+            model="gemini-flash-latest",
+            fallback_models=[
+                "gemini-flash-latest",
+                "gemini-flash-lite-latest",
+                "gemini-pro-latest",
+            ],
+            http_caller=fake_post,
+            sleep_fn=lambda _: None,
+        )
+        kq = client.tao_van_ban("Test 429 doi fallback")
+        self.assertEqual(kq, "OK tu flash-lite")
+        self.assertEqual(client.model, "gemini-flash-lite-latest")
+        # Xoay het key_1, key_2 o gemini-flash-latest -> chuyen sang gemini-flash-lite-latest -> thanh cong o key_2
+        self.assertEqual(
+            lich_su_goi,
+            [
+                ("gemini-flash-latest", "key_1"),
+                ("gemini-flash-latest", "key_2"),
+                ("gemini-flash-lite-latest", "key_1"),
+                ("gemini-flash-lite-latest", "key_2"),
+            ],
+        )
+
+        # Neu tat ca key va tat ca fallback deu 429 -> bao GeminiQuotaError sau khi thu du cac model
+        models_da_thu_het: list[str] = []
+
+        def always_429(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            m = url.split("/models/")[1].split(":")[0]
+            if m not in models_da_thu_het:
+                models_da_thu_het.append(m)
+            return 429, '{"error": {"status": "RESOURCE_EXHAUSTED"}}'
+
+        client_het = GeminiClient(
+            api_keys=["key_1", "key_2"],
+            model="gemini-flash-latest",
+            fallback_models=[
+                "gemini-flash-latest",
+                "gemini-flash-lite-latest",
+                "gemini-pro-latest",
+            ],
+            http_caller=always_429,
+            sleep_fn=lambda _: None,
+        )
+        with self.assertRaises(GeminiQuotaError):
+            client_het.tao_van_ban("Test het sach quota")
+        self.assertEqual(
+            models_da_thu_het,
+            ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
+        )
 
     def test_lam_sach_json(self) -> None:
         raw = 'Loi mo dau...\n```json\n{"a": 1, "b": [2, 3,],}\n```\nLoi ket.'
