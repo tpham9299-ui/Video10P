@@ -1,0 +1,340 @@
+{
+  "tieuDe": "Nghịch lý √2: Ngày thế giới số hữu tỉ sụp đổ",
+  "chuDe": "Lịch sử Toán học qua hoạt hình người que",
+  "bangMau": {
+    "nenChinh": "#0B1120",
+    "nenPhu": "#111C33",
+    "luoi": "#1E293B",
+    "chuChinh": "#F8FAFC",
+    "chuPhu": "#94A3B8",
+    "nhanManh": "#38BDF8",
+    "canhBao": "#F59E0B"
+  },
+  "batSfx": false,
+  "batPhuDe": true,
+  "danhSachNhanVat": [
+    {
+      "id": "pythagoras",
+      "ten": "Pythagoras",
+      "mauThan": "#F8FAFC",
+      "mauNangLuong": "#FACC15",
+      "phuKien": "vong_nguyet_que"
+    },
+    {
+      "id": "hippasus",
+      "ten": "Hippasus",
+      "mauThan": "#E2E8F0",
+      "mauNangLuong": "#38BDF8",
+      "phuKien": "khan_choang_bay"
+    },
+    {
+      "id": "nguoi_dan",
+      "ten": "Người Kể Chuyện",
+      "mauThan": "#CBD5E1",
+      "mauNangLuong": "#34D399",
+      "phuKien": "kinh_tron"
+    }
+  ],
+  "chuong": [
+    {
+      "id": "chuong_1",
+      "tenChuong": "1. Giáo phái số hữu tỉ",
+      "canh": [
+        {
+          "id": "canh_01_mo_dau",
+          "boCuc": "mo_dau",
+          "tuFrame": 0,
+          "denFrame": 90,
+          "tieuDeNho": "Pythagoras & Bí mật của √2",
+          "namMoc": "~500 TCN • Hy Lạp Cổ Đại",
+          "loiThoai": "Chào mừng đến với giai thoại kịch tính nhất lịch sử số học: cuộc đối đầu giữa Pythagoras và Hippasus.",
+          "phuDe": [
+            "Khoảng 500 TCN, một phát hiện nhỏ đã làm rung chuyển toàn bộ nền Toán học Hy Lạp."
+          ],
+          "nhanVat": [
+            {
+              "id": "pythagoras",
+              "x": 640,
+              "y": 830,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "tram_tu"
+            },
+            {
+              "id": "hippasus",
+              "x": 1280,
+              "y": 830,
+              "huong": "trai",
+              "hanhDong": "suy_nghi_gai_dau",
+              "bieuCam": "tinh_quai"
+            }
+          ],
+          "daoCu": [
+            {
+              "loai": "thuoc_compa",
+              "x": 960,
+              "y": 650,
+              "tiLe": 1.1,
+              "nhan": "Hình học cổ đại"
+            }
+          ]
+        },
+        {
+          "id": "canh_02_ke_chuyen",
+          "boCuc": "ke_chuyen",
+          "tuFrame": 90,
+          "denFrame": 180,
+          "tieuDeNho": "Tín điều: Vạn vật đều là số hữu tỉ",
+          "namMoc": "~530 TCN",
+          "loiThoai": "Trường phái Pythagoras tin rằng mọi độ dài trong vũ trụ đều viết được thành tỉ số giữa hai số nguyên.",
+          "phuDe": [
+            "Pythagoras khẳng định: mọi đại lượng đều biểu diễn được dưới dạng phân số p/q."
+          ],
+          "congThucLatex": [
+            {
+              "latex": "x = \\frac{p}{q}, \\quad p, q \\in \\mathbb{Z}"
+            }
+          ],
+          "nhanVat": [
+            {
+              "id": "pythagoras",
+              "x": 760,
+              "y": 830,
+              "huong": "phai",
+              "hanhDong": "giang_bai",
+              "bieuCam": "vui",
+              "dangNoi": true
+            }
+          ],
+          "daoCu": [
+            {
+              "loai": "cuon_giay",
+              "x": 1240,
+              "y": 680,
+              "tiLe": 1.2,
+              "nhan": "Tín điều Pythagoras"
+            }
+          ]
+        },
+        {
+          "id": "canh_03_doi_thoai",
+          "boCuc": "doi_thoai",
+          "tuFrame": 180,
+          "denFrame": 270,
+          "tieuDeNho": "Đường chéo hình vuông cạnh 1 dài bao nhiêu?",
+          "loiThoai": "Pythagoras khẳng định mọi số đều hữu tỉ, nhưng Hippasus đặt câu hỏi về đường chéo hình vuông cạnh 1.",
+          "phuDe": [
+            "Hippasus thách thức: đường chéo hình vuông cạnh 1 không thể viết thành p/q!"
+          ],
+          "nhanVat": [
+            {
+              "id": "pythagoras",
+              "x": 580,
+              "y": 830,
+              "huong": "phai",
+              "hanhDong": "giang_bai",
+              "bieuCam": "tuc_gian",
+              "dangNoi": true,
+              "bongBongThoai": "Mọi số đều là p/q!"
+            },
+            {
+              "id": "hippasus",
+              "x": 1340,
+              "y": 830,
+              "huong": "trai",
+              "hanhDong": "chi_bang",
+              "bieuCam": "tinh_quai",
+              "dangNoi": true,
+              "bongBongThoai": "Còn √2 thì sao?"
+            }
+          ],
+          "daoCu": [
+            {
+              "loai": "dau_hoi_cham",
+              "x": 960,
+              "y": 540,
+              "tiLe": 1.1,
+              "mau": "#F59E0B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chuong_2",
+      "tenChuong": "2. Cú chém √2 & Chứng minh",
+      "canh": [
+        {
+          "id": "canh_04_hanh_dong",
+          "boCuc": "hanh_dong",
+          "tuFrame": 270,
+          "denFrame": 390,
+          "tieuDeNho": "Kiếm √2 phá vỡ Khiên Số Nguyên",
+          "loiThoai": "Hippasus rút thanh kiếm căn bậc hai của 2, tung nhát chém làm rung chuyển chiếc khiên số nguyên của Pythagoras!",
+          "phuDe": [
+            "Hippasus tung nhát chém √2 đánh thẳng vào Khiên Số Nguyên của Pythagoras!"
+          ],
+          "camera": {
+            "zoom": 1.04,
+            "panX": 0,
+            "panY": -10
+          },
+          "nhanVat": [
+            {
+              "id": "hippasus",
+              "x": 680,
+              "y": 830,
+              "huong": "phai",
+              "hanhDong": "chem_kiem_toan",
+              "vuKhiToan": "kiem_can2",
+              "bieuCam": "tuc_gian",
+              "frameRaDon": 18
+            },
+            {
+              "id": "pythagoras",
+              "x": 1220,
+              "y": 830,
+              "huong": "trai",
+              "hanhDong": "do_don_khien",
+              "vuKhiToan": "khien_so_nguyen",
+              "bieuCam": "ngac_nhien"
+            }
+          ],
+          "hieuUngTanCong": [
+            {
+              "loai": "vet_chem",
+              "tuX": 740,
+              "tuY": 650,
+              "denX": 1150,
+              "denY": 690,
+              "mau": "#38BDF8",
+              "tuFrame": 16,
+              "thoiLuong": 32,
+              "kyHieuToan": "√2"
+            },
+            {
+              "loai": "song_xung_kich",
+              "tuX": 1150,
+              "tuY": 690,
+              "mau": "#FACC15",
+              "tuFrame": 24,
+              "thoiLuong": 36,
+              "hitstopFrames": 3,
+              "impactFrame": true,
+              "cuongDoRung": 14
+            }
+          ]
+        },
+        {
+          "id": "canh_05_giai_thich_toan",
+          "boCuc": "giai_thich_toan",
+          "tuFrame": 390,
+          "denFrame": 540,
+          "tieuDeNho": "Chứng minh phản chứng √2 vô tỉ",
+          "namMoc": "Phản chứng kinh điển",
+          "loiThoai": "Giả sử căn 2 bằng phân số tối giản p trên q. Bình phương hai vế dẫn tới cả p và q đều chẵn, mâu thuẫn!",
+          "phuDe": [
+            "Giả sử √2 = p/q tối giản → suy ra cả p và q đều chia hết cho 2.",
+            "Điều này mâu thuẫn với giả thiết tối giản → √2 là số vô tỉ!"
+          ],
+          "nhanVat": [
+            {
+              "id": "hippasus",
+              "x": 310,
+              "y": 700,
+              "huong": "phai",
+              "hanhDong": "chi_bang",
+              "bieuCam": "vui",
+              "dangNoi": true
+            }
+          ],
+          "daoCu": [
+            {
+              "loai": "bong_den",
+              "x": 470,
+              "y": 240,
+              "tiLe": 0.9
+            }
+          ],
+          "congThucLatex": [
+            {
+              "nhan": "Bước 1: Giả sử phân số tối giản",
+              "latex": "\\sqrt{2} = \\frac{p}{q}, \\quad \\gcd(p, q) = 1",
+              "tuFrame": 0
+            },
+            {
+              "nhan": "Bước 2: Bình phương hai vế",
+              "latex": "2q^2 = p^2 \\implies p = 2k",
+              "tuFrame": 35
+            },
+            {
+              "nhan": "Bước 3: Mâu thuẫn tất yếu",
+              "latex": "q^2 = 2k^2 \\implies \\gcd(p, q) \\ge 2 \\quad (\\text{Vô lý!})",
+              "tuFrame": 75,
+              "noiBat": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chuong_3",
+      "tenChuong": "3. Di sản số vô tỉ",
+      "canh": [
+        {
+          "id": "canh_06_dong_thoi_gian",
+          "boCuc": "dong_thoi_gian",
+          "tuFrame": 540,
+          "denFrame": 645,
+          "tieuDeNho": "Bước ngoặt của trục số thực",
+          "namMoc": "530 TCN → 300 TCN",
+          "loiThoai": "Từ cú sốc của Hippasus, nhân loại mở ra cánh cửa bước vào thế giới số vô tỉ và số thực.",
+          "phuDe": [
+            "Từ cú sốc √2, Toán học Hy Lạp chuyển hướng mạnh mẽ sang hình học và chứng minh chặt chẽ."
+          ],
+          "nhanVat": [
+            {
+              "id": "nguoi_dan",
+              "x": 960,
+              "y": 830,
+              "huong": "phai",
+              "hanhDong": "giang_bai",
+              "bieuCam": "vui",
+              "dangNoi": true
+            }
+          ],
+          "daoCu": [
+            {
+              "loai": "dong_ho_cat",
+              "x": 1440,
+              "y": 690,
+              "tiLe": 1.0,
+              "nhan": "Dòng chảy lịch sử"
+            }
+          ]
+        },
+        {
+          "id": "canh_07_ket_thuc",
+          "boCuc": "ket_thuc",
+          "tuFrame": 645,
+          "denFrame": 750,
+          "tieuDeNho": "Hẹn gặp lại ở giai thoại Toán học tiếp theo!",
+          "loiThoai": "Cảm ơn bạn đã theo dõi. Hãy đón xem tập tiếp theo về cuộc chiến giải tích Newton và Leibniz!",
+          "phuDe": [
+            "Bấm đăng ký để theo dõi tập tiếp theo của series Lịch sử Toán học!"
+          ],
+          "nhanVat": [
+            {
+              "id": "nguoi_dan",
+              "x": 960,
+              "y": 840,
+              "huong": "phai",
+              "hanhDong": "an_mung_nhay",
+              "bieuCam": "vui"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

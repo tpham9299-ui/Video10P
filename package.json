@@ -1,0 +1,23 @@
+{
+  "name": "video-dai-nguoi-que-toan-hoc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Du an Remotion 16:9 hoat hinh nguoi que ke chuyen lich su Toan hoc",
+  "scripts": {
+    "dev": "remotion studio",
+    "kiem-tra": "npx tsc --noEmit && node scripts/test_khung.mjs",
+    "render:mau": "remotion render src/index.ts VideoDaiNguoiQue out/mau_pythagoras.mp4 --props=du_lieu/mau_pythagoras.json"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "katex": "^0.16.11",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.7",
+    "@types/react": "^19.0.0",
+    "typescript": "^5.7.2"
+  }
+}
