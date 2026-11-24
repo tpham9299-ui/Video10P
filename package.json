@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "remotion studio",
     "kiem-tra": "npx tsc --noEmit && node scripts/test_khung.mjs",
+    "kiem-tra:all": "npm run kiem-tra && python -X utf8 scripts/test_pipeline.py",
     "render:mau": "remotion render src/index.ts VideoDaiNguoiQue out/mau_pythagoras.mp4 --props=du_lieu/mau_pythagoras.json"
   },
   "dependencies": {

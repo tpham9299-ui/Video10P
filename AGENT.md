@@ -1,15 +1,14 @@
 # Trạng thái bàn giao tác vụ (AGENT.md)
 
-## Mốc hiện tại: `v0.2` — Phim hoạt hình 2D kể chuyện Toán học (Thiên nhiên sống động, Diễn xuất hài hước & Bảng giảng Toán)
-- Tái cấu trúc sạch `src/kieu_dai.ts` bỏ hoàn toàn phong cách chiến đấu, chuyển sang bộ kiểu phim hoạt hình kể chuyện Toán học (7 bố cục, 8 bối cảnh thiên nhiên, 7 thời tiết, 14 động tác diễn xuất/hài, 9 biểu cảm, 8 phụ kiện, 8 vật cầm tay, 8 hiệu ứng hoạt hình, 5 minh họa Toán, `loiBinhHaiHuoc`, `chuyenCanh`).
-- Xây dựng `src/boicanh/BoiCanhHoatHinh.tsx`: 8 bối cảnh SVG `1920×1080` có chiều sâu 3 lớp, chuyển động tự nhiên theo `useCurrentFrame()` (mây trôi, sóng nước, quả táo rơi, lá đung đưa, sao băng...) và lớp phủ thời tiết tất định không blur, không `Math.random()`.
-- Nâng cấp `src/xuong/he_xuong.ts`, `src/xuong/dong_tac.ts`, `src/nhanvat/NguoiQueDong.tsx`: chu kỳ đi bộ/chạy tự nhiên, 14 động tác diễn xuất & hài (`giat_minh_nhay_dung`, `bo_tay_can_loi`, `khoanh_tay_tu_man`, `sup_do_tuyet_vong`...), tự động nháy mắt tất định, 9 biểu cảm (gồm `can_loi_mat_do`), bóng đổ dưới chân, 8 phụ kiện và 8 vật cầm tay.
-- Xây dựng `src/vfx/HieuUngHoatHinh.tsx` (8 hiệu ứng hài/kể chuyện), `src/vfx/MayQuayDong.tsx` (`pan_nhe`, `zoom_cham`, `zoom_hai_huoc`, chuyển cảnh `mo_dan`/`quet_ngang`/`vong_tron_hoat_hinh`) và `src/amthanh/sfx.ts` (bản đồ SFX hoạt hình an toàn).
-- Cập nhật `src/daocu/MinhHoaToan.tsx`, `src/canh/KhungLoiBinhHaiHuoc.tsx`, đủ 7 cảnh (`CanhMoDau`, `CanhKeChuyen`, `CanhDoiThoai`, `CanhHaiHuoc`, `CanhGiaiThichToan`, `CanhDongThoiGian`, `CanhKet`) và `src/VideoDai.tsx`.
-- Viết lại kịch bản mẫu `du_lieu/mau_pythagoras.json` (750 frames / 25s) và mở rộng `scripts/test_khung.mjs` kiểm chứng đầy đủ hợp đồng `v0.2`.
+## Mốc hiện tại: `v0.3` — Trọn bộ pipeline Python tự động sản xuất phim hoạt hình Toán học dài >10 phút
+- Tạo `requirements.txt` (`edge-tts`, `Pillow`) và `.env.example` hỗ trợ nhiều khóa `GEMINI_API_KEYS` xoay vòng tự động (không ghi cứng key trong mã nguồn).
+- Xây dựng `scripts/pipeline/gemini_client.py`: nạp `.env` bằng thư viện chuẩn, xoay vòng API key + backoff khi gặp `429`/`503`/quota, tự làm sạch JSON bọc markdown và thử lại tối đa 2 lần khi JSON lỗi cú pháp.
+- Xây dựng `scripts/pipeline/tao_kich_ban_10p.py`: kiến trúc biên kịch 3 tầng (Dàn ý 6 hồi khóa `danhSachNhanVat` + mạch `boiCanh`/`thoiTiet` → Viết chi tiết 6 hồi nối mạch 15–22 cảnh/hồi, tự bổ sung nếu <250 từ, lưu cache `du_lieu/<slug>/cache_chuong/`, sanitize 100% enum theo `src/kieu_dai.ts` → Hậu kiểm ngoặc `{}` LaTeX, xuất `nhap_kich_ban.json` và `doc_duyet_kich_ban.md`).
+- Xây dựng `scripts/pipeline/chuan_hoa_doc_toan.py` & `scripts/pipeline/chuanbi_dai.py`: chuẩn hóa ký hiệu Toán (`√2`, `π`, `x^2`, `∞`, `TCN`, số thập phân, phân số...) sang tiếng Việt tự nhiên, sinh MP3 `edge-tts` vào `public/audio/<slug>/` có cache SHA-256, đo `ffprobe`, căn `tuFrame`/`denFrame` liền mạch `30fps` (nghỉ `0.25s` giữa cảnh, `0.75s` chuyển hồi), chia `phuDe[]` và cảnh báo nếu tổng thời lượng < 600 giây.
+- Xây dựng `scripts/pipeline/render_dai.py`: render tách hồi bằng Remotion `--frames=<start>-<end>` với cache hash hồi (hỗ trợ `--chuong 2,4`), ghép FFmpeg `concat`, trộn `--nhac-nen` (`volume=0.08`, fade-out 3s cuối), xuất `out/<slug>_chapters.txt` và lưới kiểm định 18 khung hình `out/<slug>/luoi_kiem_dinh.png` bằng Pillow.
+- Xây dựng lệnh 1 chạm `scripts/pipeline/chay_tu_dong.py` (hỗ trợ `--dung-de-duyet` & `--tiep-tuc-tu-kich-ban`) và bộ unit test offline `scripts/test_pipeline.py`; thêm `"kiem-tra:all"` vào `package.json`.
 
-## Mốc tiếp theo: `v0.3` — Pipeline sản xuất phim hoạt hình Toán học dài >10 phút
-- [ ] Viết pipeline Python chuyển kịch bản kể chuyện văn bản → JSON chuẩn `DuLieuVideoDai`.
-- [ ] Tích hợp giọng đọc TTS xuất ra `public/audio/*.mp3` và tự căn chỉnh `tuFrame..denFrame` khớp lời thoại.
-- [ ] Bổ sung file âm thanh hoạt hình (`pop.mp3`, `ding.mp3`, `boing.mp3`, `crickets.mp3`, `whoosh.mp3`, `dramatic.mp3`) vào `public/sfx/` và bật `DANH_SACH_SFX_CO_SAN`.
-- [ ] Viết script render tách từng chương rồi ghép bằng FFmpeg cho video dài 10+ phút.
+## Mốc tiếp theo: `v0.4` — Âm thanh hoạt hình SFX & Sản xuất tập phim >10 phút đầu tiên
+- [ ] Bổ sung file âm thanh hoạt hình (`pop.mp3`, `ding.mp3`, `boing.mp3`, `crickets.mp3`, `whoosh.mp3`, `dramatic.mp3`) vào `public/sfx/` và bật `DANH_SACH_SFX_CO_SAN` trong `src/amthanh/sfx.ts`.
+- [ ] Thêm nhạc nền nhẹ (royalty-free `.mp3`) và chạy sản xuất thực tế tập phim >10 phút đầu tiên.
+- [ ] Tối ưu thumbnail tự động / chuyển cảnh âm thanh giữa các hồi dựa trên phản hồi từ `luoi_kiem_dinh.png`.
