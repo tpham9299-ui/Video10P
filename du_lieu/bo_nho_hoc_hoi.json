@@ -1,6 +1,6 @@
 {
   "phienBan": "0.5",
-  "capNhatLanCuoi": "2026-11-25T09:26:24",
+  "capNhatLanCuoi": "2026-11-25T07:42:55",
   "chu_de_da_lam": [
     {
       "slug": "ramanujan_so_tay_bi_an_1729",
@@ -14,6 +14,18 @@
         "https://en.wikipedia.org/wiki/1729_(number)",
         "https://mathshistory.st-andrews.ac.uk/Biographies/Ramanujan/",
         "https://www.britannica.com/biography/Srinivasa-Ramanujan"
+      ]
+    },
+    {
+      "slug": "cantor_cac_cap_do_vo_cuc",
+      "tieuDe": "Georg Cantor Và Vô Cực: Khi Có Những Đống Vô Cực To Hơn Đống Vô Cực Khác",
+      "nhanVatChinh": "Georg Cantor, Leopold Kronecker",
+      "tomTat1Cau": "Georg Cantor thách thức giới toán học cổ điển bằng cách chứng minh vô cực có nhiều kích thước khác nhau, tạo nên cuộc tranh luận nảy lửa với Kronecker và đặt nền móng cho Lý thuyết Tập hợp hiện đại.",
+      "thoiLuongGiay": 584.9,
+      "ngayTao": "2026-11-25",
+      "nguonThamKhao": [
+        "https://en.wikipedia.org/wiki/Georg_Cantor",
+        "https://en.wikipedia.org/wiki/Cantor%27s_diagonal_argument"
       ]
     }
   ],
@@ -32,14 +44,6 @@
       "gocKhaiThac": "Cuộc drama nảy lửa thời Phục Hưng về công thức giải phương trình bậc 3: lời thề bí mật bị phản bội, trận đấu trí công khai và bước ngoặt khai sinh ra số ảo i - chìa khóa cho kỹ thuật sóng wifi hiện đại.",
       "diemThuHut": 9.4,
       "doSauToanHoc": 8.8,
-      "trangThai": "cho"
-    },
-    {
-      "slug": "cantor_cac_cap_do_vo_cuc",
-      "tieuDe": "Georg Cantor Và Vô Cực: Khi Có Những Đống Vô Cực To Hơn Đống Vô Cực Khác",
-      "gocKhaiThac": "Cantor thách thức giới toán học cổ điển bằng cách chứng minh vô cực cũng có 'size S, M, L', tạo nên cuộc tranh luận nảy lửa với Kronecker và đặt nền móng cho Lý thuyết Tập hợp trong bộ nhớ máy tính.",
-      "diemThuHut": 9.3,
-      "doSauToanHoc": 9.5,
       "trangThai": "cho"
     },
     {
@@ -70,6 +74,18 @@
       "ngay": "2026-11-25",
       "loai": "hai_huoc",
       "noiDung": "Khai thác tối đa sự tương phản hài hước giữa tư duy logic chặt chẽ phương Tây và trực giác toán học tâm linh phương Đông để tạo tiếng cười diễm lệ.",
+      "mucDoUuTien": 4
+    },
+    {
+      "ngay": "2026-11-25",
+      "loai": "toan_hoc",
+      "noiDung": "Mọi cảnh giảng toán bắt buộc phải đi kèm công thức LaTeX KaTeX chuẩn xác như |A| < |\\mathcal{P}(A)| để tăng tính hàn lâm.",
+      "mucDoUuTien": 5
+    },
+    {
+      "ngay": "2026-11-25",
+      "loai": "kich_ban",
+      "noiDung": "Tuyệt đối không để camera đứng yên quá 6.5 giây liên tục nhằm đảm bảo nhịp thị giác lôi cuốn, đồng thời phải khớp mốc thời gian rõ ràng ở các cảnh dòng thời gian.",
       "mucDoUuTien": 4
     }
   ],
