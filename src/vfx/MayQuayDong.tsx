@@ -16,6 +16,10 @@ import {
 
 export { tinhBienDoiCamera, type KetQuaBienDoiCamera };
 
+/** Vung an toan HUD co dinh ngoai transform zoom/pan: tranh de thanh tien do chuong (tren) & phu de (duoi) */
+export const HUD_TOP_SAFE = 76;
+export const HUD_BOTTOM_SAFE = 150;
+
 /** Context chia se bien doi camera cho he thong Parallax 3 lop trong BoiCanhHoatHinh */
 export const CameraParallaxContext =
   createContext<KetQuaBienDoiCamera>(CAMERA_MAC_DINH);
@@ -36,6 +40,8 @@ type MayQuayDongProps = {
   chuyenCanh?: LoaiChuyenCanh;
   nhanVat?: NhanVatTrongCanh[];
   thoiLuongCanh?: number;
+  /** Lop HUD (tieu de canh, the chuong, bong bong binh luan, cau hoi...) tach biet 100% ngoai transform zoom/pan */
+  hud?: React.ReactNode;
   children: React.ReactNode;
 };
 
@@ -46,6 +52,7 @@ export const MayQuayDong: React.FC<MayQuayDongProps> = ({
   daoCu,
   nhanVat,
   thoiLuongCanh,
+  hud,
   children,
 }) => {
   const frame = useCurrentFrame();
@@ -82,6 +89,23 @@ export const MayQuayDong: React.FC<MayQuayDongProps> = ({
           {children}
         </div>
       </CameraParallaxContext.Provider>
+
+      {/* Lop HUD co dinh ngoai transform zoom/pan, dam bao vung an toan tren >= 76px va duoi >= 150px */}
+      {hud && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            paddingTop: HUD_TOP_SAFE,
+            paddingBottom: HUD_BOTTOM_SAFE,
+            boxSizing: 'border-box',
+            pointerEvents: 'none',
+            zIndex: 20,
+          }}
+        >
+          {hud}
+        </div>
+      )}
     </div>
   );
 };

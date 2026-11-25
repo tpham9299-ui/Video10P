@@ -1,8 +1,59 @@
 import type {
+  DaoCuTrongCanh,
   LoaiBoiCanh,
   LoaiThoiTiet,
+  NhanVatTrongCanh,
   VatTheXungQuanh,
 } from '../kieu_dai';
+
+/**
+ * Kiem tra co can an noi em be ve san trong nen nha_co_phong_sinh hay khong:
+ * bo noi thua tren nen khi canh da co nhan vat so_sinh hoac dao cu noi_em_be.
+ */
+export function coAnNoiNenPhongSinh(
+  nhanVat?: readonly NhanVatTrongCanh[],
+  daoCu?: readonly DaoCuTrongCanh[],
+): boolean {
+  return Boolean(
+    nhanVat?.some((nv) => nv.doTuoi === 'so_sinh') ||
+      daoCu?.some((dc) => dc.loai === 'noi_em_be'),
+  );
+}
+
+/**
+ * Kiem tra co can an giuong benh ve san trong nen phong_benh_vien hay khong:
+ * an giuong nen khi canh co nhan vat tuThe="nam_giuong" hoac dao cu giuong_benh.
+ */
+export function coAnGiuongBenhNen(
+  nhanVat?: readonly NhanVatTrongCanh[],
+  daoCu?: readonly DaoCuTrongCanh[],
+): boolean {
+  return Boolean(
+    nhanVat?.some((nv) => nv.tuThe === 'nam_giuong') ||
+      daoCu?.some((dc) => dc.loai === 'giuong_benh'),
+  );
+}
+
+/**
+ * Loc bo dao cu trung lap voi nhan vat:
+ * - Bo dao cu noi_em_be khi da co nhan vat doTuoi="so_sinh" (da ve em be trong noi)
+ * - Bo dao cu giuong_benh khi da co nhan vat tuThe="nam_giuong" (chi giu duy nhat 1 giuong co nhan vat nam)
+ */
+export function locDaoCuKhongTrungLap(
+  daoCu?: readonly DaoCuTrongCanh[],
+  nhanVat?: readonly NhanVatTrongCanh[],
+): DaoCuTrongCanh[] {
+  if (!daoCu || daoCu.length === 0) {
+    return [];
+  }
+  const coSoSinh = Boolean(nhanVat?.some((nv) => nv.doTuoi === 'so_sinh'));
+  const coNamGiuong = Boolean(nhanVat?.some((nv) => nv.tuThe === 'nam_giuong'));
+  return daoCu.filter((dc) => {
+    if (coSoSinh && dc.loai === 'noi_em_be') return false;
+    if (coNamGiuong && dc.loai === 'giuong_benh') return false;
+    return true;
+  });
+}
 
 /**
  * Tu dong chon bo sinh vat & do vat moi truong song dong phu hop voi tung boi canh

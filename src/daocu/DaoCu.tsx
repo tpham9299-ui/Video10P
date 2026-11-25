@@ -236,16 +236,65 @@ export const DaoCu: React.FC<DaoCuProps> = ({ daoCu }) => {
         );
       case 'bien_so_xe': {
         const soXe = (daoCu.bienSoXe || daoCu.nhan || '1729').trim();
-        const rongBien = Math.max(124, soXe.length * 19 + 36);
+        const rongBien = Math.max(146, soXe.length * 20 + 44);
         return (
           <g>
-            <rect x={-rongBien / 2} y={-32} width={rongBien} height={64} rx={10} fill="#0F172A" stroke="#FACC15" strokeWidth={5} />
-            <rect x={-rongBien / 2 + 8} y={-24} width={rongBien - 16} height={48} rx={6} fill="#FEF08A" />
-            <circle cx={-rongBien / 2 + 16} cy={0} r={3.5} fill="#64748B" />
-            <circle cx={rongBien / 2 - 16} cy={0} r={3.5} fill="#64748B" />
+            {/* The chu thich / khung treo gan xe (tranh cam giac bien so treo lo lung tren tuong) */}
+            <rect
+              x={-rongBien / 2 - 12}
+              y={-56}
+              width={rongBien + 24}
+              height={102}
+              rx={16}
+              fill="#0F172A"
+              fillOpacity={0.92}
+              stroke="#FACC15"
+              strokeWidth={3.5}
+            />
+            <rect
+              x={-58}
+              y={-68}
+              width={116}
+              height={24}
+              rx={12}
+              fill="#FACC15"
+              stroke="#0F172A"
+              strokeWidth={2.5}
+            />
             <text
               x={0}
-              y={11}
+              y={-52}
+              textAnchor="middle"
+              fill="#0F172A"
+              fontSize={12.5}
+              fontWeight={900}
+              fontFamily="Segoe UI, Arial, sans-serif"
+            >
+              BIỂN SỐ TAXI
+            </text>
+            <rect
+              x={-rongBien / 2}
+              y={-30}
+              width={rongBien}
+              height={62}
+              rx={10}
+              fill="#1E293B"
+              stroke="#FEF08A"
+              strokeWidth={4}
+            />
+            <rect
+              x={-rongBien / 2 + 8}
+              y={-22}
+              width={rongBien - 16}
+              height={46}
+              rx={6}
+              fill="#FEF08A"
+            />
+            <circle cx={-rongBien / 2 + 16} cy={1} r={3.5} fill="#64748B" />
+            <circle cx={rongBien / 2 - 16} cy={1} r={3.5} fill="#64748B" />
+            <text
+              x={0}
+              y={12}
               textAnchor="middle"
               fill="#0F172A"
               fontSize={32}

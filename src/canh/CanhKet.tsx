@@ -2,6 +2,7 @@ import React from 'react';
 import { interpolate, useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
 import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
+import { locDaoCuKhongTrungLap } from '../boicanh/moi_truong_logic';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
 import { giaiTrangThaiNhanVatTrongCanh } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
@@ -32,6 +33,66 @@ export const CanhKet: React.FC<Props> = ({
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
+  const daoCuHienThi = locDaoCuKhongTrungLap(canh.daoCu, canh.nhanVat);
+
+  const lopHud = (
+    <>
+      {(hienBannerKetThuc || canh.tieuDeNho) && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 84,
+            left: 60,
+            right: 60,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            opacity: doMo,
+            pointerEvents: 'none',
+          }}
+        >
+          <div
+            style={{
+              padding: '22px 46px',
+              borderRadius: 24,
+              backgroundColor: 'rgba(15, 23, 42, 0.88)',
+              border: `3.5px solid ${bangMau.nhanManh}`,
+              textAlign: 'center',
+              maxWidth: 1320,
+              boxShadow: '8px 8px 0px rgba(15, 23, 42, 0.45)',
+            }}
+          >
+            {hienBannerKetThuc && (
+              <div
+                style={{
+                  color: bangMau.nhanManh,
+                  fontSize: 21,
+                  fontWeight: 900,
+                  letterSpacing: 1.8,
+                  marginBottom: 10,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Cảm ơn bạn đã theo dõi!
+              </div>
+            )}
+            <div
+              style={{
+                color: '#FFFFFF',
+                fontSize: 50,
+                fontWeight: 900,
+                lineHeight: 1.2,
+              }}
+            >
+              {canh.tieuDeNho ?? tieuDeVideo}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
+    </>
+  );
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
@@ -39,70 +100,20 @@ export const CanhKet: React.FC<Props> = ({
         camera={canh.camera}
         mayQuay={canh.mayQuay}
         luotThoai={canh.luotThoai}
-        daoCu={canh.daoCu}
+        daoCu={daoCuHienThi}
         chuyenCanh={canh.chuyenCanh}
         nhanVat={canh.nhanVat}
         thoiLuongCanh={thoiLuong}
+        hud={lopHud}
       >
         <BoiCanhHoatHinh
           loai={canh.boiCanh}
           thoiTiet={canh.thoiTiet}
           vatTheXungQuanh={canh.vatTheXungQuanh}
           bienSoXe={canh.bienSoXe}
+          nhanVat={canh.nhanVat}
+          daoCu={daoCuHienThi}
         />
-
-        {(hienBannerKetThuc || canh.tieuDeNho) && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 96,
-              left: 0,
-              right: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              opacity: doMo,
-              pointerEvents: 'none',
-            }}
-          >
-            <div
-              style={{
-                padding: '22px 46px',
-                borderRadius: 24,
-                backgroundColor: 'rgba(15, 23, 42, 0.86)',
-                border: `3.5px solid ${bangMau.nhanManh}`,
-                textAlign: 'center',
-                maxWidth: 1320,
-                boxShadow: '8px 8px 0px rgba(15, 23, 42, 0.45)',
-              }}
-            >
-              {hienBannerKetThuc && (
-                <div
-                  style={{
-                    color: bangMau.nhanManh,
-                    fontSize: 21,
-                    fontWeight: 900,
-                    letterSpacing: 1.8,
-                    marginBottom: 10,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Cảm ơn bạn đã theo dõi!
-                </div>
-              )}
-              <div
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: 50,
-                  fontWeight: 900,
-                  lineHeight: 1.2,
-                }}
-              >
-                {canh.tieuDeNho ?? tieuDeVideo}
-              </div>
-            </div>
-          </div>
-        )}
 
         <svg
           width={1920}
@@ -110,7 +121,7 @@ export const CanhKet: React.FC<Props> = ({
           viewBox="0 0 1920 1080"
           style={{ position: 'absolute', inset: 0 }}
         >
-          {canh.daoCu?.map((dc, idx) => (
+          {daoCuHienThi.map((dc, idx) => (
             <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
           ))}
           {danhSachNhanVat.map((nv, idx) => {
@@ -130,8 +141,6 @@ export const CanhKet: React.FC<Props> = ({
           <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
         </svg>
       </MayQuayDong>
-
-      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
     </div>
   );
 };

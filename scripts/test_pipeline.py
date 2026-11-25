@@ -2976,6 +2976,9 @@ class TestGiuChanNguoiXemV07Offline(unittest.TestCase):
             "--chi-ghep-hoan-chinh",
             "--hoan-tat-tu-meta",
             "actions/cache@v4",
+            "node-version: '22'",
+            "Cai dat Node.js 22 (co cache npm)",
+            "node-modules-${{ runner.os }}-node22-",
             "node_modules/.remotion",
             "~/.cache/remotion",
             "retention-days: 1",
@@ -2991,8 +2994,16 @@ class TestGiuChanNguoiXemV07Offline(unittest.TestCase):
             "thumbnail_*.png",
         ):
             self.assertIn(bat_buoc, text, f"Workflow thieu cau hinh bat buoc: {bat_buoc}")
+        # Dam bao da nang toan bo 3 job len Node 22 va khong con sot cau hinh Node 20
+        self.assertEqual(text.count("node-version: '22'"), 3)
+        self.assertNotIn("node-version: '20'", text)
+        self.assertNotIn("node20", text)
         # YOUTUBE_API_KEY la tuy chon: workflow hang ngay KHONG duoc phu thuoc hay yeu cau secret nay
         self.assertNotIn("YOUTUBE_API_KEY", text)
+        # Kiem tra scripts/test_khung.mjs khong import tinh truc tiep file .ts (de chay duoc tren ca Node 20 & 22+)
+        test_khung_txt = (GOC_DU_AN / "scripts" / "test_khung.mjs").read_text(encoding="utf-8")
+        self.assertIn("esbuild", test_khung_txt)
+        self.assertNotRegex(test_khung_txt, r"(?m)^import\s+[\s\S]*?from\s+['\"]\.\./src/[^'\"]+\.ts['\"]")
 
     def test_v20_buoc1_chong_ro_ri_pythagoras_outro_va_gap_frame(self) -> None:
         # 1. Xac minh ma nguon src/canh/ va src/daocu/MinhHoaToan.tsx KHONG con hardcode fallback Pythagoras

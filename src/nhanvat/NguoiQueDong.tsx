@@ -21,8 +21,9 @@ import {
   springTatDinh,
 } from '../xuong/duong_cong';
 import { bamChuoiTatDinh, bamTatDinh } from '../vfx/tat_dinh';
+import { HUD_BOTTOM_SAFE, useCameraParallax } from '../vfx/MayQuayDong';
 import { tinhLipSyncChoFrame } from './lip_sync';
-import { tinhThongSoHopTen } from './ten_nhan_vat';
+import { chiaDongBongBong, tinhThongSoHopTen } from './ten_nhan_vat';
 import {
   giaiBieuCamTheoMoc,
   tinhHuongNhinTuongTac,
@@ -1124,26 +1125,6 @@ const veLopTuThePhiaTruoc = (
   return null;
 };
 
-/** Chia noi dung bong bong thoai thanh toi da 2 dong gon dep */
-function chiaDongBongBong(noiDung: string): string[] {
-  const sach = noiDung.trim();
-  if (sach.length <= 34) {
-    return [sach];
-  }
-  const tu = sach.split(/\s+/);
-  let dong1 = '';
-  let dong2 = '';
-  for (const w of tu) {
-    if ((dong1 + ' ' + w).trim().length <= 34 && dong2.length === 0) {
-      dong1 = (dong1 + ' ' + w).trim();
-    } else {
-      dong2 = (dong2 + ' ' + w).trim();
-    }
-  }
-  if (!dong2) return [dong1];
-  return [dong1, dong2.length > 38 ? `${dong2.slice(0, 35)}…` : dong2];
-}
-
 export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
   thongTin,
   trangThai,
@@ -1155,6 +1136,7 @@ export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
+  const cam = useCameraParallax();
   const tongFrame = Math.max(1, thoiLuongCanh ?? durationInFrames);
 
   const daGiai = trangThai as Partial<TrangThaiNhanVatDaGiai>;
@@ -1238,25 +1220,57 @@ export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
   const banKinhDau = doTuoi === 'thieu_nien' ? 24.5 : 25.5;
   const doDayNet = doTuoi === 'thieu_nien' ? 7.6 : 8.5;
 
-  // Bong bong thoai bat ra bang lo xo springTatDinh (reset moi khi doi luot thoai)
+  // Bong bong thoai tu dong xuong dong & mo rong chieu cao vua du (KHONG cat cut bang "...")
   const frameBatDauThoai = daGiai.frameBatDauThoai ?? 0;
   const dongThoai = trangThai.bongBongThoai
     ? chiaDongBongBong(trangThai.bongBongThoai)
     : [];
+  const coChuThoai = dongThoai.length >= 4 ? 16 : 17.5;
+  const chieuCaoDongThoai = dongThoai.length >= 4 ? 21 : 23;
+  const demDocBongBong = 15;
   const doDaiDongLonNhat = dongThoai.reduce((m, s) => Math.max(m, s.length), 0);
-  const rongBongBong = Math.max(220, Math.min(460, doDaiDongLonNhat * 11.2 + 56));
-  const caoBongBong = dongThoai.length > 1 ? 76 : 56;
+  const rongBongBong = Math.max(
+    210,
+    Math.min(460, Math.ceil(doDaiDongLonNhat * coChuThoai * 0.58 + 46)),
+  );
+  const caoBongBong = Math.max(
+    54,
+    dongThoai.length * chieuCaoDongThoai + demDocBongBong * 2,
+  );
   const loXoThoai = springTatDinh(frame - frameBatDauThoai - 1, 11, 210);
-  const tiLeThoai = kepGiaTri(loXoThoai, 0, 1.22);
-  const nhunThoaiY = Math.sin(frame * 0.1) * 2.2;
+  const tiLeThoai = kepGiaTri(loXoThoai, 0, 1.15);
+  const nhunThoaiY = Math.sin(frame * 0.1) * 2.0;
 
-  // Hop nhan ten nhan vat tu co gian theo do dai chuoi (khong bao gio cat chu)
+  // Hop nhan ten nhan vat tu co gian + rang buoc luon nam TREN vung phu de (>= 150px tu mep duoi)
   const hopTen = tinhThongSoHopTen(thongTin.ten);
+  const zoomCam = Math.max(1, Number.isFinite(cam.zoom) ? cam.zoom : 1);
+  const panYCam = Number.isFinite(cam.panY) ? cam.panY : 0;
+  const gioiHanDuoiManHinh = 1080 - HUD_BOTTOM_SAFE - 10; // 920px (tren han vung phu de 150px)
+  const gioiHanDuoiTheGioi = 540 + (gioiHanDuoiManHinh - 540 - panYCam) / zoomCam;
+  const maxLocalTenY =
+    (gioiHanDuoiTheGioi - trangThai.y) / Math.max(0.2, tiLeTong) -
+    hopTen.height / 2;
+  const viTriTenY = Math.max(-36, Math.min(28, maxLocalTenY));
 
   const huongNhinTongX = xuong.huongNhinX + huongTuongTac.lechNhinX;
   const huongNhinTongY = xuong.huongNhinY + huongTuongTac.lechNhinY;
-  const viTriBongBongDauY = doTuoi === 'so_sinh' ? -102 : xuong.dau.y - 88;
-  const viTriBongBongDauX = doTuoi === 'so_sinh' ? 0 : xuong.dau.x + 22 * dir;
+  const viTriBongBongDauY = doTuoi === 'so_sinh' ? -98 : xuong.dau.y - 80;
+  const rawBongBongX = doTuoi === 'so_sinh' ? 0 : xuong.dau.x + 18 * dir;
+  // Giu bong bong thoai khong bi cat ra ngoai mep trai/phai 1920px
+  const nuaRongTheGioi = (rongBongBong / 2) * tiLeTong;
+  const tamBongBongTheGioi = xTong + rawBongBongX * tiLeTong;
+  const tamBongBongAnToan = kepGiaTri(
+    tamBongBongTheGioi,
+    40 + nuaRongTheGioi,
+    1880 - nuaRongTheGioi,
+  );
+  const viTriBongBongDauX =
+    (tamBongBongAnToan - xTong) / Math.max(0.2, tiLeTong);
+  const lechMuiTenX = kepGiaTri(
+    rawBongBongX - viTriBongBongDauX,
+    -rongBongBong / 2 + 28,
+    rongBongBong / 2 - 28,
+  );
 
   return (
     <g transform={`translate(${xTong.toFixed(1)}, ${trangThai.y}) scale(${tiLeTong})`}>
@@ -1443,23 +1457,23 @@ export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
         </>
       )}
 
-      {/* The ten nhan vat tu co gian theo do dai chuoi, khong bao gio bi cat chu */}
+      {/* The ten nhan vat tu co gian theo do dai chuoi & luon nam tren vung phu de */}
       {hopTen.text.length > 0 && (
-        <g transform="translate(0, 34)">
+        <g transform={`translate(0, ${viTriTenY.toFixed(1)})`}>
           <rect
             x={-hopTen.width / 2}
-            y={-17}
+            y={-hopTen.height / 2}
             width={hopTen.width}
             height={hopTen.height}
             rx={14}
             fill="#FFFDF7"
-            fillOpacity={0.94}
+            fillOpacity={0.95}
             stroke={mauChuDao}
             strokeWidth={2.6}
           />
           <text
             x={0}
-            y={2}
+            y={5.5}
             textAnchor="middle"
             fill="#0F172A"
             fontSize={hopTen.fontSize}
@@ -1471,14 +1485,14 @@ export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
         </g>
       )}
 
-      {/* Bong bong thoai hoat hinh bat ra bang lo xo springTatDinh */}
+      {/* Bong bong thoai hoat hinh tu dong mo rong chieu cao hien thi tron ven cau thoai */}
       {dongThoai.length > 0 && tiLeThoai > 0.01 && (
         <g
           transform={`translate(${viTriBongBongDauX.toFixed(1)}, ${(viTriBongBongDauY + nhunThoaiY).toFixed(1)}) scale(${tiLeThoai.toFixed(3)})`}
         >
           <rect
             x={-rongBongBong / 2}
-            y={-caoBongBong + 24}
+            y={24 - caoBongBong}
             width={rongBongBong}
             height={caoBongBong}
             rx={18}
@@ -1486,22 +1500,43 @@ export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
             stroke="#1E293B"
             strokeWidth={3.2}
           />
-          <polygon points="-10,24 10,24 -3,39" fill="#FFFFFF" stroke="#1E293B" strokeWidth={2.6} strokeLinejoin="round" />
-          <line x1={-8} y1={24} x2={8} y2={24} stroke="#FFFFFF" strokeWidth={4} />
-          {dongThoai.map((dong, idx) => (
-            <text
-              key={`dong-thoai-${idx}`}
-              x={0}
-              y={dongThoai.length > 1 ? -14 + idx * 24 : 4}
-              textAnchor="middle"
-              fill="#0F172A"
-              fontSize={18}
-              fontWeight={700}
-              fontFamily="Segoe UI, Arial, sans-serif"
-            >
-              {dong}
-            </text>
-          ))}
+          <polygon
+            points={`${(lechMuiTenX - 10).toFixed(1)},24 ${(lechMuiTenX + 10).toFixed(1)},24 ${(lechMuiTenX - 3).toFixed(1)},39`}
+            fill="#FFFFFF"
+            stroke="#1E293B"
+            strokeWidth={2.6}
+            strokeLinejoin="round"
+          />
+          <line
+            x1={lechMuiTenX - 8}
+            y1={24}
+            x2={lechMuiTenX + 8}
+            y2={24}
+            stroke="#FFFFFF"
+            strokeWidth={4}
+          />
+          {dongThoai.map((dong, idx) => {
+            const topKhung = 24 - caoBongBong;
+            const yDong =
+              topKhung +
+              demDocBongBong +
+              coChuThoai * 0.85 +
+              idx * chieuCaoDongThoai;
+            return (
+              <text
+                key={`dong-thoai-${idx}`}
+                x={0}
+                y={yDong.toFixed(1)}
+                textAnchor="middle"
+                fill="#0F172A"
+                fontSize={coChuThoai}
+                fontWeight={700}
+                fontFamily="Segoe UI, Arial, sans-serif"
+              >
+                {dong}
+              </text>
+            );
+          })}
         </g>
       )}
     </g>

@@ -52,3 +52,41 @@ export function tinhThongSoHopTen(ten: string): ThongSoHopTen {
     height,
   };
 }
+
+/**
+ * Tu dong xuong dong cho bong bong thoai theo ranh gioi tu, mo rong so dong vua du
+ * de hien thi tron ven loi thoai ngan/trung binh, TUYET DOI KHONG cat cut bang dau "...".
+ */
+export function chiaDongBongBong(
+  noiDung: string,
+  kyTuToiDaMoiDong = 32,
+): string[] {
+  const sach = (noiDung || '').trim().replace(/\s+/g, ' ');
+  if (!sach) {
+    return [];
+  }
+  if (sach.length <= kyTuToiDaMoiDong) {
+    return [sach];
+  }
+
+  const gioiHan =
+    sach.length > 100 ? 38 : sach.length > 64 ? 34 : kyTuToiDaMoiDong;
+  const cacTu = sach.split(' ');
+  const ketQua: string[] = [];
+  let dongHienTai = '';
+
+  for (const tu of cacTu) {
+    if (!dongHienTai) {
+      dongHienTai = tu;
+    } else if (dongHienTai.length + 1 + tu.length <= gioiHan) {
+      dongHienTai = `${dongHienTai} ${tu}`;
+    } else {
+      ketQua.push(dongHienTai);
+      dongHienTai = tu;
+    }
+  }
+  if (dongHienTai) {
+    ketQua.push(dongHienTai);
+  }
+  return ketQua;
+}

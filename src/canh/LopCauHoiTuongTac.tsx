@@ -8,6 +8,8 @@ type LopCauHoiTuongTacProps = {
   cauHoi?: CauHoiTuongTac;
   bangMau: BangMau;
   thoiLuongCanh: number;
+  /** Bo cuc 2 cot (nam gon ben phai ~65% man hinh de khong de nhan vat ben trai) hoac can giua */
+  boCuc?: 'phai_hai_cot' | 'giua';
 };
 
 /**
@@ -20,6 +22,7 @@ export const LopCauHoiTuongTac: React.FC<LopCauHoiTuongTacProps> = ({
   cauHoi,
   bangMau,
   thoiLuongCanh,
+  boCuc = 'phai_hai_cot',
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -29,12 +32,12 @@ export const LopCauHoiTuongTac: React.FC<LopCauHoiTuongTacProps> = ({
   }
 
   const tt = tinhTrangThaiCauHoiTuongTac(cauHoi, frame, thoiLuongCanh, fps);
-  const scaleThe = kepGiaTri(springTatDinh(frame - 2, 11, 200), 0, 1.12);
+  const scaleThe = kepGiaTri(springTatDinh(frame - 2, 11, 200), 0, 1.06);
   const scaleSoDem = tt.dangDemNguoc
-    ? 1 + (1 - kepGiaTri(springTatDinh(tt.frameTrongGiayHienTai, 10, 260), 0, 1)) * 0.35
+    ? 1 + (1 - kepGiaTri(springTatDinh(tt.frameTrongGiayHienTai, 10, 260), 0, 1)) * 0.32
     : 1;
   const scaleDapAn = tt.daHienDapAn
-    ? kepGiaTri(springTatDinh(tt.frameTuDapAn, 10, 210), 0, 1.15)
+    ? kepGiaTri(springTatDinh(tt.frameTuDapAn, 10, 210), 0, 1.06)
     : 0;
 
   const mauThanhDem =
@@ -44,34 +47,39 @@ export const LopCauHoiTuongTac: React.FC<LopCauHoiTuongTacProps> = ({
         ? '#FACC15'
         : '#FB7185';
 
+  const laHaiCotPhai = boCuc === 'phai_hai_cot';
+
   return (
     <div
       style={{
         position: 'absolute',
-        top: 64,
-        left: 0,
-        right: 0,
+        top: 76,
+        bottom: 154,
+        left: laHaiCotPhai ? 620 : 0,
+        right: laHaiCotPhai ? 52 : 0,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
+        justifyContent: laHaiCotPhai ? 'center' : 'flex-start',
+        alignItems: laHaiCotPhai ? 'stretch' : 'center',
         gap: 18,
         pointerEvents: 'none',
         zIndex: 25,
         fontFamily: 'Segoe UI, Arial, sans-serif',
+        boxSizing: 'border-box',
       }}
     >
       {/* The cau hoi chinh */}
       <div
         style={{
-          width: 1120,
-          maxWidth: '88%',
+          width: laHaiCotPhai ? '100%' : 1120,
+          maxWidth: laHaiCotPhai ? '100%' : '88%',
           backgroundColor: 'rgba(15, 23, 42, 0.94)',
           border: `4px solid ${bangMau.nhanManh || '#FACC15'}`,
           borderRadius: 24,
-          padding: '20px 30px',
+          padding: '20px 28px',
           boxShadow: '10px 10px 0px rgba(15, 23, 42, 0.45)',
           transform: `scale(${scaleThe.toFixed(3)})`,
-          transformOrigin: 'top center',
+          transformOrigin: laHaiCotPhai ? 'center right' : 'top center',
           boxSizing: 'border-box',
         }}
       >
@@ -214,15 +222,15 @@ export const LopCauHoiTuongTac: React.FC<LopCauHoiTuongTacProps> = ({
       {tt.daHienDapAn && scaleDapAn > 0.02 && (
         <div
           style={{
-            width: 980,
-            maxWidth: '84%',
+            width: laHaiCotPhai ? '100%' : 980,
+            maxWidth: laHaiCotPhai ? '100%' : '84%',
             backgroundColor: '#ECFDF5',
             border: '4px solid #059669',
             borderRadius: 22,
             padding: '18px 28px',
             boxShadow: '9px 9px 0px #064E3B',
             transform: `scale(${scaleDapAn.toFixed(3)})`,
-            transformOrigin: 'top center',
+            transformOrigin: laHaiCotPhai ? 'center right' : 'top center',
             boxSizing: 'border-box',
           }}
         >

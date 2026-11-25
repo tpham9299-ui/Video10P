@@ -2,6 +2,7 @@ import React from 'react';
 import { useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
 import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
+import { locDaoCuKhongTrungLap } from '../boicanh/moi_truong_logic';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
 import {
   giaiTrangThaiNhanVatTrongCanh,
@@ -45,13 +46,15 @@ export const CanhChiaDoiManHinh: React.FC<Props> = ({
   const zoomPhai =
     batTuDongFocus && phaiDangNoi && !traiDangNoi ? noiSuy(1, 1.08, vaoKhung) : 1;
 
+  const daoCuHopLe = locDaoCuKhongTrungLap(canh.daoCu, canh.nhanVat);
+
   const veNuaManHinh = (
     nhom: TrangThaiNhanVatDaGiai[],
     laBenTrai: boolean,
     zoomNua: number,
     dangNoiBenNay: boolean,
   ) => {
-    const daoCuNua = (canh.daoCu ?? []).filter((dc) =>
+    const daoCuNua = daoCuHopLe.filter((dc) =>
       laBenTrai ? dc.x < 960 : dc.x >= 960,
     );
     const hieuUngNua = (canh.hieuUngHoatHinh ?? []).filter((hu) =>
@@ -93,6 +96,8 @@ export const CanhChiaDoiManHinh: React.FC<Props> = ({
             thoiTiet={canh.thoiTiet}
             vatTheXungQuanh={canh.vatTheXungQuanh}
             bienSoXe={canh.bienSoXe}
+            nhanVat={canh.nhanVat}
+            daoCu={daoCuHopLe}
           />
 
           <svg
@@ -160,7 +165,7 @@ export const CanhChiaDoiManHinh: React.FC<Props> = ({
         <div
           style={{
             position: 'absolute',
-            top: 62,
+            top: 76,
             left: 0,
             right: 0,
             display: 'flex',

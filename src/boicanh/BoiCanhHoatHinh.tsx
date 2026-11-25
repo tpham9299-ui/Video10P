@@ -1,13 +1,19 @@
 import React from 'react';
 import { useCurrentFrame } from 'remotion';
 import type {
+  DaoCuTrongCanh,
   LoaiBoiCanh,
   LoaiThoiTiet,
+  NhanVatTrongCanh,
   VatTheXungQuanh,
 } from '../kieu_dai';
 import { bamTatDinh } from '../vfx/tat_dinh';
 import { useCameraParallax } from '../vfx/MayQuayDong';
 import { kepGiaTri } from '../xuong/duong_cong';
+import {
+  coAnGiuongBenhNen,
+  coAnNoiNenPhongSinh,
+} from './moi_truong_logic';
 import {
   CangBienTauThuy,
   DuongPhoXeCo,
@@ -27,6 +33,12 @@ type BoiCanhHoatHinhProps = {
   thoiTiet?: LoaiThoiTiet;
   vatTheXungQuanh?: readonly VatTheXungQuanh[];
   bienSoXe?: string;
+  /** Danh sach nhan vat trong canh de tu dong khu trung lap do vat nen (noi em be / giuong benh) */
+  nhanVat?: readonly NhanVatTrongCanh[];
+  /** Danh sach dao cu trong canh de tu dong khu trung lap do vat nen */
+  daoCu?: readonly DaoCuTrongCanh[];
+  anNoiNen?: boolean;
+  anGiuongBenhNen?: boolean;
 };
 
 export type ParallaxOffset = {
@@ -1489,10 +1501,17 @@ export const BoiCanhHoatHinh: React.FC<BoiCanhHoatHinhProps> = ({
   thoiTiet = 'khong',
   vatTheXungQuanh,
   bienSoXe,
+  nhanVat,
+  daoCu,
+  anNoiNen: anNoiNenProp,
+  anGiuongBenhNen: anGiuongBenhNenProp,
 }) => {
   const frame = useCurrentFrame();
   const cam = useCameraParallax();
   const px = tinhParallax(cam.panX, cam.panY);
+  const anNoiNen = anNoiNenProp ?? coAnNoiNenPhongSinh(nhanVat, daoCu);
+  const anGiuongBenhNen =
+    anGiuongBenhNenProp ?? coAnGiuongBenhNen(nhanVat, daoCu);
 
   const veBoiCanh = () => {
     switch (loai) {
@@ -1519,13 +1538,13 @@ export const BoiCanhHoatHinh: React.FC<BoiCanhHoatHinhProps> = ({
       case 'giang_duong_hien_dai':
         return <GiangDuongHienDai frame={frame} px={px} />;
       case 'nha_co_phong_sinh':
-        return <NhaCoPhongSinh frame={frame} px={px} />;
+        return <NhaCoPhongSinh frame={frame} px={px} anNoiNen={anNoiNen} />;
       case 'cang_bien_tau_thuy':
         return <CangBienTauThuy frame={frame} px={px} laHoangHon={thoiTiet === 'hoang_hon'} />;
       case 'phong_tro_bep_lua':
         return <PhongTroBepLua frame={frame} px={px} />;
       case 'phong_benh_vien':
-        return <PhongBenhVien frame={frame} px={px} />;
+        return <PhongBenhVien frame={frame} px={px} anGiuongBenhNen={anGiuongBenhNen} />;
       case 'duong_pho_xe_co':
         return <DuongPhoXeCo frame={frame} px={px} laHoangHon={thoiTiet === 'hoang_hon'} />;
       case 'giang_duong_dai_hoc':

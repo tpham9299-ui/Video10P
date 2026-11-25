@@ -38,7 +38,7 @@ export const KhungLoiBinhHaiHuoc: React.FC<KhungLoiBinhHaiHuocProps> = ({
     <div
       style={{
         position: 'absolute',
-        top: 64,
+        top: 76,
         left: benTrai ? 52 : undefined,
         right: benTrai ? undefined : 52,
         maxWidth: 430,
@@ -46,7 +46,7 @@ export const KhungLoiBinhHaiHuoc: React.FC<KhungLoiBinhHaiHuocProps> = ({
         transform: `rotate(${gocHienTai.toFixed(2)}deg) scale(${scale.toFixed(3)})`,
         transformOrigin: benTrai ? 'top left' : 'top right',
         pointerEvents: 'none',
-        zIndex: 20,
+        zIndex: 24,
       }}
     >
       <div

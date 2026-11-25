@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import {
   AbsoluteFill,
   Audio,
+  Freeze,
   getStaticFiles,
   Sequence,
   staticFile,
@@ -32,74 +33,130 @@ import {
 import { easeInOutCubic, kepGiaTri, noiSuy } from './xuong/duong_cong';
 
 /**
- * Lop chuyen canh hoat hinh toan man hinh (v0.4):
- * Hien thuc hoa du 3 kieu:
- * - mo_dan: mo dan dong-mo em ai
- * - quet_ngang: man quet ngang vien vang dong-mo nhanh gon
- * - vong_tron_hoat_hinh: Iris Wipe dong-mo hinh tron kinh dien phim hoat hinh
+ * Khung chuyen canh noi tiep phu kin 100% khung hinh (khong lo nen toi trong khi truot slide):
+ * - quet_ngang: dung nen noi cua canh truoc (Freeze o frame cuoi) + quet mo canh moi tu trai sang phai voi vach vang mem
+ * - mo_dan: cross-fade muot phu kin 100% khung hinh (co nen canh truoc o duoi)
+ * - vong_tron_hoat_hinh: Iris Wipe hinh tron kinh dien (co nen canh truoc o duoi neu co)
  */
-const LopChuyenCanhCanh: React.FC<{
+const KhungChuyenCanhNoiTiep: React.FC<{
   chuyenCanhVao?: LoaiChuyenCanh;
-  chuyenCanhRa?: LoaiChuyenCanh;
-  thoiLuongCanh: number;
-}> = ({ chuyenCanhVao, chuyenCanhRa, thoiLuongCanh }) => {
+  noiDungMoi: React.ReactNode;
+  noiDungTruoc?: React.ReactNode;
+  frameCuoiCanhTruoc?: number;
+}> = ({
+  chuyenCanhVao,
+  noiDungMoi,
+  noiDungTruoc,
+  frameCuoiCanhTruoc = 0,
+}) => {
   const frame = useCurrentFrame();
 
-  const veHieuUng = (
-    loai: LoaiChuyenCanh,
-    tienDoMo: number, // 0 = che kin hoan toan, 1 = mo ra hoan toan
-    laPhaRa: boolean,
-  ) => {
-    const e = easeInOutCubic(kepGiaTri(tienDoMo, 0, 1));
+  if (!chuyenCanhVao) {
+    return <>{noiDungMoi}</>;
+  }
 
-    if (loai === 'mo_dan') {
-      // Giu do mo toi da 0.62 de chuyen canh muot ma, khong tao khung den tuyet doi (gap frame)
-      const op = (1 - e) * 0.62;
-      if (op <= 0.005) return null;
+  const doDaiVao =
+    chuyenCanhVao === 'vong_tron_hoat_hinh'
+      ? 16
+      : chuyenCanhVao === 'quet_ngang'
+        ? 14
+        : 12;
+
+  if (frame >= doDaiVao) {
+    return <>{noiDungMoi}</>;
+  }
+
+  const e = easeInOutCubic(kepGiaTri((frame + 1) / (doDaiVao + 1), 0, 1));
+  const coNenNoi = Boolean(noiDungTruoc);
+
+  if (chuyenCanhVao === 'quet_ngang') {
+    if (coNenNoi) {
+      // Nen noi tu canh truoc phu kin 100% phan chua quet + canh moi phu kin 100% ben trai (tach stacking context)
+      const phanTramChePhai = Math.max(0, (1 - e) * 100);
+      const viTriThanhVang = e * 1920;
       return (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundColor: '#0F172A',
-            opacity: op,
-            pointerEvents: 'none',
-            zIndex: 35,
-          }}
-        />
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', isolation: 'isolate' }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 1, isolation: 'isolate' }}>
+            <Freeze frame={Math.max(0, frameCuoiCanhTruoc)}>
+              {noiDungTruoc}
+            </Freeze>
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 2,
+              isolation: 'isolate',
+              clipPath: `inset(0 ${phanTramChePhai.toFixed(2)}% 0 0)`,
+            }}
+          >
+            {noiDungMoi}
+          </div>
+          {e > 0.02 && e < 0.98 && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: viTriThanhVang - 5,
+                width: 10,
+                backgroundColor: '#FACC15',
+                boxShadow: '0 0 0 2px rgba(15, 23, 42, 0.45)',
+                pointerEvents: 'none',
+                zIndex: 28,
+              }}
+            />
+          )}
+        </div>
       );
     }
 
-    if (loai === 'quet_ngang') {
-      if (e >= 0.995) return null;
-      // Pha vao: man quet di chuyen tu 0 -> 1980; pha ra: man quet truot tu -1980 -> 0
-      const leftX = laPhaRa ? noiSuy(0, -1980, e) : noiSuy(0, 1980, e);
-      return (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: leftX,
-            width: 1960,
-            backgroundColor: '#1E293B',
-            borderLeft: laPhaRa ? undefined : '16px solid #FACC15',
-            borderRight: laPhaRa ? '16px solid #FACC15' : undefined,
-            pointerEvents: 'none',
-            zIndex: 35,
-          }}
-        />
-      );
-    }
-
-    // vong_tron_hoat_hinh: Iris Wipe dong-mo hinh tron (ban kinh toi thieu > 0 tranh khung den chet)
-    if (e >= 0.995) return null;
-    const r = Math.max(48, noiSuy(48, 1320, e));
-    const cx = 960;
-    const cy = 540;
-    const d = `M 0 0 H 1920 V 1080 H 0 Z M ${cx - r} ${cy} a ${r} ${r} 0 1 0 ${r * 2} 0 a ${r} ${r} 0 1 0 ${-r * 2} 0 Z`;
-
+    // Khong co canh truoc (canh dau tien): fade muot phu kin 100% khung hinh, khong de ho nen toi
+    const op = kepGiaTri(0.35 + e * 0.65, 0, 1);
     return (
+      <div style={{ position: 'absolute', inset: 0, opacity: op }}>
+        {noiDungMoi}
+      </div>
+    );
+  }
+
+  if (chuyenCanhVao === 'mo_dan') {
+    if (coNenNoi) {
+      return (
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', isolation: 'isolate' }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 1, isolation: 'isolate' }}>
+            <Freeze frame={Math.max(0, frameCuoiCanhTruoc)}>
+              {noiDungTruoc}
+            </Freeze>
+          </div>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 2, isolation: 'isolate', opacity: e }}>
+            {noiDungMoi}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: kepGiaTri(0.35 + e * 0.65, 0, 1),
+        }}
+      >
+        {noiDungMoi}
+      </div>
+    );
+  }
+
+  // vong_tron_hoat_hinh: Iris Wipe hinh tron kinh dien (phu kin 100% khung hinh)
+  const r = Math.max(48, noiSuy(48, 1320, e));
+  const cx = 960;
+  const cy = 540;
+  const d = `M 0 0 H 1920 V 1080 H 0 Z M ${cx - r} ${cy} a ${r} ${r} 0 1 0 ${r * 2} 0 a ${r} ${r} 0 1 0 ${-r * 2} 0 Z`;
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+      {noiDungMoi}
       <svg
         width={1920}
         height={1080}
@@ -111,7 +168,7 @@ const LopChuyenCanhCanh: React.FC<{
           zIndex: 35,
         }}
       >
-        <path d={d} fill="#0F172A" fillRule="evenodd" />
+        <path d={d} fill="#0F172A" fillOpacity={coNenNoi ? 0.88 : 0.92} fillRule="evenodd" />
         <circle
           cx={cx}
           cy={cy}
@@ -121,37 +178,8 @@ const LopChuyenCanhCanh: React.FC<{
           strokeWidth={7}
         />
       </svg>
-    );
-  };
-
-  // Pha vao dau canh (bat dau tu (frame + 1) / (doDaiVao + 1) de khong dong cung 100% toi o frame 0)
-  if (chuyenCanhVao) {
-    const doDaiVao =
-      chuyenCanhVao === 'vong_tron_hoat_hinh'
-        ? 16
-        : chuyenCanhVao === 'quet_ngang'
-          ? 12
-          : 10;
-    if (frame < doDaiVao) {
-      return veHieuUng(chuyenCanhVao, (frame + 1) / (doDaiVao + 1), false);
-    }
-  }
-
-  // Pha dong o cuoi canh khi canh tiep theo co khai bao chuyenCanh
-  if (chuyenCanhRa) {
-    const doDaiRa =
-      chuyenCanhRa === 'vong_tron_hoat_hinh'
-        ? 12
-        : chuyenCanhRa === 'quet_ngang'
-          ? 10
-          : 8;
-    const conLai = thoiLuongCanh - 1 - frame;
-    if (conLai >= 0 && conLai < doDaiRa) {
-      return veHieuUng(chuyenCanhRa, (conLai + 1) / (doDaiRa + 1), true);
-    }
-  }
-
-  return null;
+    </div>
+  );
 };
 
 /** Phu de 16:9 de doc tren ca nen sang (troi xanh/giay kem) lan nen toi (troi dem) */
@@ -186,27 +214,29 @@ const PhuDeCanh: React.FC<{
     <div
       style={{
         position: 'absolute',
-        left: 140,
-        right: 140,
-        bottom: 36,
+        left: 120,
+        right: 120,
+        bottom: 24,
+        maxHeight: 120,
         display: 'flex',
         justifyContent: 'center',
+        alignItems: 'flex-end',
         pointerEvents: 'none',
         zIndex: 30,
       }}
     >
       <div
         style={{
-          padding: '14px 30px',
+          padding: '11px 28px',
           borderRadius: 16,
-          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
           border: `2.5px solid ${mauVien}`,
           color: '#FFFFFF',
-          fontSize: 28,
+          fontSize: 26,
           fontWeight: 700,
-          lineHeight: 1.35,
+          lineHeight: 1.32,
           textAlign: 'center',
-          maxWidth: 1520,
+          maxWidth: 1540,
           fontFamily: 'Segoe UI, Arial, sans-serif',
         }}
       >
@@ -253,6 +283,30 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
 
   const veNoiDungCanh = (muc: CanhDaCanKhung) => {
     const { canh, tenChuong, hienManHinhKetThuc } = muc;
+
+    // Uu tien bo cuc giang Toan va dong thoi gian de khong bi che khuat bang/thanh moc thoi gian
+    if (
+      !hienManHinhKetThuc &&
+      (canh.boCuc === 'giai_thich_toan' || canh.loaiCanh === 'giang_toan')
+    ) {
+      return (
+        <CanhGiaiThichToan
+          canh={canh}
+          bangMau={bangMau}
+          banDoNhanVat={banDoNhanVat}
+        />
+      );
+    }
+
+    if (!hienManHinhKetThuc && canh.boCuc === 'dong_thoi_gian') {
+      return (
+        <CanhDongThoiGian
+          canh={canh}
+          bangMau={bangMau}
+          banDoNhanVat={banDoNhanVat}
+        />
+      );
+    }
 
     // Uu tien che do chia doi man hinh (gocQuay="chia_doi_man_hinh") va canh tuong tac khan gia v2.0
     if (!hienManHinhKetThuc && canh.mayQuay?.gocQuay === 'chia_doi_man_hinh') {
@@ -391,6 +445,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
             ? durationInFrames - tongFrames
             : 0;
         const thoiLuongCanh = muc.thoiLuongCanh + phanBuCuoi;
+        const mucTruoc = idx > 0 ? tatCaCanh[idx - 1] : undefined;
         return (
           <Sequence
             key={`${muc.canh.id}-${idx}`}
@@ -398,7 +453,14 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
             durationInFrames={thoiLuongCanh}
             name={`${muc.canh.id} (${muc.canh.boCuc})`}
           >
-            {veNoiDungCanh(muc)}
+            <KhungChuyenCanhNoiTiep
+              chuyenCanhVao={muc.canh.chuyenCanh}
+              noiDungMoi={veNoiDungCanh(muc)}
+              noiDungTruoc={mucTruoc ? veNoiDungCanh(mucTruoc) : undefined}
+              frameCuoiCanhTruoc={
+                mucTruoc ? Math.max(0, mucTruoc.thoiLuongCanh - 1) : 0
+              }
+            />
 
             {batPhuDe && (
               <PhuDeCanh
@@ -407,12 +469,6 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
                 banDoNhanVat={banDoNhanVat}
               />
             )}
-
-            <LopChuyenCanhCanh
-              chuyenCanhVao={muc.canh.chuyenCanh}
-              chuyenCanhRa={muc.chuyenCanhTiepTheo}
-              thoiLuongCanh={thoiLuongCanh}
-            />
 
             {muc.canh.audioSrc && (
               <Audio src={staticFile(muc.canh.audioSrc)} />

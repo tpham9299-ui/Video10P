@@ -64,10 +64,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cai dat Node.js 20 (co cache npm)
+      - name: Cai dat Node.js 22 (co cache npm)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Cai dat Python 3.11 (co cache pip)
@@ -82,9 +82,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            node-modules-${{ runner.os }}-node20-
+            node-modules-${{ runner.os }}-node22-
 
       - name: Cai dat FFmpeg, font Unicode va thu vien
         run: |
@@ -184,10 +184,10 @@ jobs:
       - name: Lay ma nguon tu repo
         uses: actions/checkout@v4
 
-      - name: Cai dat Node.js 20 (co cache npm)
+      - name: Cai dat Node.js 22 (co cache npm)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Cai dat Python 3.11 (co cache pip)
@@ -202,9 +202,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            node-modules-${{ runner.os }}-node20-
+            node-modules-${{ runner.os }}-node22-
 
       - name: Cai dat FFmpeg va thu vien can thiet
         run: |
@@ -273,10 +273,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cai dat Node.js 20 (co cache npm)
+      - name: Cai dat Node.js 22 (co cache npm)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Cai dat Python 3.11 (co cache pip)
@@ -291,9 +291,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            node-modules-${{ runner.os }}-node20-
+            node-modules-${{ runner.os }}-node22-
 
       - name: Cai dat FFmpeg, font Unicode va thu vien
         run: |

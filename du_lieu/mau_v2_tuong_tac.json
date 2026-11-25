@@ -129,18 +129,12 @@
               "y": 650
             }
           ],
-          "daoCu": [
-            {
-              "loai": "noi_em_be",
-              "x": 1280,
-              "y": 760
-            }
-          ],
+          "daoCu": [],
           "nhanVat": [
             {
               "id": "ramanujan",
-              "x": 860,
-              "y": 810,
+              "x": 960,
+              "y": 788,
               "huong": "phai",
               "doTuoi": "so_sinh",
               "tuThe": "om_em_be",
@@ -204,7 +198,7 @@
             {
               "id": "ramanujan",
               "x": 840,
-              "y": 810,
+              "y": 788,
               "huong": "phai",
               "doTuoi": "truong_thanh",
               "tuThe": "mac_ao_khoac",
@@ -254,14 +248,9 @@
           ],
           "daoCu": [
             {
-              "loai": "giuong_benh",
-              "x": 1300,
-              "y": 770
-            },
-            {
               "loai": "tach_tra_nong",
               "x": 1060,
-              "y": 720
+              "y": 675
             }
           ],
           "luotThoai": [
@@ -288,7 +277,7 @@
             {
               "id": "hardy",
               "x": 640,
-              "y": 810,
+              "y": 785,
               "huong": "phai",
               "doTuoi": "gia",
               "tuThe": "ngoi_ban",
@@ -300,7 +289,7 @@
             {
               "id": "ramanujan",
               "x": 1280,
-              "y": 810,
+              "y": 785,
               "huong": "trai",
               "doTuoi": "truong_thanh",
               "tuThe": "nam_giuong",
@@ -334,20 +323,20 @@
           "tieuDeNho": "Biển số taxi huyền thoại 1729",
           "loiThoai": "Chỉ trong nửa giây, chiếc taxi cổ biển số 1729 ngoài phố London bỗng trở thành con số nổi tiếng nhất giới Toán học!",
           "camera": {
-            "kieu": "zoom_hai_huoc",
-            "zoom": 1.2
+            "kieu": "tinh"
           },
           "mayQuay": {
             "gocQuay": "zoom_dao_cu",
+            "doPhong": 1.18,
             "diemTieuCu": {
-              "x": 1420,
-              "y": 540
+              "x": 1160,
+              "y": 720
             }
           },
           "vatTheXungQuanh": [
             {
               "loai": "xe_taxi_co",
-              "x": 420,
+              "x": 520,
               "y": 755,
               "tocDo": 3.0,
               "bienSoXe": "1729"
@@ -356,8 +345,8 @@
           "daoCu": [
             {
               "loai": "bien_so_xe",
-              "x": 1420,
-              "y": 540,
+              "x": 1460,
+              "y": 778,
               "bienSoXe": "1729"
             }
           ],
@@ -369,8 +358,8 @@
           "nhanVat": [
             {
               "id": "hardy",
-              "x": 760,
-              "y": 810,
+              "x": 620,
+              "y": 785,
               "huong": "phai",
               "doTuoi": "gia",
               "tuThe": "mac_ao_khoac",
@@ -423,8 +412,8 @@
           "nhanVat": [
             {
               "id": "ramanujan",
-              "x": 960,
-              "y": 810,
+              "x": 420,
+              "y": 788,
               "huong": "phai",
               "doTuoi": "truong_thanh",
               "tuThe": "dung",
@@ -455,10 +444,12 @@
           "tieuDeNho": "Cấu trúc đối xứng của 1729",
           "loiThoai": "Trên bảng giảng đường Cambridge, hai cách phân tích 1729 thành tổng hai lập phương hiện lên sắc nét và đầy bất ngờ.",
           "camera": {
-            "kieu": "tinh"
+            "kieu": "tinh",
+            "zoom": 1
           },
           "mayQuay": {
-            "gocQuay": "trung_canh"
+            "gocQuay": "toan_canh",
+            "doPhong": 1
           },
           "congThucLatex": [
             {
@@ -533,8 +524,8 @@
           "nhanVat": [
             {
               "id": "ramanujan",
-              "x": 255,
-              "y": 808,
+              "x": 245,
+              "y": 790,
               "huong": "phai",
               "doTuoi": "truong_thanh",
               "tuThe": "dung",
@@ -559,16 +550,18 @@
           "tieuDeNho": "Những cột mốc bất tử của Ramanujan",
           "loiThoai": "Chỉ trong 32 năm cuộc đời ngắn ngủi, Ramanujan đã để lại gần 3.900 đẳng thức vẫn đang soi sáng vật lý hiện đại.",
           "camera": {
-            "kieu": "zoom_cham"
+            "kieu": "zoom_cham",
+            "zoom": 1.04
           },
           "mayQuay": {
-            "gocQuay": "chia_doi_man_hinh"
+            "gocQuay": "toan_canh",
+            "doPhong": 1.04
           },
           "vatTheXungQuanh": [
             {
               "loai": "dong_ho_qua_lac",
               "x": 1680,
-              "y": 420
+              "y": 510
             }
           ],
           "mocThoiGian": [
@@ -595,7 +588,7 @@
             {
               "id": "ramanujan",
               "x": 640,
-              "y": 810,
+              "y": 788,
               "huong": "phai",
               "doTuoi": "truong_thanh",
               "tuThe": "ngoi_ban",
@@ -605,7 +598,7 @@
             {
               "id": "hardy",
               "x": 1280,
-              "y": 810,
+              "y": 788,
               "huong": "trai",
               "doTuoi": "gia",
               "tuThe": "dung",

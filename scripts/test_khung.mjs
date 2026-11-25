@@ -1,40 +1,64 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import {
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { build as esbuildBuild } from 'esbuild';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const gocDuAn = path.resolve(__dirname, '..');
+
+/**
+ * Bien dich tam cac module TypeScript thuan bang esbuild (co san trong node_modules cua Remotion)
+ * de test_khung.mjs chay muot 100% tren ca Node 20 lan Node 22+ khong phu thuoc strip-types.
+ */
+async function napCacModuleTs() {
+  const thuMucTam = fs.mkdtempSync(path.join(os.tmpdir(), 'video10p-test-khung-'));
+  const tepBundle = path.join(thuMucTam, 'bundle.mjs');
+  const donDep = () => {
+    try {
+      fs.rmSync(thuMucTam, { recursive: true, force: true });
+    } catch {
+      // bo qua loi don dep tam
+    }
+  };
+  process.once('exit', donDep);
+
+  const maNguonTongHop = `
+export {
   GIOI_HAN_GOC_DAU_MAX,
   GIOI_HAN_GOC_DAU_MIN,
   tinhKhungXuongCoBan,
-} from '../src/xuong/he_xuong.ts';
-import {
+} from './src/xuong/he_xuong.ts';
+export {
   coDuLieuMinhHoaHopLe,
   layDanhSachBuocSuyLuan,
   locMocThoiGianHopLe,
-} from '../src/daocu/minh_hoa_hop_le.ts';
-import {
+} from './src/daocu/minh_hoa_hop_le.ts';
+export {
   chuanHoaKhungHinhLienMach,
   kiemTraKhungHinhLienMach,
-} from '../src/canh/dieu_phoi_canh.ts';
-import { tinhThongSoHopTen } from '../src/nhanvat/ten_nhan_vat.ts';
-import {
+} from './src/canh/dieu_phoi_canh.ts';
+export { chiaDongBongBong, tinhThongSoHopTen } from './src/nhanvat/ten_nhan_vat.ts';
+export {
   easeInBack,
   easeInOutCubic,
   easeOutBack,
   springTatDinh,
-} from '../src/xuong/duong_cong.ts';
-import { bamTatDinh, bamChuoiTatDinh } from '../src/vfx/tat_dinh.ts';
-import {
+} from './src/xuong/duong_cong.ts';
+export { bamTatDinh, bamChuoiTatDinh } from './src/vfx/tat_dinh.ts';
+export {
   BAN_DO_SFX_HIEU_UNG,
   DANH_SACH_SFX_CO_SAN,
   layAmLuongSfx,
   layDuongDanSfxNeuCoSan,
-} from '../src/amthanh/sfx.ts';
-import {
+} from './src/amthanh/sfx.ts';
+export {
   chonKhauHinhTuBienDo,
   tinhLipSyncChoFrame,
   tinhLipSyncDuPhong,
-} from '../src/nhanvat/lip_sync.ts';
-import {
+} from './src/nhanvat/lip_sync.ts';
+export {
   DANH_SACH_DO_TUOI,
   DANH_SACH_GOC_QUAY,
   DANH_SACH_LOAI_BOI_CANH,
@@ -44,31 +68,99 @@ import {
   DANH_SACH_LOAI_MINH_HOA_TOAN,
   DANH_SACH_LOAI_VAT_THE_XUNG_QUANH,
   DANH_SACH_TU_THE,
-} from '../src/kieu_dai.ts';
-import {
+} from './src/kieu_dai.ts';
+export {
+  coAnGiuongBenhNen,
+  coAnNoiNenPhongSinh,
   giaiDanhSachVatTheXungQuanh,
   layVatTheMacDinhChoBoiCanh,
+  locDaoCuKhongTrungLap,
   tinhBuomBay,
   tinhGocQuaLac,
   tinhViTriTaxiCo,
-} from '../src/boicanh/moi_truong_logic.ts';
-import {
+} from './src/boicanh/moi_truong_logic.ts';
+export {
   tinhBienDoiCamera,
   xacDinhNguoiDangNoiTaiFrame,
-} from '../src/vfx/dao_dien_camera.ts';
-import {
+} from './src/vfx/dao_dien_camera.ts';
+export {
   giaiBieuCamTheoMoc,
   giaiTrangThaiNhanVatTrongCanh,
   tinhHuongNhinTuongTac,
-} from '../src/nhanvat/dien_xuat.ts';
-import {
+} from './src/nhanvat/dien_xuat.ts';
+export {
   chiaNhomNhanVatChiaDoi,
   tinhTrangThaiCauHoiTuongTac,
-} from '../src/canh/tuong_tac.ts';
+} from './src/canh/tuong_tac.ts';
+`;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const gocDuAn = path.resolve(__dirname, '..');
+  await esbuildBuild({
+    stdin: {
+      contents: maNguonTongHop,
+      resolveDir: gocDuAn,
+      loader: 'ts',
+    },
+    bundle: true,
+    format: 'esm',
+    platform: 'node',
+    target: 'node20',
+    packages: 'external',
+    outfile: tepBundle,
+    logLevel: 'silent',
+  });
+
+  return import(pathToFileURL(tepBundle).href);
+}
+
+const {
+  GIOI_HAN_GOC_DAU_MAX,
+  GIOI_HAN_GOC_DAU_MIN,
+  tinhKhungXuongCoBan,
+  coDuLieuMinhHoaHopLe,
+  layDanhSachBuocSuyLuan,
+  locMocThoiGianHopLe,
+  chuanHoaKhungHinhLienMach,
+  kiemTraKhungHinhLienMach,
+  chiaDongBongBong,
+  tinhThongSoHopTen,
+  easeInBack,
+  easeInOutCubic,
+  easeOutBack,
+  springTatDinh,
+  bamTatDinh,
+  bamChuoiTatDinh,
+  BAN_DO_SFX_HIEU_UNG,
+  DANH_SACH_SFX_CO_SAN,
+  layAmLuongSfx,
+  layDuongDanSfxNeuCoSan,
+  chonKhauHinhTuBienDo,
+  tinhLipSyncChoFrame,
+  tinhLipSyncDuPhong,
+  DANH_SACH_DO_TUOI,
+  DANH_SACH_GOC_QUAY,
+  DANH_SACH_LOAI_BOI_CANH,
+  DANH_SACH_LOAI_CANH,
+  DANH_SACH_LOAI_DAO_CU,
+  DANH_SACH_LOAI_HANH_DONG,
+  DANH_SACH_LOAI_MINH_HOA_TOAN,
+  DANH_SACH_LOAI_VAT_THE_XUNG_QUANH,
+  DANH_SACH_TU_THE,
+  coAnGiuongBenhNen,
+  coAnNoiNenPhongSinh,
+  giaiDanhSachVatTheXungQuanh,
+  layVatTheMacDinhChoBoiCanh,
+  locDaoCuKhongTrungLap,
+  tinhBuomBay,
+  tinhGocQuaLac,
+  tinhViTriTaxiCo,
+  tinhBienDoiCamera,
+  xacDinhNguoiDangNoiTaiFrame,
+  giaiBieuCamTheoMoc,
+  giaiTrangThaiNhanVatTrongCanh,
+  tinhHuongNhinTuongTac,
+  chiaNhomNhanVatChiaDoi,
+  tinhTrangThaiCauHoiTuongTac,
+} = await napCacModuleTs();
 
 const LOAI_BO_CUC_BAT_BUOC = [
   'mo_dau',
@@ -1184,6 +1276,43 @@ if (
 }
 console.log(
   `[OK] v2.0 Buoc 3: ${DANH_SACH_LOAI_BOI_CANH.length} boi canh Parallax (10 moi + React.memo), ${DANH_SACH_LOAI_DAO_CU.length} dao cu (9 ke chuyen moi), ${DANH_SACH_LOAI_VAT_THE_XUNG_QUANH.length} sinh vat/do vat moi truong tat dinh & MinhHoaToan tham so hoa JSON pass 100%.`,
+);
+
+// 5g. Kiem tra 6 loi bo cuc / hien thi da sua: HUD ngoai camera, khu trung lap noi/giuong, bong bong thoai khong cat ..., 2 cot tuong tac, giang toan zoom 1.0x & chuyen canh slide phu kin
+const cauThoaiTrungBinh =
+  'Không đâu Hardy! Đó là số nhỏ nhất bằng tổng hai lập phương theo hai cách khác nhau!';
+const cacDongBongBong = chiaDongBongBong(cauThoaiTrungBinh);
+if (
+  cacDongBongBong.length < 2 ||
+  cacDongBongBong.join(' ') !== cauThoaiTrungBinh ||
+  cacDongBongBong.some((d) => d.includes('…') || d.includes('...'))
+) {
+  baoLoi(
+    `chiaDongBongBong phai giu tron ven loi thoai va KHONG cat bang ... (nhan: ${JSON.stringify(cacDongBongBong)})`,
+  );
+}
+if (
+  coAnNoiNenPhongSinh([{ id: 'r', x: 960, y: 788, huong: 'phai', doTuoi: 'so_sinh', hanhDong: 'dung_tho', bieuCam: 'vui_tuoi' }], []) !== true ||
+  coAnNoiNenPhongSinh([], [{ loai: 'noi_em_be', x: 1200, y: 760 }]) !== true ||
+  coAnNoiNenPhongSinh([], []) !== false ||
+  coAnGiuongBenhNen([{ id: 'r', x: 1280, y: 785, huong: 'trai', tuThe: 'nam_giuong', hanhDong: 'dung_tho', bieuCam: 'vui_tuoi' }], []) !== true ||
+  coAnGiuongBenhNen([], []) !== false ||
+  locDaoCuKhongTrungLap(
+    [{ loai: 'giuong_benh', x: 1300, y: 770 }, { loai: 'tach_tra_nong', x: 1060, y: 675 }],
+    [{ id: 'r', x: 1280, y: 785, huong: 'trai', tuThe: 'nam_giuong', hanhDong: 'dung_tho', bieuCam: 'vui_tuoi' }],
+  ).length !== 1
+) {
+  baoLoi('Logic khu trung lap noi em be / giuong benh hoat dong chua dung');
+}
+if (!srcMayQuay.includes('HUD_TOP_SAFE = 76') || !srcMayQuay.includes('HUD_BOTTOM_SAFE = 150')) {
+  baoLoi('MayQuayDong.tsx phai khai bao HUD_TOP_SAFE = 76 va HUD_BOTTOM_SAFE = 150 tach khoi transform');
+}
+const srcGiangToan = fs.readFileSync(path.join(gocDuAn, 'src', 'canh', 'CanhGiaiThichToan.tsx'), 'utf8');
+if (!srcGiangToan.includes('doPhong: 1')) {
+  baoLoi('CanhGiaiThichToan.tsx phai khoa zoom camera o 1.0x (doPhong: 1)');
+}
+console.log(
+  '[OK] Kiem dinh 6 sua loi hien thi: HUD ngoai zoom (>=76px/150px), khu trung lap noi/giuong, bong bong thoai tron ven khong "...", tuong tac 2 cot, giang Toan zoom 1.0x & chuyen canh phu kin.',
 );
 
 // 6. Quet quy tac cam blur va Math.random() trong src/

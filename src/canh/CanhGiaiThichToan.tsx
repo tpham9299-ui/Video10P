@@ -2,6 +2,7 @@ import React from 'react';
 import { interpolate, useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
 import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
+import { locDaoCuKhongTrungLap } from '../boicanh/moi_truong_logic';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
 import { giaiTrangThaiNhanVatTrongCanh } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
@@ -43,42 +44,61 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
   }
 
   const coMinhHoa = Boolean(canh.minhHoaToan);
+  const daoCuHienThi = locDaoCuKhongTrungLap(canh.daoCu, canh.nhanVat);
+
+  const lopHud = (
+    <>
+      {canh.cauHoiTuongTac && (
+        <LopCauHoiTuongTac
+          cauHoi={canh.cauHoiTuongTac}
+          bangMau={bangMau}
+          thoiLuongCanh={thoiLuong}
+        />
+      )}
+      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
+    </>
+  );
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
+      {/* Khoa zoom camera o 1.0x trong canh giang_toan de bang xanh + do thi luon nam gon 100% trong khung 1920x1080 */}
       <MayQuayDong
-        camera={canh.camera}
-        mayQuay={canh.mayQuay}
+        camera={{ kieu: 'tinh', zoom: 1, panX: 0, panY: 0 }}
+        mayQuay={{ gocQuay: 'toan_canh', doPhong: 1 }}
         luotThoai={canh.luotThoai}
-        daoCu={canh.daoCu}
+        daoCu={daoCuHienThi}
         chuyenCanh={canh.chuyenCanh}
         nhanVat={canh.nhanVat}
         thoiLuongCanh={thoiLuong}
+        hud={lopHud}
       >
         <BoiCanhHoatHinh
           loai={canh.boiCanh}
           thoiTiet={canh.thoiTiet}
           vatTheXungQuanh={canh.vatTheXungQuanh}
           bienSoXe={canh.bienSoXe}
+          nhanVat={canh.nhanVat}
+          daoCu={daoCuHienThi}
         />
 
-        {/* Bang xanh lon vien go nam gon ben phai man hinh */}
+        {/* Bang xanh lon vien go nam gon 100% trong khung an toan (le tren 76px, le phai 48px >= 40px, le duoi 154px >= 150px) */}
         <div
           style={{
             position: 'absolute',
-            top: 62,
-            left: 520,
+            top: 76,
+            left: 468,
             right: 48,
-            bottom: 146,
+            bottom: 154,
             borderRadius: 20,
             backgroundColor: '#114226',
-            border: '12px solid #92400E',
+            border: '10px solid #92400E',
             boxShadow: '0 10px 0 rgba(120, 53, 15, 0.35)',
-            padding: '22px 28px',
+            padding: '18px 24px',
             display: 'flex',
             flexDirection: 'column',
-            gap: 16,
+            gap: 14,
             boxSizing: 'border-box',
+            overflow: 'hidden',
           }}
         >
           {/* Tieu de bang xanh */}
@@ -124,17 +144,20 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
               display: 'flex',
               flex: 1,
               minHeight: 0,
-              gap: 22,
+              minWidth: 0,
+              gap: 18,
               alignItems: 'stretch',
             }}
           >
             <div
               style={{
-                flex: coMinhHoa ? '1 1 55%' : '1 1 100%',
+                flex: coMinhHoa ? '1 1 51%' : '1 1 100%',
+                minWidth: 0,
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 13,
+                gap: 12,
                 justifyContent: 'center',
+                overflow: 'hidden',
               }}
             >
               {danhSachCongThuc.map((ct, idx) => {
@@ -235,7 +258,14 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
             </div>
 
             {canh.minhHoaToan && (
-              <div style={{ flex: '0 0 43%', minHeight: 0 }}>
+              <div
+                style={{
+                  flex: '0 0 47%',
+                  minWidth: 0,
+                  minHeight: 0,
+                  overflow: 'hidden',
+                }}
+              >
                 <MinhHoaToan
                   data={canh.minhHoaToan}
                   mauNhanManh={bangMau.nhanManh || '#FDE047'}
@@ -252,7 +282,7 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
           viewBox="0 0 1920 1080"
           style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
         >
-          {canh.daoCu?.map((dc, idx) => (
+          {daoCuHienThi.map((dc, idx) => (
             <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
           ))}
           {danhSachNhanVat.map((nv, idx) => {
@@ -263,7 +293,7 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
                 key={`${nv.id}-${idx}`}
                 thongTin={tt}
                 trangThai={nv}
-                tiLe={1.32}
+                tiLe={1.28}
                 thoiLuongCanh={thoiLuong}
                 bienDoAmThanh={canh.bienDoAmThanh}
               />
@@ -272,16 +302,6 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
           <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
         </svg>
       </MayQuayDong>
-
-      {canh.cauHoiTuongTac && (
-        <LopCauHoiTuongTac
-          cauHoi={canh.cauHoiTuongTac}
-          bangMau={bangMau}
-          thoiLuongCanh={thoiLuong}
-        />
-      )}
-
-      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
     </div>
   );
 };

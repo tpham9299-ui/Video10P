@@ -2,6 +2,7 @@ import React from 'react';
 import { useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
 import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
+import { locDaoCuKhongTrungLap } from '../boicanh/moi_truong_logic';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
 import { giaiTrangThaiNhanVatTrongCanh } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
@@ -26,57 +27,15 @@ export const CanhKeChuyen: React.FC<Props> = ({
   const frame = useCurrentFrame();
   const thoiLuong = Math.max(1, canh.denFrame - canh.tuFrame);
   const danhSachNhanVat = giaiTrangThaiNhanVatTrongCanh(canh, frame, thoiLuong);
+  const daoCuHienThi = locDaoCuKhongTrungLap(canh.daoCu, canh.nhanVat);
 
-  return (
-    <div style={{ position: 'absolute', inset: 0 }}>
-      <MayQuayDong
-        camera={canh.camera}
-        mayQuay={canh.mayQuay}
-        luotThoai={canh.luotThoai}
-        daoCu={canh.daoCu}
-        chuyenCanh={canh.chuyenCanh}
-        nhanVat={canh.nhanVat}
-        thoiLuongCanh={thoiLuong}
-      >
-        <BoiCanhHoatHinh
-          loai={canh.boiCanh}
-          thoiTiet={canh.thoiTiet}
-          vatTheXungQuanh={canh.vatTheXungQuanh}
-          bienSoXe={canh.bienSoXe}
-        />
-
-        <svg
-          width={1920}
-          height={1080}
-          viewBox="0 0 1920 1080"
-          style={{ position: 'absolute', inset: 0 }}
-        >
-          {canh.daoCu?.map((dc, idx) => (
-            <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
-          ))}
-          {danhSachNhanVat.map((nv, idx) => {
-            const tt = banDoNhanVat[nv.id];
-            if (!tt) return null;
-            return (
-              <NguoiQueDong
-                key={`${nv.id}-${idx}`}
-                thongTin={tt}
-                trangThai={nv}
-                tiLe={1.25}
-                thoiLuongCanh={thoiLuong}
-                bienDoAmThanh={canh.bienDoAmThanh}
-              />
-            );
-          })}
-          <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
-        </svg>
-      </MayQuayDong>
-
-      {/* The chuong & tieu de nho o goc trai tren */}
+  const lopHud = (
+    <>
+      {/* The chuong & tieu de nho o goc trai tren (cach mep tren >= 76px, tach khoi zoom camera) */}
       <div
         style={{
           position: 'absolute',
-          top: 60,
+          top: 76,
           left: 52,
           display: 'flex',
           flexDirection: 'column',
@@ -106,10 +65,10 @@ export const CanhKeChuyen: React.FC<Props> = ({
             style={{
               padding: '8px 20px',
               borderRadius: 14,
-              backgroundColor: 'rgba(15, 23, 42, 0.84)',
+              backgroundColor: 'rgba(15, 23, 42, 0.86)',
               border: `2.5px solid ${bangMau.nhanManh}`,
               color: '#FFFFFF',
-              fontSize: 32,
+              fontSize: 30,
               fontWeight: 800,
             }}
           >
@@ -127,6 +86,56 @@ export const CanhKeChuyen: React.FC<Props> = ({
       )}
 
       <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
+    </>
+  );
+
+  return (
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <MayQuayDong
+        camera={canh.camera}
+        mayQuay={canh.mayQuay}
+        luotThoai={canh.luotThoai}
+        daoCu={daoCuHienThi}
+        chuyenCanh={canh.chuyenCanh}
+        nhanVat={canh.nhanVat}
+        thoiLuongCanh={thoiLuong}
+        hud={lopHud}
+      >
+        <BoiCanhHoatHinh
+          loai={canh.boiCanh}
+          thoiTiet={canh.thoiTiet}
+          vatTheXungQuanh={canh.vatTheXungQuanh}
+          bienSoXe={canh.bienSoXe}
+          nhanVat={canh.nhanVat}
+          daoCu={daoCuHienThi}
+        />
+
+        <svg
+          width={1920}
+          height={1080}
+          viewBox="0 0 1920 1080"
+          style={{ position: 'absolute', inset: 0 }}
+        >
+          {daoCuHienThi.map((dc, idx) => (
+            <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
+          ))}
+          {danhSachNhanVat.map((nv, idx) => {
+            const tt = banDoNhanVat[nv.id];
+            if (!tt) return null;
+            return (
+              <NguoiQueDong
+                key={`${nv.id}-${idx}`}
+                thongTin={tt}
+                trangThai={nv}
+                tiLe={1.25}
+                thoiLuongCanh={thoiLuong}
+                bienDoAmThanh={canh.bienDoAmThanh}
+              />
+            );
+          })}
+          <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
+        </svg>
+      </MayQuayDong>
     </div>
   );
 };

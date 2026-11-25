@@ -655,8 +655,7 @@ const MinhHoaTungBuocSvg: React.FC<{
   frame: number;
   buocVe?: BuocVeToan[];
   khungToaDo?: KhungToaDoToan;
-  chuThichCuoi?: string;
-}> = ({ frame, buocVe, khungToaDo, chuThichCuoi }) => {
+}> = ({ frame, buocVe, khungToaDo }) => {
   if (!Array.isArray(buocVe) || buocVe.length === 0) {
     return <KhungTrongSachSvg />;
   }
@@ -667,7 +666,7 @@ const MinhHoaTungBuocSvg: React.FC<{
     (b): b is Extract<BuocVeToan, { loai: 'truc_toa_do' }> => b.loai === 'truc_toa_do',
   );
 
-  // Tu dong nhan dien he toa do 'toan' (y huong len) hay 'svg' (0..500, 0..490)
+  // Tu dong nhan dien he toa do 'toan' (y huong len) hay 'svg' (0..500, 0..440)
   let dungToaDoToan = khungToaDo?.heToaDo === 'toan' || Boolean(khungToaDo) || Boolean(buocTruc);
   if (khungToaDo?.heToaDo === 'svg') {
     dungToaDoToan = false;
@@ -700,11 +699,11 @@ const MinhHoaTungBuocSvg: React.FC<{
   const spanX = Math.max(0.001, xMax - xMin);
   const spanY = Math.max(0.001, yMax - yMin);
 
-  // Vung ve an toan trong viewBox 500x490 (chua cho chu thich cuoi o y=462)
-  const padL = 52;
-  const padR = 456;
-  const padT = 48;
-  const padB = 420;
+  // Vung ve an toan trong viewBox 500x440 (tat ca truc, mui ten, nhan deu nam gon 100% trong viewBox)
+  const padL = 56;
+  const padR = 446;
+  const padT = 42;
+  const padB = 392;
   const plotW = padR - padL;
   const plotH = padB - padT;
 
@@ -747,6 +746,7 @@ const MinhHoaTungBuocSvg: React.FC<{
     const y0 = Math.max(padT, Math.min(padB, toSvg(0, 0).y));
     const hienLuoi = cfg.hienLuoi !== false;
     const soDuong = 5;
+    const datNhanYBenPhai = x0 < 92;
 
     return (
       <g key={key} opacity={op}>
@@ -762,13 +762,20 @@ const MinhHoaTungBuocSvg: React.FC<{
             );
           })}
         <line x1={padL - 8} y1={y0} x2={padR + 14} y2={y0} stroke={mauTruc} strokeWidth={3} />
-        <polygon points={`${padR + 18},${y0} ${padR + 6},${y0 - 6} ${padR + 6},${y0 + 6}`} fill={mauTruc} />
+        <polygon points={`${padR + 20},${y0} ${padR + 8},${y0 - 6} ${padR + 8},${y0 + 6}`} fill={mauTruc} />
         <line x1={x0} y1={padB + 10} x2={x0} y2={padT - 14} stroke={mauTruc} strokeWidth={3} />
-        <polygon points={`${x0},${padT - 18} ${x0 - 6},${padT - 6} ${x0 + 6},${padT - 6}`} fill={mauTruc} />
-        <text x={padR + 14} y={y0 + 22} textAnchor="end" fill="#FEFCE8" fontSize={18} fontWeight={800}>
+        <polygon points={`${x0},${padT - 20} ${x0 - 6},${padT - 8} ${x0 + 6},${padT - 8}`} fill={mauTruc} />
+        <text x={padR + 18} y={Math.min(426, y0 + 24)} textAnchor="end" fill="#FEFCE8" fontSize={18} fontWeight={800}>
           {cfg.nhanX ?? 'x'}
         </text>
-        <text x={x0 - 16} y={padT - 2} textAnchor="end" fill="#FEFCE8" fontSize={18} fontWeight={800}>
+        <text
+          x={datNhanYBenPhai ? x0 + 14 : x0 - 14}
+          y={padT - 4}
+          textAnchor={datNhanYBenPhai ? 'start' : 'end'}
+          fill="#FEFCE8"
+          fontSize={18}
+          fontWeight={800}
+        >
           {cfg.nhanY ?? 'y'}
         </text>
       </g>
@@ -776,7 +783,7 @@ const MinhHoaTungBuocSvg: React.FC<{
   };
 
   return (
-    <svg width="100%" height="100%" viewBox="0 0 500 490">
+    <svg width="100%" height="100%" viewBox="0 0 500 440" preserveAspectRatio="xMidYMid meet">
       {/* Neu khai bao khungToaDo.hienTruc ma khong co buoc truc_toa_do rieng */}
       {dungToaDoToan &&
         !buocTruc &&
@@ -1007,11 +1014,11 @@ const MinhHoaTungBuocSvg: React.FC<{
                 )}
                 {buoc.nhan && t > 0.55 && (
                   <text
-                    x={midX - Math.sin(goc) * 18}
-                    y={midY + Math.cos(goc) * 18 + 5}
+                    x={Math.max(84, Math.min(416, midX - Math.sin(goc) * 18))}
+                    y={Math.max(32, Math.min(416, midY + Math.cos(goc) * 18 + 5))}
                     textAnchor="middle"
                     fill="#FEF9C3"
-                    fontSize={20}
+                    fontSize={19}
                     fontWeight={800}
                   >
                     {buoc.nhan}
@@ -1025,16 +1032,19 @@ const MinhHoaTungBuocSvg: React.FC<{
             const p = toSvg(buoc.x, buoc.y);
             const mau = buoc.mau ?? '#FEF08A';
             const r = (buoc.banKinh ?? 6.5) * (0.4 + 0.6 * t);
+            const lePhai = p.x > 350;
+            const leTren = p.y < 64;
             return (
               <g key={`tb-${idx}`} opacity={t}>
                 <circle cx={p.x} cy={p.y} r={r * 2.1} fill={mau} fillOpacity={0.22} />
                 <circle cx={p.x} cy={p.y} r={r} fill={mau} stroke="#092B19" strokeWidth={2} />
                 {buoc.nhan && (
                   <text
-                    x={p.x + 12}
-                    y={p.y - 10}
+                    x={lePhai ? p.x - 12 : p.x + 12}
+                    y={leTren ? p.y + 22 : p.y - 10}
+                    textAnchor={lePhai ? 'end' : 'start'}
                     fill="#FFFFFF"
-                    fontSize={19}
+                    fontSize={18}
                     fontWeight={800}
                     fontFamily="Segoe UI, Arial, sans-serif"
                   >
@@ -1050,11 +1060,11 @@ const MinhHoaTungBuocSvg: React.FC<{
             return (
               <text
                 key={`tb-${idx}`}
-                x={p.x}
-                y={p.y}
+                x={Math.max(68, Math.min(432, p.x))}
+                y={Math.max(30, Math.min(420, p.y))}
                 textAnchor="middle"
                 fill={buoc.mau ?? '#FEF9C3'}
-                fontSize={buoc.coChu ?? 20}
+                fontSize={buoc.coChu ?? 19}
                 fontWeight={800}
                 opacity={t}
                 fontFamily="Segoe UI, Arial, sans-serif"
@@ -1068,20 +1078,6 @@ const MinhHoaTungBuocSvg: React.FC<{
             return null;
         }
       })}
-
-      {chuThichCuoi && (
-        <text
-          x={250}
-          y={466}
-          textAnchor="middle"
-          fill="#FEFCE8"
-          fontSize={19}
-          fontWeight={800}
-          fontFamily="Segoe UI, Arial, sans-serif"
-        >
-          {chuThichCuoi}
-        </text>
-      )}
     </svg>
   );
 };
@@ -1113,7 +1109,6 @@ export const MinhHoaToan: React.FC<MinhHoaToanProps> = ({
             frame={frame}
             buocVe={data.buocVe}
             khungToaDo={data.khungToaDo}
-            chuThichCuoi={data.chuThichCuoi}
           />
         );
       case 'chuoi_suy_luan':
@@ -1129,28 +1124,62 @@ export const MinhHoaToan: React.FC<MinhHoaToanProps> = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
+        width: '100%',
+        minWidth: 0,
         borderRadius: 16,
         backgroundColor: 'rgba(9, 43, 25, 0.85)',
         border: `2.5px solid ${mauHighlight}`,
-        padding: '12px 14px 8px',
+        padding: '10px 14px 10px',
         boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
     >
       {data.tieuDe && (
         <div
           style={{
             color: '#FEF08A',
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: 800,
+            lineHeight: 1.25,
             textAlign: 'center',
             marginBottom: 4,
-            letterSpacing: 0.3,
+            letterSpacing: 0.2,
+            flexShrink: 0,
+            wordBreak: 'break-word',
           }}
         >
           {data.tieuDe}
         </div>
       )}
-      <div style={{ flex: 1, minHeight: 0 }}>{veHinh()}</div>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          minWidth: 0,
+          width: '100%',
+          overflow: 'hidden',
+        }}
+      >
+        {veHinh()}
+      </div>
+      {data.chuThichCuoi && (
+        <div
+          style={{
+            color: '#FEFCE8',
+            fontSize: 15.5,
+            fontWeight: 700,
+            lineHeight: 1.3,
+            textAlign: 'center',
+            marginTop: 4,
+            padding: '4px 6px 0',
+            borderTop: '1.5px dashed rgba(254, 249, 195, 0.28)',
+            flexShrink: 0,
+            wordBreak: 'break-word',
+          }}
+        >
+          {data.chuThichCuoi}
+        </div>
+      )}
     </div>
   );
 };

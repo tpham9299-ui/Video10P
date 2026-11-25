@@ -10,6 +10,10 @@ type BoiCanhMoiProps = {
   frame: number;
   px: ParallaxOffset;
   laHoangHon?: boolean;
+  /** Bo noi ve thua o nen nha_co_phong_sinh khi da co nhan vat so_sinh hoac dao cu noi_em_be */
+  anNoiNen?: boolean;
+  /** An giuong benh ve san o nen phong_benh_vien khi da co nhan vat nam_giuong hoac dao cu giuong_benh */
+  anGiuongBenhNen?: boolean;
 };
 
 // =============================================================================
@@ -66,7 +70,11 @@ const NhaCoPhongSinhLop3Tinh = React.memo(() => (
   </g>
 ));
 
-export const NhaCoPhongSinh: React.FC<BoiCanhMoiProps> = ({ frame, px }) => {
+export const NhaCoPhongSinh: React.FC<BoiCanhMoiProps> = ({
+  frame,
+  px,
+  anNoiNen = false,
+}) => {
   const lacNoi = Math.sin(frame * 0.085) * 4.2;
   const nhipDen = 1 + Math.sin(frame * 0.16) * 0.06;
   return (
@@ -87,19 +95,21 @@ export const NhaCoPhongSinh: React.FC<BoiCanhMoiProps> = ({ frame, px }) => {
       </g>
       <g transform={`translate(${px.lop3X.toFixed(1)}, ${px.lop3Y.toFixed(1)})`}>
         <NhaCoPhongSinhLop3Tinh />
-        {/* Noi em be bap benh em ai ben phai */}
-        <g transform={`translate(1485, 735) rotate(${lacNoi.toFixed(2)}, 0, 52)`}>
-          <path d="M -98 46 Q 0 78 98 46" fill="none" stroke="#78350F" strokeWidth={9} strokeLinecap="round" />
-          <line x1={-56} y1={24} x2={-56} y2={56} stroke="#78350F" strokeWidth={7} />
-          <line x1={56} y1={24} x2={56} y2={56} stroke="#78350F" strokeWidth={7} />
-          <path d="M -88 -26 L 88 -26 L 74 36 L -74 36 Z" fill="#D97706" stroke="#451A03" strokeWidth={5} strokeLinejoin="round" />
-          {[-50, -18, 18, 50].map((nx) => (
-            <line key={`nc-n-${nx}`} x1={nx} y1={-22} x2={nx * 0.85} y2={32} stroke="#92400E" strokeWidth={4} />
-          ))}
-          <path d="M -72 -26 Q 0 -48 72 -26 Z" fill="#FEF08A" stroke="#CA8A04" strokeWidth={3} />
-          <circle cx={-28} cy={-38} r={16} fill="#FDE68A" stroke="#78350F" strokeWidth={3} />
-          <path d="M -34 -39 Q -28 -35 -22 -39" fill="none" stroke="#78350F" strokeWidth={2.2} strokeLinecap="round" />
-        </g>
+        {/* Chi ve noi em be nen khi trong canh CHUA co nhan vat so_sinh hoac dao cu noi_em_be */}
+        {!anNoiNen && (
+          <g transform={`translate(1485, 735) rotate(${lacNoi.toFixed(2)}, 0, 52)`}>
+            <path d="M -98 46 Q 0 78 98 46" fill="none" stroke="#78350F" strokeWidth={9} strokeLinecap="round" />
+            <line x1={-56} y1={24} x2={-56} y2={56} stroke="#78350F" strokeWidth={7} />
+            <line x1={56} y1={24} x2={56} y2={56} stroke="#78350F" strokeWidth={7} />
+            <path d="M -88 -26 L 88 -26 L 74 36 L -74 36 Z" fill="#D97706" stroke="#451A03" strokeWidth={5} strokeLinejoin="round" />
+            {[-50, -18, 18, 50].map((nx) => (
+              <line key={`nc-n-${nx}`} x1={nx} y1={-22} x2={nx * 0.85} y2={32} stroke="#92400E" strokeWidth={4} />
+            ))}
+            <path d="M -72 -26 Q 0 -48 72 -26 Z" fill="#FEF08A" stroke="#CA8A04" strokeWidth={3} />
+            <circle cx={-28} cy={-38} r={16} fill="#FDE68A" stroke="#78350F" strokeWidth={3} />
+            <path d="M -34 -39 Q -28 -35 -22 -39" fill="none" stroke="#78350F" strokeWidth={2.2} strokeLinecap="round" />
+          </g>
+        )}
       </g>
     </g>
   );
@@ -357,32 +367,39 @@ const PhongBenhVienLop2Tinh = React.memo(() => (
   </g>
 ));
 
-const PhongBenhVienLop3Tinh = React.memo(() => (
-  <g>
-    <rect x={-180} y={718} width={2280} height={445} fill="#CBD5E1" />
-    <rect x={-180} y={712} width={2280} height={12} fill="#94A3B8" />
-    {/* Giuong benh co dien ben phai */}
-    <g transform="translate(1480, 742)">
-      <path d="M -210 38 L -210 -128 Q -210 -150 -184 -150 L -162 -150 L -162 38" fill="none" stroke="#64748B" strokeWidth={12} strokeLinecap="round" />
-      <path d="M 210 38 L 210 -78 Q 210 -98 186 -98 L 166 -98 L 166 38" fill="none" stroke="#64748B" strokeWidth={12} strokeLinecap="round" />
-      <rect x={-196} y={-52} width={392} height={46} rx={10} fill="#FFFFFF" stroke="#94A3B8" strokeWidth={4} />
-      <ellipse cx={-135} cy={-66} rx={48} ry={20} fill="#F8FAFC" stroke="#CBD5E1" strokeWidth={3} />
-      <rect x={-95} y={-56} width={290} height={54} rx={8} fill="#38BDF8" fillOpacity={0.85} stroke="#0369A1" strokeWidth={4} />
-      <rect x={-206} y={-4} width={412} height={16} rx={4} fill="#475569" />
+const PhongBenhVienLop3Tinh = React.memo<{ anGiuongBenhNen?: boolean }>(
+  ({ anGiuongBenhNen = false }) => (
+    <g>
+      <rect x={-180} y={718} width={2280} height={445} fill="#CBD5E1" />
+      <rect x={-180} y={712} width={2280} height={12} fill="#94A3B8" />
+      {/* Chi ve giuong benh co dien tren nen khi CHUA co nhan vat tuThe="nam_giuong" */}
+      {!anGiuongBenhNen && (
+        <g transform="translate(1480, 742)">
+          <path d="M -210 38 L -210 -128 Q -210 -150 -184 -150 L -162 -150 L -162 38" fill="none" stroke="#64748B" strokeWidth={12} strokeLinecap="round" />
+          <path d="M 210 38 L 210 -78 Q 210 -98 186 -98 L 166 -98 L 166 38" fill="none" stroke="#64748B" strokeWidth={12} strokeLinecap="round" />
+          <rect x={-196} y={-52} width={392} height={46} rx={10} fill="#FFFFFF" stroke="#94A3B8" strokeWidth={4} />
+          <ellipse cx={-135} cy={-66} rx={48} ry={20} fill="#F8FAFC" stroke="#CBD5E1" strokeWidth={3} />
+          <rect x={-95} y={-56} width={290} height={54} rx={8} fill="#38BDF8" fillOpacity={0.85} stroke="#0369A1" strokeWidth={4} />
+          <rect x={-206} y={-4} width={412} height={16} rx={4} fill="#475569" />
+        </g>
+      )}
+      {/* Tu dau giuong + lo thuoc & tach tra */}
+      <g transform="translate(1060, 710)">
+        <rect x={-56} y={-105} width={112} height={120} rx={8} fill="#F8FAFC" stroke="#64748B" strokeWidth={5} />
+        <line x1={-46} y1={-48} x2={46} y2={-48} stroke="#94A3B8" strokeWidth={4} />
+        <circle cx={0} cy={-76} r={5} fill="#64748B" />
+        <circle cx={0} cy={-18} r={5} fill="#64748B" />
+        <rect x={-28} y={-135} width={18} height={30} rx={4} fill="#38BDF8" stroke="#0369A1" strokeWidth={2.5} />
+        <rect x={8} y={-126} width={24} height={21} rx={4} fill="#FEF3C7" stroke="#92400E" strokeWidth={2.5} />
+      </g>
     </g>
-    {/* Tu dau giuong + lo thuoc & tach tra */}
-    <g transform="translate(1150, 710)">
-      <rect x={-56} y={-105} width={112} height={120} rx={8} fill="#F8FAFC" stroke="#64748B" strokeWidth={5} />
-      <line x1={-46} y1={-48} x2={46} y2={-48} stroke="#94A3B8" strokeWidth={4} />
-      <circle cx={0} cy={-76} r={5} fill="#64748B" />
-      <circle cx={0} cy={-18} r={5} fill="#64748B" />
-      <rect x={-28} y={-135} width={18} height={30} rx={4} fill="#38BDF8" stroke="#0369A1" strokeWidth={2.5} />
-      <rect x={8} y={-126} width={24} height={21} rx={4} fill="#FEF3C7" stroke="#92400E" strokeWidth={2.5} />
-    </g>
-  </g>
-));
+  ),
+);
 
-export const PhongBenhVien: React.FC<BoiCanhMoiProps> = ({ px }) => (
+export const PhongBenhVien: React.FC<BoiCanhMoiProps> = ({
+  px,
+  anGiuongBenhNen = false,
+}) => (
   <g>
     <g transform={`translate(${(px.lop1X * 0.4).toFixed(1)}, ${(px.lop1Y * 0.3).toFixed(1)})`}>
       <PhongBenhVienLop1Tinh />
@@ -391,7 +408,7 @@ export const PhongBenhVien: React.FC<BoiCanhMoiProps> = ({ px }) => (
       <PhongBenhVienLop2Tinh />
     </g>
     <g transform={`translate(${px.lop3X.toFixed(1)}, ${px.lop3Y.toFixed(1)})`}>
-      <PhongBenhVienLop3Tinh />
+      <PhongBenhVienLop3Tinh anGiuongBenhNen={anGiuongBenhNen} />
     </g>
   </g>
 );

@@ -2,6 +2,7 @@ import React from 'react';
 import { interpolate, useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
 import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
+import { locDaoCuKhongTrungLap } from '../boicanh/moi_truong_logic';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
 import { giaiTrangThaiNhanVatTrongCanh } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
@@ -35,6 +36,82 @@ export const CanhMoDau: React.FC<Props> = ({
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
+  const daoCuHienThi = locDaoCuKhongTrungLap(canh.daoCu, canh.nhanVat);
+
+  // Tach lop tieu de mo man & bong bong binh luan ra NGOAI transform zoom/pan cua MayQuayDong (>= 76px tu mep tren)
+  const lopHud = (
+    <>
+      <div
+        style={{
+          position: 'absolute',
+          top: 76,
+          left: 60,
+          right: 60,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          opacity: doMoTieuDe,
+          transform: `translateY(${dichTieuDeY}px)`,
+          pointerEvents: 'none',
+        }}
+      >
+        {canh.namMoc && (
+          <div
+            style={{
+              padding: '7px 24px',
+              borderRadius: 999,
+              border: '3px solid #1E293B',
+              backgroundColor: '#FEF08A',
+              color: '#1E293B',
+              fontSize: 21,
+              fontWeight: 900,
+              letterSpacing: 1.5,
+              marginBottom: 14,
+              boxShadow: '4px 4px 0px #1E293B',
+            }}
+          >
+            {canh.namMoc}
+          </div>
+        )}
+
+        <div
+          style={{
+            padding: '18px 42px',
+            borderRadius: 24,
+            backgroundColor: 'rgba(15, 23, 42, 0.88)',
+            border: `3.5px solid ${bangMau.nhanManh}`,
+            boxShadow: '8px 8px 0px rgba(15, 23, 42, 0.4)',
+            maxWidth: 1380,
+            textAlign: 'center',
+          }}
+        >
+          <h1
+            style={{
+              margin: 0,
+              color: '#FFFFFF',
+              fontSize: 56,
+              fontWeight: 900,
+              lineHeight: 1.15,
+            }}
+          >
+            {canh.tieuDeNho ?? tieuDeVideo}
+          </h1>
+          <p
+            style={{
+              margin: '10px 0 0',
+              color: '#FEF08A',
+              fontSize: 25,
+              fontWeight: 700,
+            }}
+          >
+            {chuDeVideo}
+          </p>
+        </div>
+      </div>
+
+      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
+    </>
+  );
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
@@ -42,85 +119,20 @@ export const CanhMoDau: React.FC<Props> = ({
         camera={canh.camera}
         mayQuay={canh.mayQuay}
         luotThoai={canh.luotThoai}
-        daoCu={canh.daoCu}
+        daoCu={daoCuHienThi}
         chuyenCanh={canh.chuyenCanh}
         nhanVat={canh.nhanVat}
         thoiLuongCanh={thoiLuong}
+        hud={lopHud}
       >
         <BoiCanhHoatHinh
           loai={canh.boiCanh}
           thoiTiet={canh.thoiTiet}
           vatTheXungQuanh={canh.vatTheXungQuanh}
           bienSoXe={canh.bienSoXe}
+          nhanVat={canh.nhanVat}
+          daoCu={daoCuHienThi}
         />
-
-        <div
-          style={{
-            position: 'absolute',
-            top: 86,
-            left: 0,
-            right: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            opacity: doMoTieuDe,
-            transform: `translateY(${dichTieuDeY}px)`,
-            pointerEvents: 'none',
-          }}
-        >
-          {canh.namMoc && (
-            <div
-              style={{
-                padding: '7px 24px',
-                borderRadius: 999,
-                border: '3px solid #1E293B',
-                backgroundColor: '#FEF08A',
-                color: '#1E293B',
-                fontSize: 21,
-                fontWeight: 900,
-                letterSpacing: 1.5,
-                marginBottom: 16,
-                boxShadow: '4px 4px 0px #1E293B',
-              }}
-            >
-              {canh.namMoc}
-            </div>
-          )}
-
-          <div
-            style={{
-              padding: '20px 44px',
-              borderRadius: 24,
-              backgroundColor: 'rgba(15, 23, 42, 0.86)',
-              border: `3.5px solid ${bangMau.nhanManh}`,
-              boxShadow: '8px 8px 0px rgba(15, 23, 42, 0.4)',
-              maxWidth: 1380,
-              textAlign: 'center',
-            }}
-          >
-            <h1
-              style={{
-                margin: 0,
-                color: '#FFFFFF',
-                fontSize: 60,
-                fontWeight: 900,
-                lineHeight: 1.15,
-              }}
-            >
-              {canh.tieuDeNho ?? tieuDeVideo}
-            </h1>
-            <p
-              style={{
-                margin: '12px 0 0',
-                color: '#FEF08A',
-                fontSize: 26,
-                fontWeight: 700,
-              }}
-            >
-              {chuDeVideo}
-            </p>
-          </div>
-        </div>
 
         <svg
           width={1920}
@@ -128,7 +140,7 @@ export const CanhMoDau: React.FC<Props> = ({
           viewBox="0 0 1920 1080"
           style={{ position: 'absolute', inset: 0 }}
         >
-          {canh.daoCu?.map((dc, idx) => (
+          {daoCuHienThi.map((dc, idx) => (
             <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
           ))}
           {danhSachNhanVat.map((nv, idx) => {
@@ -148,8 +160,6 @@ export const CanhMoDau: React.FC<Props> = ({
           <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
         </svg>
       </MayQuayDong>
-
-      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
     </div>
   );
 };
