@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCurrentFrame } from 'remotion';
 import type {
+  AnhSangMoiTruong,
   DaoCuTrongCanh,
   LoaiBoiCanh,
   LoaiThoiTiet,
@@ -11,8 +12,10 @@ import { bamTatDinh } from '../vfx/tat_dinh';
 import { useCameraParallax } from '../vfx/MayQuayDong';
 import { kepGiaTri } from '../xuong/duong_cong';
 import {
+  BOI_CANH_TRONG_NHA,
+  BOI_CANH_VU_TRU,
   coAnGiuongBenhNen,
-  coAnNoiNenPhongSinh,
+  layKhungCuaSoChoBoiCanh,
 } from './moi_truong_logic';
 import {
   CangBienTauThuy,
@@ -26,6 +29,7 @@ import {
   PhongTroBepLua,
   SanTruongCoDien,
 } from './BoiCanhMoi';
+import { NenMinhHoaAI } from './NenMinhHoaAI';
 import { SinhVatVaMoiTruong } from './SinhVatVaMoiTruong';
 
 type BoiCanhHoatHinhProps = {
@@ -39,6 +43,14 @@ type BoiCanhHoatHinhProps = {
   daoCu?: readonly DaoCuTrongCanh[];
   anNoiNen?: boolean;
   anGiuongBenhNen?: boolean;
+  /** Duong dan tuong doi trong public/ toi anh minh hoa AI (v3.0); neu co se dung NenMinhHoaAI */
+  anhBoiCanh?: string | null;
+  /** Thong so anh sang moi truong tu Pillow de dong bo hieu ung khong khi (v3.0) */
+  anhSangMoiTruong?: AnhSangMoiTruong;
+  /** Khung tranh dac ta can canh vat the/phong canh (v3.0) */
+  laKhungTranhDacTa?: boolean;
+  /** Thoi luong canh (frame) de tinh Ken Burns muot cho NenMinhHoaAI */
+  thoiLuongCanh?: number;
 };
 
 export type ParallaxOffset = {
@@ -1378,12 +1390,24 @@ const GiangDuongHienDai: React.FC<{ frame: number; px: ParallaxOffset }> = ({
   );
 };
 
-/** Lop phu thoi tiet tat dinh 100% theo frame (khong blur, khong Math.random) */
-const LopThoiTiet: React.FC<{ thoiTiet?: LoaiThoiTiet; frame: number }> = ({
-  thoiTiet,
-  frame,
-}) => {
+/** Lop phu thoi tiet tat dinh 100% theo frame (khong blur, khong Math.random; rang buoc trong nha vs ngoai troi) */
+const LopThoiTiet: React.FC<{
+  thoiTiet?: LoaiThoiTiet;
+  boiCanh: LoaiBoiCanh;
+  frame: number;
+}> = ({ thoiTiet, boiCanh, frame }) => {
   if (!thoiTiet || thoiTiet === 'khong') {
+    return null;
+  }
+
+  const laTrongNha = BOI_CANH_TRONG_NHA.has(boiCanh);
+  const laVuTru = BOI_CANH_VU_TRU.has(boiCanh);
+  const cuaSo = layKhungCuaSoChoBoiCanh(boiCanh);
+
+  if (laVuTru && (thoiTiet === 'la_roi' || thoiTiet === 'mua_nhe' || thoiTiet === 'tuyet_roi')) {
+    return null;
+  }
+  if (laTrongNha && thoiTiet === 'la_roi') {
     return null;
   }
 
@@ -1414,21 +1438,57 @@ const LopThoiTiet: React.FC<{ thoiTiet?: LoaiThoiTiet; frame: number }> = ({
       return (
         <g pointerEvents="none">
           <rect x={-180} y={-120} width={2280} height={1320} fill="#0F172A" fillOpacity={0.14} />
-          {Array.from({ length: 10 }).map((_, i) => {
-            const fx = 140 + bamTatDinh(i * 41 + 9) * 1640 + Math.sin(frame * 0.05 + i) * 22;
-            const fy = 520 + bamTatDinh(i * 17 + 3) * 360 + Math.cos(frame * 0.06 + i) * 16;
-            const op = 0.25 + 0.65 * Math.abs(Math.sin(frame * 0.1 + i * 1.4));
-            return (
-              <g key={`domdom-${i}`} opacity={op}>
-                <circle cx={fx} cy={fy} r={8} fill="#FDE047" fillOpacity={0.28} />
-                <circle cx={fx} cy={fy} r={3} fill="#FEF9C3" />
-              </g>
-            );
-          })}
+          {!laTrongNha &&
+            Array.from({ length: 10 }).map((_, i) => {
+              const fx = 140 + bamTatDinh(i * 41 + 9) * 1640 + Math.sin(frame * 0.05 + i) * 22;
+              const fy = 520 + bamTatDinh(i * 17 + 3) * 360 + Math.cos(frame * 0.06 + i) * 16;
+              const op = 0.25 + 0.65 * Math.abs(Math.sin(frame * 0.1 + i * 1.4));
+              return (
+                <g key={`domdom-${i}`} opacity={op}>
+                  <circle cx={fx} cy={fy} r={8} fill="#FDE047" fillOpacity={0.28} />
+                  <circle cx={fx} cy={fy} r={3} fill="#FEF9C3" />
+                </g>
+              );
+            })}
         </g>
       );
 
-    case 'mua_nhe':
+    case 'mua_nhe': {
+      if (laTrongNha) {
+        if (!cuaSo) return null;
+        const clipId = `clip-mua-cs-${boiCanh}`;
+        return (
+          <g pointerEvents="none">
+            <defs>
+              <clipPath id={clipId}>
+                <rect x={cuaSo.x} y={cuaSo.y} width={cuaSo.width} height={cuaSo.height} rx={6} />
+              </clipPath>
+            </defs>
+            <g clipPath={`url(#${clipId})`}>
+              {Array.from({ length: 24 }).map((_, i) => {
+                const speed = 14 + (i % 4) * 3;
+                const x0 = cuaSo.x + bamTatDinh(i * 29 + 1) * (cuaSo.width + 60);
+                const y0 = bamTatDinh(i * 53 + 7) * cuaSo.height;
+                const y = cuaSo.y + ((y0 + frame * speed) % (cuaSo.height + 30)) - 20;
+                const x = x0 - ((frame * speed * 0.18) % 60);
+                return (
+                  <line
+                    key={`mua-cs-${i}`}
+                    x1={x}
+                    y1={y}
+                    x2={x - 7}
+                    y2={y + 24}
+                    stroke="#E0F2FE"
+                    strokeOpacity={0.62}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+            </g>
+          </g>
+        );
+      }
       return (
         <g pointerEvents="none">
           <rect x={-180} y={-120} width={2280} height={1320} fill="#0F172A" fillOpacity={0.12} />
@@ -1454,6 +1514,7 @@ const LopThoiTiet: React.FC<{ thoiTiet?: LoaiThoiTiet; frame: number }> = ({
           })}
         </g>
       );
+    }
 
     case 'la_roi':
       return (
@@ -1476,7 +1537,31 @@ const LopThoiTiet: React.FC<{ thoiTiet?: LoaiThoiTiet; frame: number }> = ({
         </g>
       );
 
-    case 'tuyet_roi':
+    case 'tuyet_roi': {
+      if (laTrongNha) {
+        if (!cuaSo) return null;
+        const clipId = `clip-tuyet-tt-${boiCanh}`;
+        return (
+          <g pointerEvents="none">
+            <defs>
+              <clipPath id={clipId}>
+                <rect x={cuaSo.x} y={cuaSo.y} width={cuaSo.width} height={cuaSo.height} rx={6} />
+              </clipPath>
+            </defs>
+            <g clipPath={`url(#${clipId})`}>
+              {Array.from({ length: 20 }).map((_, i) => {
+                const sx = cuaSo.x + bamTatDinh(i * 19 + 5) * cuaSo.width;
+                const sy0 = bamTatDinh(i * 43 + 9) * cuaSo.height;
+                const speed = 1.4 + (i % 4) * 0.5;
+                const y = cuaSo.y + ((sy0 + frame * speed) % (cuaSo.height + 16)) - 8;
+                const x = sx + Math.sin(frame * 0.05 + i * 1.7) * 14;
+                const r = 2.6 + (i % 3) * 1.4;
+                return <circle key={`tuyet-cs-${i}`} cx={x} cy={y} r={r} fill="#FFFFFF" fillOpacity={0.85} />;
+              })}
+            </g>
+          </g>
+        );
+      }
       return (
         <g pointerEvents="none">
           {Array.from({ length: 36 }).map((_, i) => {
@@ -1490,6 +1575,7 @@ const LopThoiTiet: React.FC<{ thoiTiet?: LoaiThoiTiet; frame: number }> = ({
           })}
         </g>
       );
+    }
 
     default:
       return null;
@@ -1505,11 +1591,33 @@ export const BoiCanhHoatHinh: React.FC<BoiCanhHoatHinhProps> = ({
   daoCu,
   anNoiNen: anNoiNenProp,
   anGiuongBenhNen: anGiuongBenhNenProp,
+  anhBoiCanh,
+  anhSangMoiTruong,
+  laKhungTranhDacTa = false,
+  thoiLuongCanh,
 }) => {
   const frame = useCurrentFrame();
   const cam = useCameraParallax();
+
+  // Khi canh co anhBoiCanh (minh hoa AI v3.0): render NenMinhHoaAI + lop khong khi song dong
+  const duongDanAnhAi = typeof anhBoiCanh === 'string' ? anhBoiCanh.trim() : '';
+  if (duongDanAnhAi.length > 0) {
+    return (
+      <NenMinhHoaAI
+        anhBoiCanh={duongDanAnhAi}
+        loaiBoiCanh={loai}
+        thoiTiet={thoiTiet}
+        anhSangMoiTruong={anhSangMoiTruong}
+        vatTheXungQuanh={vatTheXungQuanh}
+        bienSoXe={bienSoXe}
+        laKhungTranhDacTa={laKhungTranhDacTa}
+        thoiLuongCanh={thoiLuongCanh}
+      />
+    );
+  }
+
   const px = tinhParallax(cam.panX, cam.panY);
-  const anNoiNen = anNoiNenProp ?? coAnNoiNenPhongSinh(nhanVat, daoCu);
+  const anNoiNen = anNoiNenProp ?? true;
   const anGiuongBenhNen =
     anGiuongBenhNenProp ?? coAnGiuongBenhNen(nhanVat, daoCu);
 
@@ -1581,7 +1689,7 @@ export const BoiCanhHoatHinh: React.FC<BoiCanhHoatHinhProps> = ({
         vatTheXungQuanh={vatTheXungQuanh}
         bienSoXe={bienSoXe}
       />
-      <LopThoiTiet thoiTiet={thoiTiet} frame={frame} />
+      <LopThoiTiet thoiTiet={thoiTiet} boiCanh={loai} frame={frame} />
     </svg>
   );
 };

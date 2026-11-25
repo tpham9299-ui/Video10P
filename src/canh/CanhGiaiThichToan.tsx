@@ -10,8 +10,8 @@ import { CongThucMath } from '../daocu/CongThucMath';
 import { MinhHoaToan } from '../daocu/MinhHoaToan';
 import { MayQuayDong } from '../vfx/MayQuayDong';
 import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
-import { KhungLoiBinhHaiHuoc } from './KhungLoiBinhHaiHuoc';
 import { LopCauHoiTuongTac } from './LopCauHoiTuongTac';
+import { coDuLieuMinhHoaHopLe } from '../daocu/minh_hoa_hop_le';
 
 type Props = {
   canh: Canh;
@@ -43,9 +43,20 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
     }
   }
 
-  const coMinhHoa = Boolean(canh.minhHoaToan);
+  const coMinhHoa = coDuLieuMinhHoaHopLe(canh.minhHoaToan);
   const daoCuHienThi = locDaoCuKhongTrungLap(canh.daoCu, canh.nhanVat);
 
+  // Chon phong cach bang phan khung go (lop hoc / giang duong) hoac cuon giay da co mo ra (boi canh lich su/ngoai troi)
+  const dungBangPhanGo =
+    canh.boiCanh === 'lop_hoc_bang_xanh' ||
+    canh.boiCanh === 'giang_duong_dai_hoc' ||
+    canh.boiCanh === 'giang_duong_hien_dai';
+  const moCuon = interpolate(frame, [0, 14], [0.92, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  // Cam hien thi "GOC BINH LUAN" tren bo cuc giang_toan de tranh de chu len bang Toan
   const lopHud = (
     <>
       {canh.cauHoiTuongTac && (
@@ -55,7 +66,6 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
           thoiLuongCanh={thoiLuong}
         />
       )}
-      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
     </>
   );
 
@@ -70,6 +80,7 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
         chuyenCanh={canh.chuyenCanh}
         nhanVat={canh.nhanVat}
         thoiLuongCanh={thoiLuong}
+        anhSangMoiTruong={canh.anhSangMoiTruong}
         hud={lopHud}
       >
         <BoiCanhHoatHinh
@@ -79,51 +90,113 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
           bienSoXe={canh.bienSoXe}
           nhanVat={canh.nhanVat}
           daoCu={daoCuHienThi}
+          anhBoiCanh={canh.anhBoiCanh}
+          anhSangMoiTruong={canh.anhSangMoiTruong}
+          thoiLuongCanh={thoiLuong}
         />
 
-        {/* Bang xanh lon vien go nam gon 100% trong khung an toan (le tren 76px, le phai 48px >= 40px, le duoi 154px >= 150px) */}
+        {/* Bang phan khung go hoac cuon giay da co mo ra dat gon ben canh nhan vat (Clean Cinema v3.0, khong tran khung) */}
         <div
           style={{
             position: 'absolute',
-            top: 76,
+            top: 68,
             left: 468,
             right: 48,
-            bottom: 154,
-            borderRadius: 20,
-            backgroundColor: '#114226',
-            border: '10px solid #92400E',
-            boxShadow: '0 10px 0 rgba(120, 53, 15, 0.35)',
-            padding: '18px 24px',
+            bottom: 146,
+            borderRadius: dungBangPhanGo ? 18 : 14,
+            backgroundColor: dungBangPhanGo ? '#134429' : '#FAF2DC',
+            border: dungBangPhanGo ? '11px solid #78350F' : '4px solid #1A1A1A',
+            boxShadow: dungBangPhanGo
+              ? '0 10px 0 #451A03, inset 0 0 0 3px #1A1A1A'
+              : '8px 8px 0px rgba(26, 26, 26, 0.36)',
+            padding: dungBangPhanGo ? '18px 24px 24px' : '24px 30px 24px',
             display: 'flex',
             flexDirection: 'column',
             gap: 14,
             boxSizing: 'border-box',
             overflow: 'hidden',
+            transform: `scale(${moCuon.toFixed(3)})`,
+            transformOrigin: 'center center',
           }}
         >
-          {/* Tieu de bang xanh */}
+          {/* Thanh cuon go tren/duoi cho cuon giay da co, hoac thanh dung phan cho bang phan */}
+          {!dungBangPhanGo ? (
+            <>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 11,
+                  backgroundColor: '#92400E',
+                  borderBottom: '2.5px solid #1A1A1A',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 11,
+                  backgroundColor: '#92400E',
+                  borderTop: '2.5px solid #1A1A1A',
+                }}
+              />
+            </>
+          ) : (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 60,
+                right: 60,
+                height: 8,
+                backgroundColor: '#B45309',
+                borderTop: '2px solid #1A1A1A',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                paddingLeft: 24,
+              }}
+            >
+              <div style={{ width: 32, height: 5, borderRadius: 2, backgroundColor: '#F8FAFC' }} />
+              <div style={{ width: 24, height: 5, borderRadius: 2, backgroundColor: '#FEF08A' }} />
+            </div>
+          )}
+
+          {/* Tieu de bang phan / cuon giay da */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              borderBottom: '2.5px dashed rgba(254, 249, 195, 0.35)',
-              paddingBottom: 12,
+              borderBottom: dungBangPhanGo
+                ? '2.5px dashed rgba(254, 249, 195, 0.35)'
+                : '2.5px dashed rgba(146, 64, 14, 0.35)',
+              paddingBottom: 10,
               gap: 16,
             }}
           >
-            <div style={{ color: '#FEF08A', fontSize: 32, fontWeight: 900 }}>
+            <div
+              style={{
+                color: dungBangPhanGo ? '#FEF08A' : '#1A1A1A',
+                fontSize: 31,
+                fontWeight: 900,
+              }}
+            >
               {canh.tieuDeNho ?? 'Bảng Giải Thích Toán Học'}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
               {danhSachCongThuc.length > 0 && (
                 <div
                   style={{
-                    padding: '5px 15px',
+                    padding: '4px 14px',
                     borderRadius: 999,
-                    backgroundColor: '#FEF08A',
-                    color: '#14532D',
-                    fontSize: 16,
+                    backgroundColor: dungBangPhanGo ? '#FEF08A' : '#1A1A1A',
+                    color: dungBangPhanGo ? '#14532D' : '#FAF2DC',
+                    fontSize: 15,
                     fontWeight: 900,
                   }}
                 >
@@ -131,7 +204,13 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
                 </div>
               )}
               {canh.namMoc && (
-                <div style={{ color: '#BBF7D0', fontSize: 19, fontWeight: 700 }}>
+                <div
+                  style={{
+                    color: dungBangPhanGo ? '#BBF7D0' : '#92400E',
+                    fontSize: 18,
+                    fontWeight: 800,
+                  }}
+                >
                   {canh.namMoc}
                 </div>
               )}
@@ -172,7 +251,13 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
                 });
                 const dangDoc = idx === chiSoDangDoc;
                 const daQua = idx < chiSoDangDoc;
-                const mauHighlight = ct.noiBat ? '#FDE047' : '#7DD3FC';
+                const mauHighlight = dungBangPhanGo
+                  ? ct.noiBat
+                    ? '#FDE047'
+                    : '#7DD3FC'
+                  : ct.noiBat
+                    ? '#B45309'
+                    : '#1D4ED8';
 
                 return (
                   <div
@@ -182,15 +267,21 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
                       opacity: doMo * (daQua ? 0.86 : 1),
                       transform: `translateX(${dichX}px)`,
                       padding: '12px 18px 12px 24px',
-                      borderRadius: 14,
-                      backgroundColor: dangDoc
-                        ? ct.noiBat
-                          ? 'rgba(250, 204, 21, 0.22)'
-                          : 'rgba(125, 211, 252, 0.16)'
-                        : 'rgba(9, 43, 25, 0.72)',
+                      borderRadius: 12,
+                      backgroundColor: dungBangPhanGo
+                        ? dangDoc
+                          ? ct.noiBat
+                            ? 'rgba(250, 204, 21, 0.22)'
+                            : 'rgba(125, 211, 252, 0.16)'
+                          : 'rgba(9, 43, 25, 0.72)'
+                        : dangDoc
+                          ? 'rgba(251, 191, 36, 0.24)'
+                          : 'rgba(255, 253, 247, 0.88)',
                       border: dangDoc
                         ? `2.5px solid ${mauHighlight}`
-                        : '1.5px solid rgba(255, 255, 255, 0.18)',
+                        : dungBangPhanGo
+                          ? '1.5px solid rgba(255, 255, 255, 0.18)'
+                          : '1.8px solid rgba(26, 26, 26, 0.28)',
                       overflow: 'hidden',
                     }}
                   >
@@ -203,7 +294,9 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
                         width: dangDoc ? 7 : 3,
                         backgroundColor: dangDoc
                           ? mauHighlight
-                          : 'rgba(187, 247, 208, 0.4)',
+                          : dungBangPhanGo
+                            ? 'rgba(187, 247, 208, 0.4)'
+                            : 'rgba(146, 64, 14, 0.4)',
                       }}
                     />
 
@@ -218,11 +311,13 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
                       {ct.nhan && (
                         <div
                           style={{
-                            color: dangDoc
-                              ? ct.noiBat
-                                ? '#FEF08A'
-                                : '#BAE6FD'
-                              : '#BBF7D0',
+                            color: dungBangPhanGo
+                              ? dangDoc
+                                ? ct.noiBat
+                                  ? '#FEF08A'
+                                  : '#BAE6FD'
+                                : '#BBF7D0'
+                              : '#78350F',
                             fontSize: 18,
                             fontWeight: 700,
                           }}
@@ -236,7 +331,7 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
                             padding: '2px 10px',
                             borderRadius: 999,
                             backgroundColor: mauHighlight,
-                            color: '#14532D',
+                            color: dungBangPhanGo ? '#14532D' : '#FFFDF7',
                             fontSize: 12,
                             fontWeight: 900,
                             letterSpacing: 0.5,
@@ -250,25 +345,37 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
                     <CongThucMath
                       latex={ct.latex}
                       fontSize={coMinhHoa ? (ct.noiBat ? 30 : 26) : ct.noiBat ? 38 : 32}
-                      mau={ct.noiBat ? '#FEF08A' : '#FFFFFF'}
+                      mau={
+                        dungBangPhanGo
+                          ? ct.noiBat
+                            ? '#FEF08A'
+                            : '#FFFFFF'
+                          : ct.noiBat
+                            ? '#9A3412'
+                            : '#1A1A1A'
+                      }
                     />
                   </div>
                 );
               })}
             </div>
 
-            {canh.minhHoaToan && (
+            {coMinhHoa && canh.minhHoaToan && (
               <div
                 style={{
                   flex: '0 0 47%',
                   minWidth: 0,
                   minHeight: 0,
                   overflow: 'hidden',
+                  borderRadius: 12,
+                  backgroundColor: dungBangPhanGo ? 'transparent' : '#0F291E',
+                  border: dungBangPhanGo ? 'none' : '2.5px solid #1A1A1A',
                 }}
               >
                 <MinhHoaToan
                   data={canh.minhHoaToan}
                   mauNhanManh={bangMau.nhanManh || '#FDE047'}
+                  congThucLatex={danhSachCongThuc}
                 />
               </div>
             )}
@@ -299,7 +406,11 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
               />
             );
           })}
-          <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
+          <HieuUngHoatHinh
+            danhSach={canh.hieuUngHoatHinh}
+            nhanVat={danhSachNhanVat}
+            tiLeNhanVat={1.28}
+          />
         </svg>
       </MayQuayDong>
     </div>

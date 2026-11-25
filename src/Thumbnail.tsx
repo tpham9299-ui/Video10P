@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill } from 'remotion';
+import { AbsoluteFill, Img, staticFile } from 'remotion';
 import type {
   BienTheThumbnail,
   DuLieuThumbnail,
@@ -181,6 +181,42 @@ export const ThumbnailToanHoc: React.FC<DuLieuThumbnail> = (props) => {
   const vatCamTay: LoaiVatCamTay = props.vatCamTay ?? 'cuon_giay';
   const mauNhan = props.mauNhan ?? '#FACC15';
   const mauNen = props.mauNen ?? '#0F172A';
+  const anhBoiCanhAI = typeof props.anhBoiCanh === 'string' && props.anhBoiCanh.trim().length > 0
+    ? props.anhBoiCanh.trim()
+    : null;
+
+  /** Phong nen uu tien anh minh hoa AI cua tap (v3.5), fallback BoiCanhHoatHinh SVG (KHONG blur) */
+  const renderNenThumbnail = () => {
+    if (anhBoiCanhAI) {
+      return (
+        <Img
+          src={staticFile(anhBoiCanhAI)}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      );
+    }
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: 1920,
+          height: 1080,
+          transform: 'scale(0.666667)',
+          transformOrigin: 'top left',
+        }}
+      >
+        <BoiCanhHoatHinh loai={boiCanh} thoiTiet={props.thoiTiet ?? 'nang_dep'} />
+      </div>
+    );
+  };
 
   const taoTrangThaiNhanVat = (
     x: number,
@@ -206,20 +242,8 @@ export const ThumbnailToanHoc: React.FC<DuLieuThumbnail> = (props) => {
     const trangThaiNv = taoTrangThaiNhanVat(295, 755, 'phai', 2.75);
     return (
       <AbsoluteFill style={{ width: 1280, height: 720, overflow: 'hidden', backgroundColor: mauNen }}>
-        {/* Nen boi canh thu gon khop 1280x720 */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: 1920,
-            height: 1080,
-            transform: 'scale(0.666667)',
-            transformOrigin: 'top left',
-          }}
-        >
-          <BoiCanhHoatHinh loai={boiCanh} thoiTiet={props.thoiTiet ?? 'nang_dep'} />
-        </div>
+        {/* Nen uu tien anh minh hoa AI cua tap (v3.5), fallback BoiCanhHoatHinh SVG */}
+        {renderNenThumbnail()}
 
         {/* Lop phu tuong phan & tia sunburst (khong blur) */}
         <svg width={1280} height={720} viewBox="0 0 1280 720" style={{ position: 'absolute', inset: 0 }}>
@@ -312,10 +336,13 @@ export const ThumbnailToanHoc: React.FC<DuLieuThumbnail> = (props) => {
     const trangThaiNv = taoTrangThaiNhanVat(965, 760, 'trai', 2.8);
     return (
       <AbsoluteFill style={{ width: 1280, height: 720, overflow: 'hidden', backgroundColor: '#0B1120' }}>
+        {/* Neu tap co anh nen AI (v3.5), hien thi phia sau lop chia cheo tuong phan cao */}
+        {anhBoiCanhAI && renderNenThumbnail()}
+
         {/* Nen cheo chia 2 mang mau tuong phan manh */}
         <svg width={1280} height={720} viewBox="0 0 1280 720" style={{ position: 'absolute', inset: 0 }}>
-          <rect x={0} y={0} width={1280} height={720} fill="#0F172A" />
-          <polygon points="735,0 1280,0 1280,720 630,720" fill="#F59E0B" />
+          <rect x={0} y={0} width={1280} height={720} fill="#0F172A" fillOpacity={anhBoiCanhAI ? 0.56 : 1} />
+          <polygon points="735,0 1280,0 1280,720 630,720" fill="#F59E0B" fillOpacity={anhBoiCanhAI ? 0.72 : 1} />
           <TiaSunburst cx={980} cy={360} soTia={14} mau="#FEF08A" doMo={0.35} />
           {/* Duong chia cheo sac net */}
           <line x1={735} y1={0} x2={630} y2={720} stroke="#FFFFFF" strokeWidth={14} />
@@ -403,9 +430,12 @@ export const ThumbnailToanHoc: React.FC<DuLieuThumbnail> = (props) => {
   const trangThaiNv3 = taoTrangThaiNhanVat(1035, 800, 'trai', 3.0);
   return (
     <AbsoluteFill style={{ width: 1280, height: 720, overflow: 'hidden', backgroundColor: '#114226' }}>
+      {/* Neu tap co anh nen AI (v3.5), hien thi phia sau lop bang xanh ban trong suot (khong blur) */}
+      {anhBoiCanhAI && renderNenThumbnail()}
+
       {/* Khung bang xanh lop hoc vien go co dien + luoi ke o nhe */}
       <svg width={1280} height={720} viewBox="0 0 1280 720" style={{ position: 'absolute', inset: 0 }}>
-        <rect x={0} y={0} width={1280} height={720} fill="#114226" />
+        <rect x={0} y={0} width={1280} height={720} fill="#114226" fillOpacity={anhBoiCanhAI ? 0.68 : 1} />
         {/* Luoi o ly bang xanh nhe */}
         {Array.from({ length: 16 }).map((_, i) => (
           <line

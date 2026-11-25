@@ -235,7 +235,7 @@ export const DaoCu: React.FC<DaoCuProps> = ({ daoCu }) => {
           </g>
         );
       case 'bien_so_xe': {
-        const soXe = (daoCu.bienSoXe || daoCu.nhan || '1729').trim();
+        const soXe = (daoCu.bienSoXe || daoCu.nhan || 'TAXI').trim();
         const rongBien = Math.max(146, soXe.length * 20 + 44);
         return (
           <g>

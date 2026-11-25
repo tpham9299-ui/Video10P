@@ -8,6 +8,7 @@ import type {
 import { bamTatDinh } from '../vfx/tat_dinh';
 import {
   giaiDanhSachVatTheXungQuanh,
+  layKhungCuaSoChoBoiCanh,
   tinhBuomBay,
   tinhGocQuaLac,
   tinhViTriTaxiCo,
@@ -312,25 +313,30 @@ const LaVangTheoGio: React.FC<{
   );
 };
 
-/** 8. Tuyet / mua roi qua khung cua so benh vien (co clipPath gon trong khung kinh) */
+/** 8. Tuyet / mua roi qua khung cua so (co clipPath cat gon 100% trong khung kinh, khong roi vao phong) */
 const TuyetQuaCuaSo: React.FC<{
   item: VatTheXungQuanh;
+  boiCanh: LoaiBoiCanh;
   frame: number;
   seedBase: number;
-}> = ({ item, frame, seedBase }) => {
-  const x0 = item.x ?? 685;
-  const y0 = item.y ?? 120;
-  const w = 550;
-  const h = 410;
+}> = ({ item, boiCanh, frame, seedBase }) => {
+  const khung = layKhungCuaSoChoBoiCanh(boiCanh);
+  if (!khung) {
+    return null;
+  }
+  const x0 = khung.x;
+  const y0 = khung.y;
+  const w = khung.width;
+  const h = khung.height;
   const soLuong = Math.max(6, Math.min(28, item.soLuong ?? 18));
   const mau = item.mau ?? '#FFFFFF';
-  const clipId = `clip-tuyet-cs-${seedBase}`;
+  const clipId = `clip-tuyet-cs-${boiCanh}-${seedBase}`;
 
   return (
     <g pointerEvents="none">
       <defs>
         <clipPath id={clipId}>
-          <rect x={x0} y={y0} width={w} height={h} rx={10} />
+          <rect x={x0} y={y0} width={w} height={h} rx={6} />
         </clipPath>
       </defs>
       <g clipPath={`url(#${clipId})`}>
@@ -339,8 +345,8 @@ const TuyetQuaCuaSo: React.FC<{
           const sy0 = bamTatDinh(seedBase * 23 + i * 41) * h;
           const speed = 1.4 + (i % 4) * 0.55;
           const y = y0 + ((sy0 + frame * speed) % (h + 20)) - 10;
-          const x = sx + Math.sin(frame * 0.06 + i * 1.3) * 18;
-          const r = 2.8 + (i % 3) * 1.4;
+          const x = sx + Math.sin(frame * 0.06 + i * 1.3) * 14;
+          const r = 2.6 + (i % 3) * 1.3;
           return <circle key={`tcs-${i}`} cx={x.toFixed(1)} cy={y.toFixed(1)} r={r} fill={mau} fillOpacity={0.86} />;
         })}
       </g>
@@ -348,7 +354,7 @@ const TuyetQuaCuaSo: React.FC<{
   );
 };
 
-/** 9. Chiec xe taxi co chau Au/Anh di qua pho voi bien so tuy chinh (vd: 1729) */
+/** 9. Chiec xe taxi co chau Au/Anh di qua pho (KHONG hardcode bien so 1729: chi hien bien so neu JSON truyen ro) */
 const XeTaxiCo: React.FC<{
   item: VatTheXungQuanh;
   frame: number;
@@ -357,7 +363,7 @@ const XeTaxiCo: React.FC<{
   const y = item.y ?? 745;
   const tocDo = item.tocDo ?? 3.1;
   const { x, gocBanhXe, nhunXeY } = tinhViTriTaxiCo(frame, item.x ?? 340, tocDo);
-  const bienSo = (item.bienSoXe || '1729').trim();
+  const bienSo = (item.bienSoXe || '').trim();
   const mauXe = item.mau ?? '#1E293B';
 
   return (
@@ -385,22 +391,29 @@ const XeTaxiCo: React.FC<{
       <text x={2} y={-101} textAnchor="middle" fill="#0F172A" fontSize={11} fontWeight={900} fontFamily="Segoe UI, Arial, sans-serif">
         TAXI
       </text>
-      {/* Dai trang tri & bien so xe dong (vd: 1729) */}
+      {/* Dai trang tri & bien so xe (chi hien so tuy chinh neu JSON truyen, nguoc lai de bien so tron trung tinh) */}
       <rect x={-118} y={-20} width={236} height={8} rx={3} fill="#F59E0B" />
       <g transform="translate(-4, -2)">
         <rect x={-46} y={-16} width={92} height={28} rx={5} fill="#FFFDF7" stroke="#0F172A" strokeWidth={3} />
         <rect x={-42} y={-12} width={84} height={20} rx={3} fill="#FEF08A" />
-        <text
-          x={0}
-          y={4}
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize={bienSo.length > 6 ? 13 : 16}
-          fontWeight={900}
-          fontFamily="Consolas, Segoe UI, monospace"
-        >
-          {bienSo}
-        </text>
+        {bienSo ? (
+          <text
+            x={0}
+            y={4}
+            textAnchor="middle"
+            fill="#0F172A"
+            fontSize={bienSo.length > 6 ? 13 : 16}
+            fontWeight={900}
+            fontFamily="Consolas, Segoe UI, monospace"
+          >
+            {bienSo}
+          </text>
+        ) : (
+          <g>
+            <rect x={-26} y={-4} width={52} height={4} rx={2} fill="#94A3B8" />
+            <rect x={-18} y={3} width={36} height={3} rx={1.5} fill="#CBD5E1" />
+          </g>
+        )}
       </g>
       {/* Den pha & den hau */}
       <circle cx={126} cy={-8} r={8} fill="#FEF08A" stroke="#78350F" strokeWidth={2.2} />
@@ -513,7 +526,7 @@ export const SinhVatVaMoiTruong: React.FC<SinhVatVaMoiTruongProps> = ({
           case 'la_vang_gio':
             return <LaVangTheoGio key={key} item={item} frame={frame} seedBase={idx + 31} />;
           case 'tuyet_cua_so':
-            return <TuyetQuaCuaSo key={key} item={item} frame={frame} seedBase={idx + 37} />;
+            return <TuyetQuaCuaSo key={key} item={item} boiCanh={boiCanh} frame={frame} seedBase={idx + 37} />;
           case 'xe_taxi_co':
             return <XeTaxiCo key={key} item={item} frame={frame} />;
           case 'dong_ho_qua_lac':

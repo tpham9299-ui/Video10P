@@ -20,6 +20,7 @@ if str(GOC_DU_AN) not in sys.path:
 from scripts.pipeline.bo_nho_hoc_hoi import (
     DUONG_DAN_BO_NHO_MAC_DINH,
     nhap_so_lieu_youtube,
+    tai_bo_nho,
 )
 from scripts.pipeline.gemini_client import GeminiClient, tai_env
 
@@ -322,6 +323,23 @@ def dong_bo_hang_loat_tu_file(
     return ket_qua
 
 
+def tim_video_id_tu_bo_nho(
+    slug: str,
+    duong_dan_bo_nho: Path | str | None = None,
+) -> str:
+    """Tu dong tra cuu `youtubeVideoId` da luu trong bo_nho_hoc_hoi.json theo slug."""
+    muc_tieu = str(slug or "").strip()
+    if not muc_tieu:
+        return ""
+    bo_nho = tai_bo_nho(duong_dan_bo_nho or DUONG_DAN_BO_NHO_MAC_DINH)
+    for muc in bo_nho.get("chu_de_da_lam") or []:
+        if isinstance(muc, dict) and str(muc.get("slug") or "").strip() == muc_tieu:
+            vid = str(muc.get("youtubeVideoId") or muc.get("video_id") or "").strip()
+            if vid:
+                return vid
+    return ""
+
+
 def tao_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Dong bo so lieu YouTube Data API v3 (tuy chon, stdlib) va day vao bo_nho_hoc_hoi.py."
@@ -382,13 +400,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[OK] Da dong bo {len(ds)} video YouTube vao bo_nho_hoc_hoi.json.")
         return 0
 
-    if not args.slug.strip() or not args.video_id.strip():
+    slug_val = args.slug.strip()
+    video_id_val = args.video_id.strip()
+    if slug_val and not video_id_val:
+        video_id_val = tim_video_id_tu_bo_nho(slug_val, duong_dan_bo_nho=duong_dan_bn)
+
+    if not slug_val or not video_id_val:
         print("[LOI] Can truyen du --slug va --video-id (hoac --file-anh-xa <file.json>).")
         return 2
 
     kq = dong_bo_video_youtube(
-        slug=args.slug.strip(),
-        video_id=args.video_id.strip(),
+        slug=slug_val,
+        video_id=video_id_val,
         ctr_phan_tram=args.ctr or None,
         giu_chan_30s=args.giu_chan_30s or None,
         thoi_luong_xem_tb_giay=args.thoi_luong_xem_tb or None,

@@ -10,7 +10,6 @@ import {
 } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
 import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
-import { KhungLoiBinhHaiHuoc } from './KhungLoiBinhHaiHuoc';
 import { LopCauHoiTuongTac } from './LopCauHoiTuongTac';
 import { chiaNhomNhanVatChiaDoi } from './tuong_tac';
 import { kepGiaTri, noiSuy, springTatDinh } from '../xuong/duong_cong';
@@ -98,6 +97,9 @@ export const CanhChiaDoiManHinh: React.FC<Props> = ({
             bienSoXe={canh.bienSoXe}
             nhanVat={canh.nhanVat}
             daoCu={daoCuHopLe}
+            anhBoiCanh={canh.anhBoiCanh}
+            anhSangMoiTruong={canh.anhSangMoiTruong}
+            thoiLuongCanh={thoiLuong}
           />
 
           <svg
@@ -127,10 +129,15 @@ export const CanhChiaDoiManHinh: React.FC<Props> = ({
                   tiLe={1.34}
                   thoiLuongCanh={thoiLuong}
                   bienDoAmThanh={canh.bienDoAmThanh}
+                  anhSangMoiTruong={canh.anhSangMoiTruong}
                 />
               );
             })}
-            <HieuUngHoatHinh danhSach={hieuUngNua} />
+            <HieuUngHoatHinh
+              danhSach={hieuUngNua}
+              nhanVat={nhom}
+              tiLeNhanVat={1.34}
+            />
           </svg>
         </div>
       </div>
@@ -161,36 +168,6 @@ export const CanhChiaDoiManHinh: React.FC<Props> = ({
         }}
       />
 
-      {canh.tieuDeNho && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 76,
-            left: 0,
-            right: 0,
-            display: 'flex',
-            justifyContent: 'center',
-            pointerEvents: 'none',
-            zIndex: 22,
-          }}
-        >
-          <div
-            style={{
-              padding: '8px 26px',
-              borderRadius: 16,
-              backgroundColor: 'rgba(15, 23, 42, 0.9)',
-              border: `3px solid ${bangMau.nhanManh || '#FACC15'}`,
-              color: '#FFFFFF',
-              fontSize: 30,
-              fontWeight: 900,
-              boxShadow: '5px 5px 0px rgba(15, 23, 42, 0.45)',
-            }}
-          >
-            {canh.tieuDeNho}
-          </div>
-        </div>
-      )}
-
       {canh.cauHoiTuongTac && (
         <LopCauHoiTuongTac
           cauHoi={canh.cauHoiTuongTac}
@@ -198,8 +175,6 @@ export const CanhChiaDoiManHinh: React.FC<Props> = ({
           thoiLuongCanh={thoiLuong}
         />
       )}
-
-      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
     </div>
   );
 };

@@ -6,6 +6,87 @@ import type {
   VatTheXungQuanh,
 } from '../kieu_dai';
 
+export type KhungCuaSo = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+/** Danh sach boi canh phong kin (trong nha) de chan la roi/mua/tuyet/chim/taxi lot vao phong */
+export const BOI_CANH_TRONG_NHA: ReadonlySet<LoaiBoiCanh> = new Set<LoaiBoiCanh>([
+  'thu_vien_co_dien',
+  'lop_hoc_bang_xanh',
+  'thu_vien_trung_co',
+  'dai_thien_van_phuc_hung',
+  'giang_duong_hien_dai',
+  'nha_co_phong_sinh',
+  'phong_tro_bep_lua',
+  'phong_benh_vien',
+  'giang_duong_dai_hoc',
+  'phong_thi_nghiem_co',
+  'phong_nen_hai_huoc',
+]);
+
+/** Danh sach boi canh vu tru (cam ngon_nen_den_dau lo lung, cam la roi/tuyet/chim) */
+export const BOI_CANH_VU_TRU: ReadonlySet<LoaiBoiCanh> = new Set<LoaiBoiCanh>([
+  'khong_gian_vu_tru_toan',
+  'bau_troi_dem_vu_tru',
+]);
+
+const VAT_THE_NGOAI_TROI_CAM_TRONG_NHA = new Set<VatTheXungQuanh['loai']>([
+  'la_vang_gio',
+  'chim_hai_au',
+  'chim_san_truong',
+  'ca_gon_song',
+  'buom_vuon',
+  'xe_taxi_co',
+]);
+
+const VAT_THE_CAM_TRONG_VU_TRU = new Set<VatTheXungQuanh['loai']>([
+  'ngon_nen_den_dau',
+  'la_vang_gio',
+  'chim_hai_au',
+  'chim_san_truong',
+  'ca_gon_song',
+  'buom_vuon',
+  'xe_taxi_co',
+  'tuyet_cua_so',
+  'hoi_khoi',
+]);
+
+/** Toa do khung kinh cua so chinh xac theo tung boi canh trong nha de clipPath tuyet/mua khong lot vao phong */
+export function layKhungCuaSoChoBoiCanh(loai: LoaiBoiCanh): KhungCuaSo | null {
+  switch (loai) {
+    case 'phong_benh_vien':
+      return { x: 685, y: 120, width: 550, height: 410 };
+    case 'phong_tro_bep_lua':
+      return { x: 776, y: 141, width: 368, height: 263 };
+    case 'nha_co_phong_sinh':
+      return { x: 687, y: 137, width: 526, height: 346 };
+    case 'thu_vien_co_dien':
+      return { x: 698, y: 103, width: 524, height: 524 };
+    case 'phong_thi_nghiem_co':
+      return { x: 772, y: 195, width: 376, height: 335 };
+    default:
+      return null;
+  }
+}
+
+/**
+ * Kiem tra canh nha_co_phong_sinh co thuc su co em be so sinh hoac dao cu noi_em_be hay khong.
+ * Chi hien noi em be khi canh co doTuoi="so_sinh" hoac dao cu noi_em_be (khong ve noi thua cho canh nguoi lon/gia).
+ */
+export function coHienNoiTrongPhongSinh(
+  nhanVat?: readonly NhanVatTrongCanh[],
+  daoCu?: readonly DaoCuTrongCanh[],
+): boolean {
+  return Boolean(
+    nhanVat?.some((nv) => nv.doTuoi === 'so_sinh') ||
+      daoCu?.some((dc) => dc.loai === 'noi_em_be'),
+  );
+}
+
 /**
  * Kiem tra co can an noi em be ve san trong nen nha_co_phong_sinh hay khong:
  * bo noi thua tren nen khi canh da co nhan vat so_sinh hoac dao cu noi_em_be.
@@ -14,10 +95,35 @@ export function coAnNoiNenPhongSinh(
   nhanVat?: readonly NhanVatTrongCanh[],
   daoCu?: readonly DaoCuTrongCanh[],
 ): boolean {
-  return Boolean(
-    nhanVat?.some((nv) => nv.doTuoi === 'so_sinh') ||
-      daoCu?.some((dc) => dc.loai === 'noi_em_be'),
-  );
+  return coHienNoiTrongPhongSinh(nhanVat, daoCu);
+}
+
+/**
+ * Kiem tra vat the moi truong co hop le voi loai phong / boi canh hay khong.
+ * - Cam la_vang_gio (va sinh vat ngoai troi) trong giang_duong_dai_hoc hay bat ky phong kin nao.
+ * - Cam ngon_nen_den_dau troi lo lung trong khong_gian_vu_tru_toan.
+ * - Chi cho phep tuyet_cua_so o phong co khung cua so.
+ */
+export function locVatTheHopLeTheoBoiCanh(
+  loai: LoaiBoiCanh,
+  danhSach: readonly VatTheXungQuanh[],
+): VatTheXungQuanh[] {
+  const laTrongNha = BOI_CANH_TRONG_NHA.has(loai);
+  const laVuTru = BOI_CANH_VU_TRU.has(loai);
+  const cuaSo = layKhungCuaSoChoBoiCanh(loai);
+
+  return danhSach.filter((item) => {
+    if (laTrongNha && VAT_THE_NGOAI_TROI_CAM_TRONG_NHA.has(item.loai)) {
+      return false;
+    }
+    if (laVuTru && VAT_THE_CAM_TRONG_VU_TRU.has(item.loai)) {
+      return false;
+    }
+    if (item.loai === 'tuyet_cua_so' && !cuaSo) {
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -64,7 +170,7 @@ export function layVatTheMacDinhChoBoiCanh(
   thoiTiet?: LoaiThoiTiet,
   bienSoXe?: string,
 ): VatTheXungQuanh[] {
-  const bienSo = (bienSoXe || '').trim() || '1729';
+  const bienSo = (bienSoXe || '').trim();
   switch (loai) {
     case 'cang_bien_tau_thuy':
       return [
@@ -98,7 +204,13 @@ export function layVatTheMacDinhChoBoiCanh(
       ];
     case 'duong_pho_xe_co':
       return [
-        { loai: 'xe_taxi_co', x: 340, y: 745, tocDo: 3.1, bienSoXe: bienSo },
+        {
+          loai: 'xe_taxi_co',
+          x: 340,
+          y: 745,
+          tocDo: 3.1,
+          ...(bienSo ? { bienSoXe: bienSo } : {}),
+        },
         { loai: 'chim_san_truong', x: 240, y: 205, soLuong: 3, tocDo: 1.15 },
       ];
     case 'pho_co_chau_au':
@@ -146,7 +258,10 @@ export function layVatTheMacDinhChoBoiCanh(
 
 /**
  * Giai danh sach vat the moi truong hien thi: uu tien vatTheXungQuanh[] tu JSON,
- * neu khong khai bao thi gan tu dong theo boiCanh. Luon truyen bienSoXe neu co.
+ * neu khong khai bao thi gan tu dong theo boiCanh.
+ * - Loc bo vat the lech boi canh (la_vang_gio trong phong kin, ngon_nen_den_dau trong vu tru...).
+ * - Khong hardcode bien so "1729": chi gan bienSoXe neu JSON truyen ro.
+ * - Tu dong khoa toa do tuyet_cua_so vao dung khung kinh cua so cua phong.
  */
 export function giaiDanhSachVatTheXungQuanh(
   loai: LoaiBoiCanh,
@@ -159,10 +274,20 @@ export function giaiDanhSachVatTheXungQuanh(
       ? vatTheXungQuanh
       : layVatTheMacDinhChoBoiCanh(loai, thoiTiet, bienSoXe);
 
-  return nguon.map((item) => {
+  const daLoc = locVatTheHopLeTheoBoiCanh(loai, nguon);
+  const khungCuaSo = layKhungCuaSoChoBoiCanh(loai);
+
+  return daLoc.map((item) => {
     if (item.loai === 'xe_taxi_co') {
-      const bs = (item.bienSoXe || bienSoXe || '1729').trim().slice(0, 12);
-      return { ...item, bienSoXe: bs || '1729' };
+      const bs = (item.bienSoXe || bienSoXe || '').trim().slice(0, 12);
+      return bs ? { ...item, bienSoXe: bs } : { ...item, bienSoXe: undefined };
+    }
+    if (item.loai === 'tuyet_cua_so' && khungCuaSo) {
+      return {
+        ...item,
+        x: khungCuaSo.x,
+        y: khungCuaSo.y,
+      };
     }
     return item;
   });

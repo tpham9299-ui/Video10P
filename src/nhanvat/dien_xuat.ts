@@ -146,6 +146,34 @@ export function tinhHuongNhinTuongTac(
 }
 
 /**
+ * Chong nhan doi cung 1 nhanVatId dung 2 lan trong cung 1 canh.
+ * Giu ban ghi dau tien; neu ban trung phia sau co dangNoi=true thi gop dangNoi.
+ */
+export function khuTrungLapNhanVatTrongCanh(
+  danhSach?: readonly NhanVatTrongCanh[],
+): NhanVatTrongCanh[] {
+  if (!Array.isArray(danhSach) || danhSach.length === 0) {
+    return [];
+  }
+  const ketQua: NhanVatTrongCanh[] = [];
+  const chiSoTheoId = new Map<string, number>();
+
+  for (const nv of danhSach) {
+    if (!nv || !nv.id) continue;
+    const daCo = chiSoTheoId.get(nv.id);
+    if (daCo !== undefined) {
+      if (nv.dangNoi && !ketQua[daCo].dangNoi) {
+        ketQua[daCo] = { ...ketQua[daCo], dangNoi: true };
+      }
+      continue;
+    }
+    chiSoTheoId.set(nv.id, ketQua.length);
+    ketQua.push(nv);
+  }
+  return ketQua;
+}
+
+/**
  * Giai trang thai dong cua tat ca nhan vat trong canh tai frame (ho tro day du luotThoai[], bieuCamTheoMoc[], tuongTacVoi, tuong_tac_khan_gia).
  * Giu tuong thich nguoc 100% khi canh khong dung luotThoai/bieuCamTheoMoc.
  */
@@ -154,7 +182,7 @@ export function giaiTrangThaiNhanVatTrongCanh(
   frame: number,
   thoiLuongCanh: number,
 ): TrangThaiNhanVatDaGiai[] {
-  const ds = canh.nhanVat ?? [];
+  const ds = khuTrungLapNhanVatTrongCanh(canh.nhanVat);
   const coLuotThoai = Boolean(canh.luotThoai && canh.luotThoai.length > 0);
   const luotHienTai = timLuotThoaiTaiFrame(canh.luotThoai, frame);
   const nguoiDangNoiId =
@@ -188,6 +216,10 @@ export function giaiTrangThaiNhanVatTrongCanh(
         ? luotHienTai?.noiDung
         : undefined
       : nv.bongBongThoai;
+    const kieuBongBongHieuLuc =
+      laNguoiNoiLuot && luotHienTai?.kieuBongBong
+        ? luotHienTai.kieuBongBong
+        : nv.kieuBongBong;
     const bienDoAmThanhHieuLuc =
       laNguoiNoiLuot && luotHienTai?.bienDoAmThanh
         ? luotHienTai.bienDoAmThanh
@@ -212,6 +244,7 @@ export function giaiTrangThaiNhanVatTrongCanh(
       bieuCam: bieuCamHieuLuc,
       dangNoi: dangNoiHieuLuc,
       bongBongThoai: bongBongThoaiHieuLuc,
+      kieuBongBong: kieuBongBongHieuLuc,
       bienDoAmThanh: bienDoAmThanhHieuLuc,
       frameBatDauThoai,
       nhinThangOngKinh: huongNhin.nhinThangOngKinh,

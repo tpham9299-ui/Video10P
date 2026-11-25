@@ -42,6 +42,28 @@ from scripts.pipeline.dong_bo_youtube import (
     lay_cau_hinh_youtube,
     main as main_dong_bo_youtube,
     tao_huong_dan_nhap_tay,
+    tim_video_id_tu_bo_nho,
+)
+from scripts.pipeline.dang_youtube import (
+    KICH_THUOC_CHUNK_MAC_DINH,
+    LoiDangYouTube,
+    MUI_GIO_VN,
+    dang_video_len_youtube,
+    danh_sach_bien_thieu,
+    doc_tieu_de_va_mo_ta,
+    doi_refresh_token_lay_access_token,
+    lay_cau_hinh_oauth_youtube,
+    main as main_dang_youtube,
+    tai_video_resumable,
+    tao_huong_dan_cau_hinh_youtube,
+    tao_metadata_video,
+    tinh_thoi_diem_cong_khai_vn,
+    trich_xuat_the_tag,
+)
+from scripts.pipeline.lay_refresh_token_youtube import (
+    YOUTUBE_SCOPES,
+    doi_code_lay_tokens,
+    tao_url_xac_thuc_google,
 )
 from scripts.pipeline.chuan_hoa_doc_toan import (
     TU_DIEN_PHAT_AM_MAC_DINH,
@@ -52,6 +74,7 @@ from scripts.pipeline.chuan_hoa_doc_toan import (
 from scripts.pipeline.chuanbi_dai import (
     NGHI_GIUA_LUOT_THOAI_GIAY,
     NGHI_TRUOC_PUNCHLINE_GIAY,
+    THOI_GIAN_HIEN_DAP_AN_TOI_THIEU_GIAY,
     _chen_khoang_nghi_dau_mp3,
     bam_noi_dung_tts,
     can_chinh_mang_rms,
@@ -66,12 +89,28 @@ from scripts.pipeline.chuanbi_dai import (
     lay_cau_hinh_giong_theo_vai,
     ngat_dong_phu_de_srt,
     tao_noi_dung_srt,
+    tao_parser as tao_parser_chuanbi_dai,
     tinh_bien_do_rms_tu_pcm,
     tinh_moc_va_rms_luot_thoai,
     tinh_toan_khung_hinh,
     trich_xuat_bien_do_rms,
     xac_dinh_cau_hinh_tts_canh,
     xuat_file_srt,
+)
+from scripts.pipeline.tao_boi_canh_ai import (
+    GIOI_HAN_DUNG_LUONG_KB,
+    LOAI_ANH_SANG_HOP_LE,
+    MAC_DINH_IMAGE_MODELS,
+    STYLE_BIBLE_BOI_CANH,
+    STYLE_BIBLE_CAN_CANH_VAT_THE,
+    TrinhTaoBoiCanhAI,
+    bam_mo_ta_boi_canh,
+    lap_ke_hoach_boi_canh_tap,
+    lay_cau_hinh_anh_ai,
+    luu_va_nen_anh_boi_canh,
+    phan_tich_anh_sang_moi_truong,
+    sinh_boi_canh_cho_tap,
+    tao_prompt_boi_canh,
 )
 from scripts.pipeline.gemini_client import (
     GeminiClient,
@@ -145,12 +184,16 @@ from scripts.pipeline.tao_kich_ban_10p import (
     LOAI_VAT_THE_XUNG_QUANH,
     TU_THE_NHAN_VAT,
     bien_kich_3_tang,
+    cat_gon_theo_tu,
     chuan_hoa_buoc_ve_toan,
+    chuan_hoa_canh,
     chuan_hoa_goi_y_thumbnail,
     chuan_hoa_toan_bo_kich_ban,
     kiem_dinh_guardrail_kich_ban,
     kiem_dinh_nhip_ngat_thi_giac,
     kiem_dinh_schema_du_lieu_canh,
+    kiem_tra_dau_tieng_viet,
+    kiem_tra_lap_y_toan_tap,
     kiem_tra_latex,
     la_canh_doi_thoai_hoac_tuong_tac,
     lay_goc_quay_canh,
@@ -162,6 +205,7 @@ from scripts.pipeline.tao_kich_ban_10p import (
     tao_prompt_tang_2_hoi,
     tao_prompt_tu_kiem_dinh,
     tao_slug,
+    tu_dong_sua_dau_tieng_viet,
     tu_kiem_dinh_kich_ban,
 )
 
@@ -2972,10 +3016,10 @@ class TestGiuChanNguoiXemV07Offline(unittest.TestCase):
             cac_job = _re.findall(r"^  ([a-z0-9-]+):\s*$", jobs_section, flags=_re.MULTILINE)
             self.assertEqual(cac_job, ["chuan-bi", "render-song-song", "ghep-va-luu"])
 
-        # Xac minh du luong 3 job song song theo chunk, lich chay hang ngay & tu dong luu bo nho
+        # Xac minh du luong 3 job song song theo chunk, lich chay cach 2 ngay, dang YouTube & tu dong luu bo nho
         for bat_buoc in (
             "schedule:",
-            "- cron: '0 0 * * *'",
+            "- cron: '0 0 */2 * *'",
             "0 0 * * 1,3,5",
             "workflow_dispatch:",
             "concurrency:",
@@ -3001,6 +3045,16 @@ class TestGiuChanNguoiXemV07Offline(unittest.TestCase):
             "--che-do-ci",
             "--chi-ghep-hoan-chinh",
             "--hoan-tat-tu-meta",
+            "scripts/pipeline/dang_youtube.py",
+            "YOUTUBE_CLIENT_ID",
+            "YOUTUBE_CLIENT_SECRET",
+            "YOUTUBE_REFRESH_TOKEN",
+            "tu_dong_dang_youtube:",
+            "che_do_dang:",
+            "- hen_gio",
+            "- rieng_tu",
+            "--gio-cong-khai-vn",
+            "--chi-rieng-tu",
             "actions/cache@v4",
             "node-version: '22'",
             "Cai dat Node.js 22 (co cache npm)",
@@ -3020,6 +3074,11 @@ class TestGiuChanNguoiXemV07Offline(unittest.TestCase):
             "thumbnail_*.png",
         ):
             self.assertIn(bat_buoc, text, f"Workflow thieu cau hinh bat buoc: {bat_buoc}")
+        # Buoc dang YouTube phai chay truoc buoc commit bo_nho_hoc_hoi.json len main
+        self.assertLess(
+            text.index("scripts/pipeline/dang_youtube.py"),
+            text.index("git pull --rebase origin main"),
+        )
         # Dam bao da nang toan bo 3 job len Node 22 va khong con sot cau hinh Node 20
         self.assertEqual(text.count("node-version: '22'"), 3)
         self.assertNotIn("node-version: '20'", text)
@@ -3328,8 +3387,8 @@ class TestGiuChanNguoiXemV07Offline(unittest.TestCase):
             self.assertEqual(tl["goi_y_boi_canh_va_dao_cu"][2]["tuThe"], "nam_giuong")
 
     def test_v20_buoc4_prompt_2_vai_chong_lap_va_guardrail_cuc_bo(self) -> None:
-        # 1. Xac minh enum v2.0 dong bo day du voi src/kieu_dai.ts
-        self.assertEqual(len(GOC_QUAY_CAMERA), 8)
+        # 1. Xac minh enum v2.0 -> v3.0 dong bo day du voi src/kieu_dai.ts
+        self.assertGreaterEqual(len(GOC_QUAY_CAMERA), 12)
         self.assertEqual(len(LOAI_CANH), 5)
         self.assertEqual(len(DO_TUOI_NHAN_VAT), 4)
         self.assertEqual(len(TU_THE_NHAN_VAT), 5)
@@ -4075,6 +4134,1570 @@ class TestGiuChanNguoiXemV07Offline(unittest.TestCase):
         self.assertTrue(any(c.get("loaiCanh") == "doi_thoai" and c.get("luotThoai") for c in tat_ca))
         self.assertTrue(any(c.get("loaiCanh") == "tuong_tac_khan_gia" and c.get("cauHoiTuongTac") for c in tat_ca))
         self.assertTrue(any(c.get("boCuc") == "giai_thich_toan" and c.get("minhHoaToan") for c in tat_ca))
+
+
+class TestNangCapV25Buoc1Offline(unittest.TestCase):
+    """Unit test offline cho 6 nhom sua loi v2.5 Buoc 1 (tap Georg Cantor)."""
+
+    def test_v25_1_kiem_tra_va_tu_dong_sua_dau_tieng_viet(self) -> None:
+        kb = {
+            "tieuDe": "Georg Cantor va Cuoc cach mang vo cuc",
+            "chuDe": "Hành trình chinh phục những cấp độ vô cực",
+            "danhSachNhanVat": [{"id": "cantor", "ten": "Georg Cantor"}],
+            "chuong": [
+                {
+                    "id": "hoi_1",
+                    "tenChuong": "Hồi 1: Cú sốc vô cực",
+                    "phuDeHoi": "Cuoc tranh luan gay gat giua Cantor va Kronecker ve tap vo han",
+                    "canh": [
+                        {
+                            "id": "canh_001",
+                            "boCuc": "giai_thich_toan",
+                            "tieuDeNho": "Anh xa mot mot giua hai tap hop",
+                            "loiThoai": "Cac ban biet khong, tap so tu nhien va tap so chan co cung luc luong vo cuc!",
+                            "luotThoai": [
+                                {
+                                    "nhanVatId": "cantor",
+                                    "noiDung": "Giai thoai bat ngo nay khien ca giang duong im lang!",
+                                }
+                            ],
+                            "minhHoaToan": {
+                                "loai": "so_do_anh_xa",
+                                "tieuDe": "Luy thua vo cuc va anh xa mot mot",
+                                "thamSo": {
+                                    "tenTrai": "Tap so tu nhien N",
+                                    "tenPhai": "Tap so chan",
+                                    "cotTrai": ["1", "2", "3"],
+                                    "cotPhai": ["2", "4", "6"],
+                                },
+                            },
+                            "goiY": "Goi y cho khan gia suy nghi ky truoc khi tra loi",
+                        }
+                    ],
+                }
+            ],
+        }
+        vi_pham = kiem_tra_dau_tieng_viet(kb)
+        duong_dan = {v["duongDan"] for v in vi_pham}
+        self.assertTrue(any("tieuDe" in p for p in duong_dan))
+        self.assertTrue(any("phuDeHoi" in p for p in duong_dan))
+        self.assertTrue(any("loiThoai" in p for p in duong_dan))
+        self.assertTrue(any("luotThoai" in p for p in duong_dan))
+        self.assertTrue(any("minhHoaToan" in p for p in duong_dan))
+        self.assertTrue(any("goiY" in p for p in duong_dan))
+
+        # Mock Gemini sua toan bo chuoi thieu dau
+        class _MockGeminiSuaDau:
+            def tao_json(self, prompt: str, **kwargs: Any) -> dict[str, Any]:
+                # Tra ve ban da them dau cho tat ca duongDan tim thay
+                kq: list[dict[str, str]] = []
+                for v in vi_pham:
+                    kq.append(
+                        {
+                            "duongDan": v["duongDan"],
+                            "vanBanCoDau": "Đã khôi phục đầy đủ dấu tiếng Việt tự nhiên cho nội dung này!",
+                        }
+                    )
+                return {"daSua": kq}
+
+        kb_da_sua, ds_sua = tu_dong_sua_dau_tieng_viet(kb, gemini=_MockGeminiSuaDau())
+        self.assertGreaterEqual(len(ds_sua), 6)
+        self.assertEqual(kiem_tra_dau_tieng_viet(kb_da_sua), [])
+
+    def test_v25_2_chan_dao_cu_thoi_tiet_lech_boi_canh_va_phong_sinh(self) -> None:
+        nv_ids = ["cantor"]
+        # 2a. Cam la_vang_gio trong giang_duong_dai_hoc & thoiTiet=la_roi trong phong kin
+        c_giang_duong, _ = chuan_hoa_canh(
+            {
+                "id": "canh_010",
+                "boCuc": "ke_chuyen",
+                "boiCanh": "giang_duong_dai_hoc",
+                "thoiTiet": "la_roi",
+                "loiThoai": "Cantor đứng trên bục giảng đường trình bày chứng minh mới.",
+                "vatTheXungQuanh": [
+                    {"loai": "la_vang_gio", "soLuong": 8},
+                    {"loai": "dong_ho_qua_lac", "x": 1680, "y": 220},
+                ],
+                "nhanVat": [{"id": "cantor", "x": 760, "y": 810}],
+            },
+            "canh_010",
+            nv_ids,
+        )
+        self.assertEqual(c_giang_duong["thoiTiet"], "khong")
+        self.assertNotIn("la_vang_gio", [v["loai"] for v in c_giang_duong.get("vatTheXungQuanh") or []])
+
+        # 2b. Cam ngon_nen_den_dau trong khong_gian_vu_tru_toan
+        c_vu_tru, _ = chuan_hoa_canh(
+            {
+                "id": "canh_011",
+                "boCuc": "ke_chuyen",
+                "boiCanh": "khong_gian_vu_tru_toan",
+                "thoiTiet": "ban_dem",
+                "loiThoai": "Giữa vũ trụ toán học bao la, từng tầng vô cực mở ra nối tiếp.",
+                "vatTheXungQuanh": [{"loai": "ngon_nen_den_dau", "x": 420, "y": 500}],
+                "nhanVat": [{"id": "cantor", "x": 760, "y": 810}],
+            },
+            "canh_011",
+            nv_ids,
+        )
+        self.assertNotIn("ngon_nen_den_dau", [v["loai"] for v in c_vu_tru.get("vatTheXungQuanh") or []])
+
+        # 2c. Cam nha_co_phong_sinh cho canh nguoi gia nhan giai thuong / cuoi doi
+        c_giai_thuong, _ = chuan_hoa_canh(
+            {
+                "id": "canh_012",
+                "boCuc": "ke_chuyen",
+                "boiCanh": "nha_co_phong_sinh",
+                "tieuDeNho": "Nhận huy chương Sylvester cuối đời",
+                "loiThoai": "Năm 1904, Hội Hoàng gia London trao huy chương Sylvester vinh danh Cantor.",
+                "nhanVat": [{"id": "cantor", "x": 760, "y": 810, "doTuoi": "gia"}],
+            },
+            "canh_012",
+            nv_ids,
+        )
+        self.assertNotEqual(c_giai_thuong["boiCanh"], "nha_co_phong_sinh")
+
+    def test_v25_3_cam_loi_binh_tren_toan_timeline_khong_cat_giua_tu_va_khong_lap_fallback(self) -> None:
+        nv_ids = ["cantor"]
+        # 3a. Goi loiBinhHaiHuoc bi go khoi giai_thich_toan & dong_thoi_gian
+        c_toan, _ = chuan_hoa_canh(
+            {
+                "id": "canh_020",
+                "boCuc": "giai_thich_toan",
+                "loaiCanh": "giang_toan",
+                "boiCanh": "giang_duong_dai_hoc",
+                "loiThoai": "Ta lập bảng đường chéo để tạo ra một số thực hoàn toàn mới.",
+                "loiBinhHaiHuoc": {"noiDung": "Góc nhìn này mới là chìa khóa của cả câu chuyện!"},
+                "congThucLatex": [{"latex": "|\\mathbb{R}| > |\\mathbb{N}|", "nhan": "Lực lượng số thực"}],
+                "minhHoaToan": {
+                    "loai": "luoi_duong_cheo",
+                    "tieuDe": "Lập luận đường chéo Cantor",
+                    "thamSo": {
+                        "nhanHang": ["r1", "r2", "r3"],
+                        "hang": ["0.141...", "0.333...", "0.718..."],
+                    },
+                },
+                "nhanVat": [{"id": "cantor", "x": 255, "y": 808}],
+            },
+            "canh_020",
+            nv_ids,
+        )
+        self.assertNotIn("loiBinhHaiHuoc", c_toan)
+
+        # 3b. cat_gon_theo_tu khong bao gio cat cut giua tu (nhu "...Leopol")
+        mo_ta_dai = (
+            "Cuộc tranh luận lịch sử giữa Georg Cantor và Leopold Kronecker về nền tảng tập hợp vô hạn "
+            "khiến cả cộng đồng toán học châu Âu chia rẽ sâu sắc suốt nhiều thập kỷ"
+        )
+        ket_qua_cat = cat_gon_theo_tu(mo_ta_dai, 90)
+        self.assertLessEqual(len(ket_qua_cat), 90)
+        self.assertFalse(ket_qua_cat.endswith("Leopol"))
+        # Moi tu (tru dau cham lung neu co) phai la tu nguyen ven trong mo_ta_dai
+        phan_chu = ket_qua_cat.rstrip("….")
+        self.assertTrue(mo_ta_dai.startswith(phan_chu))
+        if len(phan_chu) < len(mo_ta_dai):
+            self.assertEqual(mo_ta_dai[len(phan_chu)], " ")
+
+        # 3c. kiem_dinh_nhip_ngat_thi_giac KHONG bom chuoi fallback cung lap 5-6 lan
+        kb_thu = _tao_kich_ban_gia_6_hoi(so_canh_moi_hoi=6)
+        kb_sau, _ = kiem_dinh_nhip_ngat_thi_giac(kb_thu)
+        toan_bo_json = json.dumps(kb_sau, ensure_ascii=False)
+        self.assertNotIn("Góc nhìn này mới là chìa khóa của cả câu chuyện!", toan_bo_json)
+
+    def test_v25_4_khu_nhan_doi_nhan_vat_va_tuong_tac_giu_dap_an_it_nhat_25_den_3_giay(self) -> None:
+        nv_ids = ["cantor", "kronecker"]
+        # 4a. Chong nhan doi cung 1 nhanVatId trong 1 canh
+        c_trung, _ = chuan_hoa_canh(
+            {
+                "id": "canh_030",
+                "boCuc": "ke_chuyen",
+                "boiCanh": "thu_vien_co_dien",
+                "loiThoai": "Cantor suy tư trước những trang bản thảo chứng minh mới.",
+                "nhanVat": [
+                    {"id": "cantor", "x": 640, "y": 810},
+                    {"id": "cantor", "x": 1240, "y": 810},
+                    {"id": "kronecker", "x": 1320, "y": 810},
+                ],
+            },
+            "canh_030",
+            nv_ids,
+        )
+        ids_sau = [nv["id"] for nv in c_trung["nhanVat"]]
+        self.assertEqual(ids_sau, ["cantor", "kronecker"])
+
+        # 4b. Canh tuong_tac_khan_gia trong chuanbi_dai.py luon giu du >= 2.5-3s hien "DAP AN CHINH XAC"
+        kb_tt = {
+            "tieuDe": "Thử thách vô cực",
+            "chuDe": "So sánh hai tập vô hạn",
+            "chuong": [
+                {
+                    "id": "hoi_1",
+                    "tenChuong": "Hồi 1",
+                    "phuDeHoi": "Thử thách tương tác về tập số chẵn và số tự nhiên",
+                    "canh": [
+                        {
+                            "id": "canh_001",
+                            "boCuc": "ke_chuyen",
+                            "loaiCanh": "tuong_tac_khan_gia",
+                            "boiCanh": "san_truong_co_dien",
+                            "loiThoai": "Theo bạn tập số tự nhiên hay tập số chẵn có nhiều phần tử hơn?",
+                            "cauHoiTuongTac": {
+                                "cauHoi": "Tập nào nhiều phần tử hơn?",
+                                "thoiGianDemNguocGiay": 3,
+                                "batDauDemNguocFrame": 30,
+                                "dapAn": "Hai tập có lực lượng bằng nhau!",
+                            },
+                            "nhanVat": [{"id": "cantor", "x": 420, "y": 810}],
+                        }
+                    ],
+                }
+            ],
+        }
+        # Gia lap audio ngan chi 4.0s (120 frame) -> tinh_toan_khung_hinh phai tu mo rong thoi luong
+        kb_out, _ = tinh_toan_khung_hinh(kb_tt, {"canh_001": 4.0}, slug="cantor_test", fps=30)
+        canh_out = kb_out["chuong"][0]["canh"][0]
+        tong_frame = canh_out["denFrame"] - canh_out["tuFrame"]
+        hien_tu = canh_out["cauHoiTuongTac"]["hienDapAnTuFrame"]
+        so_frame_hien_dap_an = tong_frame - hien_tu
+        self.assertGreaterEqual(
+            so_frame_hien_dap_an,
+            int(round(THOI_GIAN_HIEN_DAP_AN_TOI_THIEU_GIAY * 30)),
+        )
+
+    def test_v25_5_phu_de_hoi_rieng_biet_va_chong_lap_y_toan_tap(self) -> None:
+        kb_lap = {
+            "tieuDe": "Georg Cantor và những cấp độ vô cực",
+            "chuDe": "Cuộc cách mạng lý thuyết tập hợp",
+            "danhSachNhanVat": [{"id": "cantor", "ten": "Georg Cantor"}],
+            "chuong": [
+                {
+                    "id": "hoi_1",
+                    "tenChuong": "Hồi 1: Cú sốc ban đầu",
+                    "phuDeHoi": "Câu mô tả dùng chung cho cả 3 hồi",
+                    "canh": [
+                        {
+                            "id": "canh_001",
+                            "boCuc": "mo_dau",
+                            "boiCanh": "giang_duong_dai_hoc",
+                            "tieuDeNho": "Khởi đầu nghịch lý",
+                            "loiThoai": "Georg Cantor chứng minh rằng tập số thực có lực lượng lớn hơn hẳn tập số tự nhiên.",
+                            "loiBinhHaiHuoc": {"noiDung": "Khán giả nghe xong lập tức choáng váng!"},
+                            "nhanVat": [{"id": "cantor", "x": 760, "y": 810}],
+                        }
+                    ],
+                },
+                {
+                    "id": "hoi_2",
+                    "tenChuong": "Hồi 2: Đường chéo kỳ diệu",
+                    "phuDeHoi": "Câu mô tả dùng chung cho cả 3 hồi",
+                    "canh": [
+                        {
+                            "id": "canh_002",
+                            "boCuc": "ke_chuyen",
+                            "boiCanh": "thu_vien_co_dien",
+                            "tieuDeNho": "Lặp lại câu chuyện",
+                            "loiThoai": "Georg Cantor chứng minh rằng tập số thực có lực lượng lớn hơn hẳn tập số tự nhiên.",
+                            "loiBinhHaiHuoc": {"noiDung": "Khán giả nghe xong lập tức choáng váng!"},
+                            "nhanVat": [{"id": "cantor", "x": 760, "y": 810}],
+                        }
+                    ],
+                },
+            ],
+        }
+        vp = kiem_dinh_guardrail_kich_ban(kb_lap)
+        loai_vp = {v["loai"] for v in vp}
+        self.assertIn("thieu_hoac_trung_phu_de_hoi", loai_vp)
+        self.assertIn("lap_giai_thoai_cau_noi", loai_vp)
+        self.assertIn("lap_loi_binh_hai_huoc", loai_vp)
+
+        # sua_loi_guardrail_cuc_bo phai tu tao phuDeHoi rieng biet va go loiBinhHaiHuoc trung
+        kb_fix, _ = sua_loi_guardrail_cuc_bo(kb_lap)
+        phu_de_cac_hoi = [ch["phuDeHoi"] for ch in kb_fix["chuong"]]
+        self.assertEqual(len(set(phu_de_cac_hoi)), 2)
+        self.assertNotIn("loiBinhHaiHuoc", kb_fix["chuong"][1]["canh"][0])
+
+
+class TestTaoBoiCanhAIV30Offline(unittest.TestCase):
+    """Unit test offline/mock cho module sinh boi canh minh hoa 2D & phan tich anh sang v3.0 (Buoc 1/4)."""
+
+    @staticmethod
+    def _tao_png_bytes(mau: tuple[int, int, int], kich_thuoc: tuple[int, int] = (320, 180)) -> bytes:
+        import io
+        from PIL import Image
+
+        buf = io.BytesIO()
+        Image.new("RGB", kich_thuoc, color=mau).save(buf, format="PNG")
+        return buf.getvalue()
+
+    def test_v30_prompt_khoa_style_bible_va_can_canh_vat_the(self) -> None:
+        # 1. STYLE_BIBLE_BOI_CANH phai chua du cac chi dan khoa phong cach dong nhat
+        for yeu_cau in (
+            "2D hand-drawn graphic novel background illustration",
+            "#1a1a1a",
+            "flat cel-shading",
+            "lower 30%",
+            "ZERO people",
+            "ZERO human figures",
+            "ZERO text",
+            "ZERO watermarks",
+            "16:9 widescreen",
+        ):
+            self.assertIn(yeu_cau, STYLE_BIBLE_BOI_CANH)
+
+        # 2. Moi trong 22 boi canh deu tao prompt khoa chat STYLE_BIBLE_BOI_CANH
+        for bc in LOAI_BOI_CANH:
+            p = tao_prompt_boi_canh(
+                boi_canh=bc,
+                thoi_tiet="hoang_hon",
+                boi_canh_lich_su="Cambridge 1914",
+            )
+            self.assertIn(STYLE_BIBLE_BOI_CANH, p)
+            self.assertIn("Cambridge 1914", p)
+
+        # 3. Khung hinh can canh vat the khoa chat STYLE_BIBLE_CAN_CANH_VAT_THE
+        for dc in ("ban_hoc_den_dau", "qua_dia_cau", "tau_thuy", "cuon_giay"):
+            p_cc = tao_prompt_boi_canh(
+                boi_canh="thu_vien_co_dien",
+                thoi_tiet="ban_dem",
+                loai_khung_hinh="can_canh_vat_the",
+                dao_cu_chinh=dc,
+            )
+            self.assertIn(STYLE_BIBLE_CAN_CANH_VAT_THE, p_cc)
+            self.assertIn("ZERO people", p_cc)
+            self.assertIn("16:9 widescreen", p_cc)
+
+        # Hash thay doi khi prompt hoac do phan giai doi
+        h1 = bam_mo_ta_boi_canh("prompt A", "boi_canh", (1280, 720))
+        h2 = bam_mo_ta_boi_canh("prompt A", "boi_canh", (1920, 1080))
+        h3 = bam_mo_ta_boi_canh("prompt B", "boi_canh", (1280, 720))
+        self.assertNotEqual(h1, h2)
+        self.assertNotEqual(h1, h3)
+
+    def test_v30_phan_tich_anh_sang_pillow_va_nen_jpeg_duoi_250kb(self) -> None:
+        from PIL import Image, ImageDraw
+
+        # 1. Nang am (vang sang)
+        img_nang = Image.new("RGB", (320, 180), color=(245, 220, 145))
+        as_nang = phan_tich_anh_sang_moi_truong(img_nang)
+        self.assertEqual(as_nang["loaiAnhSang"], "nang_am")
+        self.assertLess(as_nang["doToi"], 0.35)
+        self.assertRegex(as_nang["mauAm"], r"^#[0-9A-F]{6}$")
+
+        # 2. Anh nen (phong toi + vung anh nen am ap)
+        img_nen = Image.new("RGB", (320, 180), color=(35, 22, 12))
+        draw_nen = ImageDraw.Draw(img_nen)
+        draw_nen.ellipse((110, 50, 210, 130), fill=(245, 160, 50))
+        as_nen = phan_tich_anh_sang_moi_truong(img_nen)
+        self.assertEqual(as_nen["loaiAnhSang"], "anh_nen")
+        self.assertGreaterEqual(as_nen["doToi"], 0.58)
+
+        # 3. Dem lanh (xanh toi)
+        img_dem = Image.new("RGB", (320, 180), color=(18, 32, 78))
+        as_dem = phan_tich_anh_sang_moi_truong(img_dem)
+        self.assertEqual(as_dem["loaiAnhSang"], "dem_lanh")
+        self.assertGreaterEqual(as_dem["doToi"], 0.7)
+
+        # 4. Hoang hon (cam do chieu ta)
+        img_hh = Image.new("RGB", (320, 180), color=(225, 115, 70))
+        as_hh = phan_tich_anh_sang_moi_truong(img_hh)
+        self.assertEqual(as_hh["loaiAnhSang"], "hoang_hon")
+        self.assertTrue(0.28 <= as_hh["doToi"] < 0.65)
+
+        # 5. Trung tinh (xam/trang can bang)
+        img_tt = Image.new("RGB", (320, 180), color=(195, 200, 204))
+        as_tt = phan_tich_anh_sang_moi_truong(img_tt)
+        self.assertEqual(as_tt["loaiAnhSang"], "trung_tinh")
+
+        for kq_as in (as_nang, as_nen, as_dem, as_hh, as_tt):
+            self.assertIn(kq_as["loaiAnhSang"], LOAI_ANH_SANG_HOP_LE)
+            self.assertTrue(0.0 <= kq_as["doToi"] <= 1.0)
+
+        # 6. Kiem tra resize 1280x720 & 1920x1080 va dung luong JPEG < 250KB (ke ca anh nhieu phuc tap)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            # Tao anh phuc tap nhieu chi tiet (ti le 4:3 -> tu cat 16:9 & resize)
+            img_phuc_tap = Image.new("RGB", (800, 600))
+            px = img_phuc_tap.load()
+            for y in range(600):
+                for x in range(800):
+                    px[x, y] = ((x * 7 + y * 3) % 256, (x * 5 ^ y * 11) % 256, (x * 13 + y * 17) % 256)
+            import io
+
+            buf = io.BytesIO()
+            img_phuc_tap.save(buf, format="PNG")
+            raw_phuc_tap = buf.getvalue()
+
+            f_720 = root / "test_720.jpg"
+            meta_720 = luu_va_nen_anh_boi_canh(raw_phuc_tap, f_720, kich_thuoc=(1280, 720), chat_luong=86)
+            self.assertEqual((meta_720["width"], meta_720["height"]), (1280, 720))
+            self.assertLessEqual(f_720.stat().st_size, GIOI_HAN_DUNG_LUONG_KB * 1024)
+            with Image.open(f_720) as chk:
+                self.assertEqual(chk.size, (1280, 720))
+                self.assertEqual(chk.format, "JPEG")
+
+            f_1080 = root / "test_1080.jpg"
+            meta_1080 = luu_va_nen_anh_boi_canh(raw_phuc_tap, f_1080, kich_thuoc=(1920, 1080), chat_luong=86)
+            self.assertEqual((meta_1080["width"], meta_1080["height"]), (1920, 1080))
+            self.assertLessEqual(f_1080.stat().st_size, GIOI_HAN_DUNG_LUONG_KB * 1024)
+
+    def test_v30_xoay_key_fallback_generateContent_imagen_predict_va_cache(self) -> None:
+        import base64
+
+        png_nang_b64 = base64.b64encode(self._tao_png_bytes((240, 212, 138))).decode("ascii")
+        png_dem_b64 = base64.b64encode(self._tao_png_bytes((20, 35, 82))).decode("ascii")
+
+        # 1. Test lay_cau_hinh_anh_ai doc .env / env_override
+        keys, models = lay_cau_hinh_anh_ai(
+            duong_dan_env=Path("khong_ton_tai.env"),
+            env_override={
+                "GEMINI_API_KEYS": "k_img_1, k_img_2",
+                "GEMINI_IMAGE_MODELS": "gemini-2.5-flash-image, imagen-3.0-generate-002",
+            },
+        )
+        self.assertEqual(keys, ["k_img_1", "k_img_2"])
+        self.assertEqual(models, ["gemini-2.5-flash-image", "imagen-3.0-generate-002"])
+
+        _, models_mac_dinh = lay_cau_hinh_anh_ai(
+            duong_dan_env=Path("khong_ton_tai.env"),
+            env_override={"GEMINI_API_KEYS": "k1", "GEMINI_IMAGE_MODELS": ""},
+        )
+        self.assertEqual(models_mac_dinh, list(MAC_DINH_IMAGE_MODELS))
+
+        # 2. Test xoay key 429/503 o generateContent -> chuyen sang Imagen predict khi model 1 het sach quota
+        lich_su_goi: list[tuple[str, str]] = []
+
+        def fake_http_imagen_fallback(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            lich_su_goi.append((url, api_key))
+            if ":generateContent" in url:
+                return 429, '{"error": {"status": "RESOURCE_EXHAUSTED"}}'
+            if ":predict" in url and api_key == "k1":
+                return 503, "Service Unavailable"
+            if ":predict" in url and api_key == "k2":
+                # Kiem tra payload Imagen chuan instances/parameters 16:9
+                self.assertIn("instances", payload)
+                self.assertEqual(payload["parameters"]["aspectRatio"], "16:9")
+                return 200, json.dumps({"predictions": [{"bytesBase64Encoded": png_dem_b64}]})
+            return 500, "Unexpected"
+
+        trinh = TrinhTaoBoiCanhAI(
+            api_keys=["k1", "k2"],
+            image_models=["gemini-2.5-flash-image", "imagen-3.0-generate-002"],
+            http_caller=fake_http_imagen_fallback,
+            sleep_fn=lambda _: None,
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            pub = Path(tmp) / "public"
+            kq = trinh.tao_mot_boi_canh(
+                slug="demo_imagen",
+                ma_boi_canh="bc_01_dem",
+                boi_canh="bau_troi_dem_vu_tru",
+                thoi_tiet="ban_dem",
+                thu_muc_public=pub,
+            )
+            self.assertEqual(kq["nguon"], "ai")
+            self.assertEqual(kq["model"], "imagen-3.0-generate-002")
+            self.assertEqual(kq["duongDanAnh"], "boi_canh/demo_imagen/bc_01_dem.jpg")
+            self.assertTrue((pub / "boi_canh" / "demo_imagen" / "bc_01_dem.jpg").exists())
+            self.assertEqual(kq["anhSangMoiTruong"]["loaiAnhSang"], "dem_lanh")
+            # Model 1 thu het 2 key (429) -> chuyen sang model 2 :predict, key 1 gap 503 -> key 2 thanh cong
+            self.assertEqual(len(lich_su_goi), 4)
+            self.assertIn(":generateContent", lich_su_goi[0][0])
+            self.assertIn(":predict", lich_su_goi[2][0])
+            self.assertIn(":predict", lich_su_goi[3][0])
+
+        # 3. Test generateContent tra inlineData + cache hash tren lan chay 2 (0 luot goi API)
+        so_luot_api = {"n": 0}
+
+        def fake_http_inline(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            so_luot_api["n"] += 1
+            self.assertIn(":generateContent", url)
+            self.assertIn("IMAGE", payload["generationConfig"]["responseModalities"])
+            return (
+                200,
+                json.dumps(
+                    {
+                        "candidates": [
+                            {
+                                "content": {
+                                    "parts": [
+                                        {"inlineData": {"mimeType": "image/png", "data": png_nang_b64}}
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ),
+            )
+
+        du_lieu_nho = {
+            "tieuDe": "Câu chuyện Euler",
+            "chuDe": "7 cây cầu Königsberg",
+            "chuong": [
+                {
+                    "id": "chuong_1",
+                    "tenChuong": "Hồi 1",
+                    "canh": [
+                        {
+                            "id": "canh_001",
+                            "boCuc": "mo_dau",
+                            "boiCanh": "pho_co_chau_au",
+                            "thoiTiet": "nang_dep",
+                            "mayQuay": {"gocQuay": "toan_canh"},
+                            "loiThoai": "Cảnh 1 toàn cảnh phố cổ.",
+                            "nhanVat": [],
+                        },
+                        {
+                            "id": "canh_002",
+                            "boCuc": "doi_thoai",
+                            "boiCanh": "pho_co_chau_au",
+                            "thoiTiet": "nang_dep",
+                            "mayQuay": {"gocQuay": "focus_trai"},
+                            "loiThoai": "Cảnh 2 cùng phố cổ nhưng đổi góc quay focus trái.",
+                            "nhanVat": [],
+                        },
+                        {
+                            "id": "canh_003",
+                            "boCuc": "ke_chuyen",
+                            "boiCanh": "thu_vien_co_dien",
+                            "thoiTiet": "ban_dem",
+                            "mayQuay": {"gocQuay": "zoom_dao_cu"},
+                            "daoCu": [{"loai": "qua_dia_cau", "x": 960, "y": 540}],
+                            "loiThoai": "Cảnh 3 cận cảnh quả địa cầu.",
+                            "nhanVat": [],
+                        },
+                    ],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dl_out1, tk1 = sinh_boi_canh_cho_tap(
+                slug="euler_cache",
+                du_lieu=du_lieu_nho,
+                thu_muc_du_lieu=root / "du_lieu",
+                thu_muc_public=root / "public",
+                api_keys=["key_ok"],
+                image_models=["gemini-2.5-flash-image"],
+                http_caller=fake_http_inline,
+                sleep_fn=lambda _: None,
+            )
+            # 3 canh -> chi sinh 2 boi canh doc ban (canh_001 & canh_002 tai su dung chung 1 anh, canh_003 la can canh vat the)
+            self.assertEqual(tk1["tongBoiCanhDocBan"], 2)
+            self.assertEqual(tk1["soSinhMoi"], 2)
+            self.assertEqual(so_luot_api["n"], 2)
+            c1, c2, c3 = dl_out1["chuong"][0]["canh"]
+            self.assertEqual(c1["anhBoiCanh"], c2["anhBoiCanh"])
+            self.assertNotEqual(c1["anhBoiCanh"], c3["anhBoiCanh"])
+            self.assertEqual(c1["anhSangMoiTruong"]["loaiAnhSang"], "nang_am")
+
+            # Lan chay 2: hit cache 100%, so_luot_api KHONG tang!
+            dl_out2, tk2 = sinh_boi_canh_cho_tap(
+                slug="euler_cache",
+                du_lieu=du_lieu_nho,
+                thu_muc_du_lieu=root / "du_lieu",
+                thu_muc_public=root / "public",
+                api_keys=["key_ok"],
+                image_models=["gemini-2.5-flash-image"],
+                http_caller=fake_http_inline,
+                sleep_fn=lambda _: None,
+            )
+            self.assertEqual(so_luot_api["n"], 2)
+            self.assertEqual(tk2["soDungCache"], 2)
+            self.assertEqual(tk2["soSinhMoi"], 0)
+            self.assertEqual(dl_out2["chuong"][0]["canh"][0]["anhBoiCanh"], c1["anhBoiCanh"])
+
+    def test_v30_fallback_an_toan_khi_offline_hoac_het_quota(self) -> None:
+        du_lieu_mini = _tao_kich_ban_gia_6_hoi(so_canh_moi_hoi=1)  # 6 canh
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            # 1. Che do offline/mock -> khong goi HTTP, tra anhBoiCanh=None & anhSangMoiTruong an toan
+            dl_off, tk_off = sinh_boi_canh_cho_tap(
+                slug="test_offline_bg",
+                du_lieu=du_lieu_mini,
+                thu_muc_du_lieu=root / "du_lieu",
+                thu_muc_public=root / "public",
+                che_do_offline=True,
+                api_keys=["k1"],
+                http_caller=lambda *a, **kw: (_ for _ in ()).throw(AssertionError("Khong duoc goi API khi offline!")),
+            )
+            self.assertEqual(tk_off["soCanhCoAnhAi"], 0)
+            self.assertEqual(tk_off["soFallbackSvg"], tk_off["tongBoiCanhDocBan"])
+            for ch in dl_off["chuong"]:
+                for c in ch["canh"]:
+                    self.assertIsNone(c["anhBoiCanh"])
+                    self.assertIn(c["anhSangMoiTruong"]["loaiAnhSang"], LOAI_ANH_SANG_HOP_LE)
+
+            # 2. Toan bo API key & model bi 429/503 -> KHONG crash, fallback duongDanAnh=None
+            def always_429(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+                return 429, '{"error": {"status": "RESOURCE_EXHAUSTED"}}'
+
+            dl_err, tk_err = sinh_boi_canh_cho_tap(
+                slug="test_quota_bg",
+                du_lieu=du_lieu_mini,
+                thu_muc_du_lieu=root / "du_lieu",
+                thu_muc_public=root / "public",
+                api_keys=["k1", "k2"],
+                image_models=["gemini-2.5-flash-image", "imagen-3.0-generate-002"],
+                http_caller=always_429,
+                sleep_fn=lambda _: None,
+            )
+            self.assertEqual(tk_err["soCanhCoAnhAi"], 0)
+            self.assertEqual(tk_err["soFallbackSvg"], tk_err["tongBoiCanhDocBan"])
+            self.assertTrue(all(c["anhBoiCanh"] is None for ch in dl_err["chuong"] for c in ch["canh"]))
+
+    def test_v30_ke_hoach_14_den_20_boi_canh_tich_hop_chuanbi_dai_va_workflow(self) -> None:
+        import base64
+
+        # 1. Tap 6 hoi x 18 canh = 108 canh voi nhieu dia diem + goc quay -> gon trong 14..20 boi canh doc ban
+        kb_lon = _tao_kich_ban_gia_6_hoi(so_canh_moi_hoi=18)
+        ds_bc_mau = [
+            "bo_bien_hy_lap",
+            "quang_truong_hy_lap",
+            "thu_vien_co_dien",
+            "lop_hoc_bang_xanh",
+            "san_truong_co_dien",
+            "cang_bien_tau_thuy",
+            "phong_tro_bep_lua",
+            "bau_troi_dem_vu_tru",
+        ]
+        ds_tt_mau = ["nang_dep", "hoang_hon", "ban_dem", "nang_dep"]
+        for idx_ch, ch in enumerate(kb_lon["chuong"]):
+            for idx_c, canh in enumerate(ch["canh"]):
+                canh["boiCanh"] = ds_bc_mau[(idx_ch + idx_c) % len(ds_bc_mau)]
+                canh["thoiTiet"] = ds_tt_mau[(idx_ch + idx_c) % len(ds_tt_mau)]
+                if idx_c == 3:
+                    canh["mayQuay"] = {"gocQuay": "zoom_dao_cu"}
+                    canh["daoCu"] = [{"loai": "cuon_giay", "x": 960, "y": 540}]
+
+        ke_hoach, canh_to_ma = lap_ke_hoach_boi_canh_tap(kb_lon, so_luong_toi_da=20)
+        self.assertGreaterEqual(len(ke_hoach), 14)
+        self.assertLessEqual(len(ke_hoach), 20)
+        self.assertEqual(len(canh_to_ma), 108)
+        self.assertTrue(any(m["loaiKhungHinh"] == "can_canh_vat_the" for m in ke_hoach))
+
+        # 2. Tich hop cuoi pha chuanbi_dai.py: bat anh AI (mock HTTP) vs co --tat-anh-ai
+        parser_cb = tao_parser_chuanbi_dai()
+        args_tat = parser_cb.parse_args(["--slug", "demo_v3", "--tat-anh-ai"])
+        self.assertTrue(args_tat.tat_anh_ai)
+        args_bat = parser_cb.parse_args(["--slug", "demo_v3"])
+        self.assertFalse(args_bat.tat_anh_ai)
+
+        png_b64 = base64.b64encode(self._tao_png_bytes((235, 200, 130))).decode("ascii")
+
+        def fake_img_http(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            return (
+                200,
+                json.dumps(
+                    {
+                        "candidates": [
+                            {"content": {"parts": [{"inlineData": {"mimeType": "image/png", "data": png_b64}}]}}
+                        ]
+                    }
+                ),
+            )
+
+        kb_ngan = _tao_kich_ban_gia_6_hoi(so_canh_moi_hoi=1)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dl_dir = root / "du_lieu"
+            pub_dir = root / "public"
+            out_dir = root / "out"
+            (dl_dir / "v3_demo").mkdir(parents=True)
+            (dl_dir / "v3_demo" / "nhap_kich_ban.json").write_text(
+                json.dumps(kb_ngan, ensure_ascii=False), encoding="utf-8"
+            )
+
+            # 2a. Bat anh AI trong chuan_bi_audio_va_du_lieu_render
+            f_render, tk = chuan_bi_audio_va_du_lieu_render(
+                slug="v3_demo",
+                thu_muc_du_lieu=dl_dir,
+                thu_muc_public=pub_dir,
+                thu_muc_out=out_dir,
+                env_override={"GEMINI_API_KEYS": "k_v3", "GEMINI_IMAGE_MODELS": "gemini-2.5-flash-image"},
+                tts_generator=lambda cid, txt, p: p.write_bytes(b"FAKE_MP3"),
+                duration_prober=lambda _: 4.0,
+                rms_extractor=lambda p, f: [0.4] * 120,
+                tat_anh_ai=False,
+                image_http_caller=fake_img_http,
+            )
+            self.assertGreater(tk["boiCanhAi"]["tongBoiCanhDocBan"], 0)
+            self.assertEqual(tk["boiCanhAi"]["soCanhCoAnhAi"], 6)
+            render_json = json.loads(f_render.read_text(encoding="utf-8"))
+            c0 = render_json["chuong"][0]["canh"][0]
+            self.assertTrue(str(c0["anhBoiCanh"]).startswith("boi_canh/v3_demo/"))
+            self.assertTrue((pub_dir / c0["anhBoiCanh"]).exists())
+            self.assertIn(c0["anhSangMoiTruong"]["loaiAnhSang"], LOAI_ANH_SANG_HOP_LE)
+
+            # 2b. Tat anh AI (--tat-anh-ai)
+            _, tk_tat = chuan_bi_audio_va_du_lieu_render(
+                slug="v3_demo",
+                thu_muc_du_lieu=dl_dir,
+                thu_muc_public=pub_dir,
+                thu_muc_out=out_dir,
+                tts_generator=lambda cid, txt, p: p.write_bytes(b"FAKE_MP3"),
+                duration_prober=lambda _: 4.0,
+                rms_extractor=lambda p, f: [0.4] * 120,
+                tat_anh_ai=True,
+            )
+            self.assertEqual(tk_tat["boiCanhAi"]["trangThai"], "da_tat")
+
+        # 3. Kiem tra workflow YAML goi public/boi_canh/<slug>/ & .gitignore chan public/boi_canh/
+        wf_text = (GOC_DU_AN / ".github" / "workflows" / "tu-dong-video10p.yml").read_text(encoding="utf-8")
+        self.assertIn("public/boi_canh/${{ steps.xuat_output.outputs.slug }}/", wf_text)
+        self.assertIn("GEMINI_IMAGE_MODELS", wf_text)
+        gi_text = (GOC_DU_AN / ".gitignore").read_text(encoding="utf-8")
+        self.assertIn("public/boi_canh/", gi_text)
+
+
+class TestNangCapV30Buoc4Offline(unittest.TestCase):
+    """Kiem tra toan dien Buoc 4/4 (v3.0): Dao dien AI v3.0, danhSachBoiCanhAI, pre-TTS guard, nhip hai & mau_v3_dien_anh.json."""
+
+    def test_v30_buoc4_enum_ho_so_tao_hinh_va_danh_sach_boi_canh_ai(self) -> None:
+        from scripts.pipeline.tao_kich_ban_10p import (
+            GOC_QUAY_CAMERA,
+            KIEU_BONG_BONG_CHAT,
+            LOAI_CO_RAU,
+            LOAI_HIEU_UNG_HOAT_HINH,
+            LOAI_KIEU_TOC,
+            LOAI_TRANG_PHUC,
+            TAM_KHUNG_NHAN_VAT,
+            chuan_hoa_danh_sach_boi_canh_ai,
+            chuan_hoa_danh_sach_nhan_vat,
+        )
+
+        # 1. Xac minh enum v3.0 dong bo 100% voi src/kieu_dai.ts
+        for gq in ("can_mat_trai", "can_mat_phai", "can_mat_kich_tinh", "dao_goc_can_mat"):
+            self.assertIn(gq, GOC_QUAY_CAMERA)
+        for hu in ("mo_hoi_lon", "khoi_boc_tai", "mat_xoan_oc", "cham_hoi_nay", "tia_toc_do", "bong_den_y_tuong"):
+            self.assertIn(hu, LOAI_HIEU_UNG_HOAT_HINH)
+        self.assertEqual(len(LOAI_TRANG_PHUC), 7)
+        self.assertEqual(len(LOAI_KIEU_TOC), 7)
+        self.assertEqual(len(LOAI_CO_RAU), 4)
+        self.assertEqual(len(TAM_KHUNG_NHAN_VAT), 3)
+        self.assertEqual(len(KIEU_BONG_BONG_CHAT), 4)
+
+        # 2. Ho so tao hinh co dinh xuyen suot tap
+        nvs = chuan_hoa_danh_sach_nhan_vat(
+            [
+                {
+                    "id": "euler",
+                    "ten": "Leonhard Euler",
+                    "mauChuDao": "#1D4ED8",
+                    "trangPhuc": "ao_choang_hoc_gia",
+                    "kieuToc": "mu_noi",
+                    "coRau": "khong",
+                    "mauAo": "#1E40AF",
+                },
+                {"id": "thi_truong", "ten": "Thị Trưởng"},
+            ]
+        )
+        self.assertEqual(nvs[0]["trangPhuc"], "ao_choang_hoc_gia")
+        self.assertEqual(nvs[0]["kieuToc"], "mu_noi")
+        self.assertEqual(nvs[0]["mauAo"], "#1E40AF")
+        self.assertIn(nvs[1]["trangPhuc"], LOAI_TRANG_PHUC)
+        self.assertIn(nvs[1]["kieuToc"], LOAI_KIEU_TOC)
+
+        # 3. chuan_hoa_danh_sach_boi_canh_ai & anh xa thang sang tao_boi_canh_ai.lap_ke_hoach_boi_canh_tap
+        ds_ai = chuan_hoa_danh_sach_boi_canh_ai(
+            [
+                {
+                    "maBoiCanhAI": "bc_01_giang_duong",
+                    "loaiKhungHinh": "boi_canh",
+                    "boiCanh": "giang_duong_dai_hoc",
+                    "thoiTiet": "nang_dep",
+                    "moTaTiengAnh": "18th century European lecture hall with tall arched windows, no people",
+                },
+                {
+                    "maBoiCanhAI": "cc_01_ban_do",
+                    "loaiKhungHinh": "can_canh_vat_the",
+                    "boiCanh": "thu_vien_co_dien",
+                    "thoiTiet": "ban_dem",
+                    "daoCuChinh": "cuon_giay",
+                    "moTaTiengAnh": "Close-up antique map of seven bridges with candle on wooden desk, no people",
+                },
+            ]
+        )
+        self.assertEqual(len(ds_ai), 2)
+
+        raw_kb = {
+            "tieuDe": "Leonhard Euler & 7 Cây Cầu",
+            "chuDe": "Lý thuyết đồ thị",
+            "danhSachNhanVat": nvs,
+            "danhSachBoiCanhAI": ds_ai,
+            "chuong": [
+                {
+                    "id": "chuong_1",
+                    "tenChuong": "1. Khởi đầu",
+                    "phuDeHoi": "Mở màn câu chuyện bảy cây cầu lịch sử",
+                    "canh": [
+                        {
+                            "boCuc": "doi_thoai",
+                            "loaiCanh": "doi_thoai",
+                            "boiCanh": "giang_duong_dai_hoc",
+                            "maBoiCanhAI": "bc_01_giang_duong",
+                            "loiThoai": "Chào ngài, bảy cây cầu này đi thế nào? Cứ đếm bậc đỉnh là ra ngay!",
+                            "luotThoai": [
+                                {"nhanVatId": "thi_truong", "noiDung": "Chào ngài, bảy cây cầu này đi thế nào?", "kieuBongBong": "quat_thao"},
+                                {"nhanVatId": "euler", "noiDung": "Cứ đếm bậc đỉnh là ra ngay!", "kieuBongBong": "ca_khia"},
+                            ],
+                            "nhanVat": [
+                                {"id": "thi_truong", "x": 640, "y": 810, "tamKhung": "ban_than"},
+                                {"id": "euler", "x": 1280, "y": 810, "tamKhung": "can_mat"},
+                            ],
+                            "hieuUngHoatHinh": [
+                                {"loai": "bong_den_y_tuong", "x": 1280, "y": 400},
+                            ],
+                        },
+                        {
+                            "boCuc": "ke_chuyen",
+                            "boiCanh": "thu_vien_co_dien",
+                            "maBoiCanhAI": "cc_01_ban_do",
+                            "laKhungTranhDacTa": True,
+                            "mayQuay": {"gocQuay": "can_mat_kich_tinh", "doPhong": 2.2},
+                            "loiThoai": "Trên tấm bản đồ cổ, bảy cây cầu hiện lên như một mê cung hóc búa.",
+                            "nhanVat": [{"id": "euler", "x": 960, "y": 810}],
+                        },
+                    ],
+                }
+            ],
+        }
+        kb_sach, _ = chuan_hoa_toan_bo_kich_ban(raw_kb)
+        c1, c2 = kb_sach["chuong"][0]["canh"]
+        # Tu dong gan dao_goc_can_mat & bao toan kieuBongBong, doPhong=2.2
+        self.assertEqual(c1["mayQuay"]["gocQuay"], "dao_goc_can_mat")
+        self.assertTrue(c1["mayQuay"]["tuDongFocusNguoiNoi"])
+        self.assertEqual(c1["luotThoai"][0]["kieuBongBong"], "quat_thao")
+        self.assertEqual(c1["luotThoai"][1]["kieuBongBong"], "ca_khia")
+        self.assertEqual(c2["mayQuay"]["doPhong"], 2.2)
+
+        ke_hoach, canh_to_ma = lap_ke_hoach_boi_canh_tap(kb_sach)
+        self.assertEqual(canh_to_ma["canh_001"], "bc_01_giang_duong")
+        self.assertEqual(canh_to_ma["canh_002"], "cc_01_ban_do")
+        by_ma = {m["maBoiCanh"]: m for m in ke_hoach}
+        self.assertIn("18th century European lecture hall", by_ma["bc_01_giang_duong"]["moTaBoSung"])
+        self.assertEqual(by_ma["cc_01_ban_do"]["loaiKhungHinh"], "can_canh_vat_the")
+
+    def test_v30_buoc4_pre_tts_guard_nhip_hai_va_chong_ro_ri_1729(self) -> None:
+        from scripts.pipeline.chuanbi_dai import (
+            HO_SO_GIONG_NHAN_VAT,
+            NGHI_GIUA_LUOT_THOAI_GIAY,
+            tinh_moc_va_rms_luot_thoai,
+            tinh_nghi_nhip_hai_luot_thoai,
+        )
+
+        # 1. Khoang nghi nhip hai nam chuan trong 0.25s..0.40s & phan biet giong
+        self.assertGreaterEqual(NGHI_GIUA_LUOT_THOAI_GIAY, 0.25)
+        self.assertLessEqual(NGHI_GIUA_LUOT_THOAI_GIAY, 0.40)
+        nghi_thuong = tinh_nghi_nhip_hai_luot_thoai({"kieuBongBong": "thuong", "bieuCam": "vui_tuoi"})
+        nghi_punch = tinh_nghi_nhip_hai_luot_thoai({"kieuBongBong": "ca_khia", "bieuCam": "tinh_quai"})
+        self.assertGreaterEqual(nghi_thuong, 0.25)
+        self.assertLessEqual(nghi_punch, 0.40)
+        self.assertGreater(nghi_punch, nghi_thuong)
+
+        luot_res, _, _ = tinh_moc_va_rms_luot_thoai(
+            [
+                {"nhanVatId": "a", "noiDung": "Câu mở đầu"},
+                {"nhanVatId": "b", "noiDung": "Cà khịa ngay!", "kieuBongBong": "ca_khia"},
+            ],
+            [1.0, 1.0],
+            [[0.5] * 30, [0.8] * 30],
+            fps=30,
+            dung_nhip_hai_dong=True,
+        )
+        self.assertEqual(luot_res[1]["batDauFrame"], 30 + int(round(nghi_punch * 30)))
+
+        # Tat ca ho so giong phan biet ro rang voi nhau va voi nguoi dan (+0%, +0Hz)
+        giong_set = {(h["voice"], h["rate"], h["pitch"]) for h in HO_SO_GIONG_NHAN_VAT}
+        self.assertEqual(len(giong_set), len(HO_SO_GIONG_NHAN_VAT))
+        self.assertNotIn(("vi-VN-NamMinhNeural", "+0%", "+0Hz"), giong_set)
+
+        # 2. Guardrail chan bien so '1729' mac dinh trong tap khong phai Ramanujan
+        kb_euler = _tao_kich_ban_gia_6_hoi(so_canh_moi_hoi=2)
+        kb_euler["tieuDe"] = "Leonhard Euler & 7 Cây Cầu"
+        kb_euler["chuDe"] = "Lý thuyết đồ thị"
+        kb_euler["chuong"][0]["canh"][0]["bienSoXe"] = "1729"
+        kb_euler["chuong"][0]["canh"][0]["daoCu"] = [{"loai": "bien_so_xe", "x": 960, "y": 620, "bienSoXe": "1729"}]
+        vp = kiem_dinh_guardrail_kich_ban(kb_euler)
+        self.assertTrue(any(v["loai"] == "bien_so_1729_mac_dinh" for v in vp))
+        kb_fixed, _ = sua_loi_guardrail_cuc_bo(kb_euler)
+        self.assertNotIn("bienSoXe", kb_fixed["chuong"][0]["canh"][0])
+        self.assertNotIn("bienSoXe", kb_fixed["chuong"][0]["canh"][0]["daoCu"][0])
+
+        # 3. Guardrail kiem_tra_dau_tieng_viet() chay TRUOC Edge TTS trong chuanbi_dai.py
+        class _FakeGeminiFixDau:
+            def tao_json(self, **kwargs: Any) -> dict[str, Any]:
+                return {
+                    "daSua": [
+                        {
+                            "duongDan": "chuong[0].canh[0].loiThoai",
+                            "vanBanCoDau": "Đây là câu thoại lịch sử Toán học đã được khôi phục dấu đầy đủ.",
+                        }
+                    ]
+                }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dl_dir, pub_dir, out_dir = root / "du_lieu", root / "public", root / "out"
+            (dl_dir / "test_dau").mkdir(parents=True)
+            kb_thieu_dau = {
+                "tieuDe": "Câu Chuyện Euler",
+                "chuDe": "Lịch sử Toán học",
+                "danhSachNhanVat": [{"id": "euler", "ten": "Euler", "mauThan": "#1E293B", "mauChuDao": "#1D4ED8", "mauDa": "#FFFDF7", "phuKien": "khong"}],
+                "chuong": [
+                    {
+                        "id": "chuong_1",
+                        "tenChuong": "1. Khởi đầu",
+                        "phuDeHoi": "Hồi mở màn đầy thú vị",
+                        "canh": [
+                            {
+                                "id": "canh_001",
+                                "boCuc": "ke_chuyen",
+                                "boiCanh": "thu_vien_co_dien",
+                                "thoiTiet": "khong",
+                                "tuFrame": 0,
+                                "denFrame": 120,
+                                "loiThoai": "Day la cau thoai lich su Toan hoc khong co dau tieng Viet nao ca.",
+                                "nhanVat": [{"id": "euler", "x": 960, "y": 810, "huong": "phai", "hanhDong": "dung_tho", "bieuCam": "vui_tuoi"}],
+                            },
+                            {
+                                "id": "canh_002",
+                                "boCuc": "ke_chuyen",
+                                "loaiCanh": "tuong_tac_khan_gia",
+                                "boiCanh": "giang_duong_dai_hoc",
+                                "thoiTiet": "khong",
+                                "tuFrame": 120,
+                                "denFrame": 240,
+                                "loiThoai": "Theo bạn đáp án đúng cho câu đố bảy cây cầu là gì?",
+                                "cauHoiTuongTac": {
+                                    "cauHoi": "Cần thêm bao nhiêu cây cầu?",
+                                    "thoiGianDemNguocGiay": 3,
+                                    "batDauDemNguocFrame": 15,
+                                    "dapAn": "Chỉ cần thêm đúng 1 cây cầu!",
+                                },
+                                "nhanVat": [{"id": "euler", "x": 960, "y": 810, "huong": "phai", "hanhDong": "quay_nhin_khan_gia", "bieuCam": "tinh_quai"}],
+                            },
+                        ],
+                    }
+                ],
+            }
+            (dl_dir / "test_dau" / "nhap_kich_ban.json").write_text(
+                json.dumps(kb_thieu_dau, ensure_ascii=False), encoding="utf-8"
+            )
+            da_doc_tts: list[str] = []
+
+            def fake_tts_rec(cid: str, txt: str, p: Path) -> None:
+                da_doc_tts.append(txt)
+                p.write_bytes(b"MP3")
+
+            f_render, tk = chuan_bi_audio_va_du_lieu_render(
+                slug="test_dau",
+                thu_muc_du_lieu=dl_dir,
+                thu_muc_public=pub_dir,
+                thu_muc_out=out_dir,
+                tts_generator=fake_tts_rec,
+                duration_prober=lambda _: 2.0,
+                rms_extractor=lambda p, f: [0.5] * 60,
+                gemini_client=_FakeGeminiFixDau(),
+                tu_sua_dau_tieng_viet=True,
+                tat_anh_ai=True,
+            )
+            self.assertEqual(tk["soChuoiThieuDauPhatHien"], 1)
+            self.assertEqual(tk["soChuoiDaSuaDau"], 1)
+            # Edge TTS phai nhan ban DA CO DAU DAY DU
+            self.assertIn("khôi phục dấu đầy đủ", da_doc_tts[0])
+
+            # Canh tuong_tac_khan_gia phai giu hop dap an >= 2.5s (75 frames) sau khi dem nguoc ve 0
+            render_obj = json.loads(f_render.read_text(encoding="utf-8"))
+            c_tt = render_obj["chuong"][0]["canh"][1]
+            tong_f_tt = c_tt["denFrame"] - c_tt["tuFrame"]
+            hien_f = c_tt["cauHoiTuongTac"]["hienDapAnTuFrame"]
+            self.assertGreaterEqual((tong_f_tt - hien_f) / 30.0, 2.5)
+
+    def test_v30_buoc4_mau_v3_dien_anh_dat_toan_bo_guardrail(self) -> None:
+        duong_dan = GOC_DU_AN / "du_lieu" / "mau_v3_dien_anh.json"
+        self.assertTrue(duong_dan.exists(), "Thieu du_lieu/mau_v3_dien_anh.json")
+        du_lieu = json.loads(duong_dan.read_text(encoding="utf-8"))
+
+        self.assertEqual(kiem_dinh_guardrail_kich_ban(du_lieu), [])
+        self.assertEqual(kiem_dinh_schema_du_lieu_canh(du_lieu), [])
+        self.assertEqual(kiem_tra_lien_mach_khung_hinh(du_lieu), [])
+        self.assertEqual(kiem_tra_dau_tieng_viet(du_lieu), [])
+        self.assertEqual(kiem_tra_ro_ri_pythagoras(du_lieu), [])
+
+        tat_ca_canh = [c for ch in du_lieu["chuong"] for c in ch["canh"]]
+        goc_quays = {str((c.get("mayQuay") or {}).get("gocQuay") or "") for c in tat_ca_canh}
+        for gq in ("can_mat_trai", "can_mat_phai", "can_mat_kich_tinh", "dao_goc_can_mat"):
+            self.assertIn(gq, goc_quays)
+
+        kieu_bb = {
+            str(lt.get("kieuBongBong") or "")
+            for c in tat_ca_canh
+            for lt in (c.get("luotThoai") or [])
+        }
+        for bb in ("thuong", "quat_thao", "suy_nghi", "ca_khia"):
+            self.assertIn(bb, kieu_bb)
+
+        vfx_loai = {
+            str(hu.get("loai") or "")
+            for c in tat_ca_canh
+            for hu in (c.get("hieuUngHoatHinh") or [])
+        }
+        for fx in ("mo_hoi_lon", "khoi_boc_tai", "mat_xoan_oc", "cham_hoi_nay", "tia_toc_do", "bong_den_y_tuong"):
+            self.assertIn(fx, vfx_loai)
+
+        # Kiem tra canh tuong_tac_khan_gia giu dap an >= 2.5s
+        c_tt = next(c for c in tat_ca_canh if c.get("loaiCanh") == "tuong_tac_khan_gia")
+        tong_f = c_tt["denFrame"] - c_tt["tuFrame"]
+        self.assertGreaterEqual((tong_f - c_tt["cauHoiTuongTac"]["hienDapAnTuFrame"]) / 30.0, 2.5)
+
+
+class TestDangYouTubeOffline(unittest.TestCase):
+    """Bo unit test mock offline cho dang_youtube.py va lay_refresh_token_youtube.py (thuan stdlib)."""
+
+    def test_thieu_secret_thoat_an_toan_ma_0(self) -> None:
+        import io
+        from unittest import mock
+
+        with tempfile.TemporaryDirectory() as tmp:
+            env_rong = Path(tmp) / ".env.rong"
+            env_rong.write_text("# Khong co bien YouTube\n", encoding="utf-8")
+
+            # 1. Thieu toan bo 3 bien
+            cfg = lay_cau_hinh_oauth_youtube(
+                duong_dan_env=env_rong,
+                env_override={
+                    "YOUTUBE_CLIENT_ID": "",
+                    "YOUTUBE_CLIENT_SECRET": "",
+                    "YOUTUBE_REFRESH_TOKEN": "",
+                },
+            )
+            self.assertEqual(
+                danh_sach_bien_thieu(cfg),
+                ["YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN"],
+            )
+
+            # 2. Chi thieu 1 bien (YOUTUBE_REFRESH_TOKEN) -> dang_video_len_youtube tra ve thieu_cau_hinh
+            kq = dang_video_len_youtube(
+                slug="tap_demo",
+                duong_dan_env=env_rong,
+                env_override={
+                    "YOUTUBE_CLIENT_ID": "cid_demo",
+                    "YOUTUBE_CLIENT_SECRET": "csec_demo",
+                    "YOUTUBE_REFRESH_TOKEN": "",
+                },
+            )
+            self.assertEqual(kq["trangThai"], "thieu_cau_hinh")
+            self.assertEqual(kq["bienThieu"], ["YOUTUBE_REFRESH_TOKEN"])
+            self.assertIn("lay_refresh_token_youtube.py", kq["huongDan"])
+
+            # 3. Chay CLI main() khi thieu secret -> in huong dan va thoat ma 0 an toan (KHONG fail workflow)
+            buf = io.StringIO()
+            env_sach = {
+                k: v
+                for k, v in __import__("os").environ.items()
+                if k not in ("YOUTUBE_CLIENT_ID", "YOUTUBE_CLIENT_SECRET", "YOUTUBE_REFRESH_TOKEN")
+            }
+            with mock.patch.dict("os.environ", env_sach, clear=True):
+                with mock.patch("sys.stdout", buf):
+                    rc = main_dang_youtube(["--slug", "tap_demo", "--env", str(env_rong)])
+            self.assertEqual(rc, 0)
+            out_txt = buf.getvalue()
+            self.assertIn("YOUTUBE_CLIENT_ID", out_txt)
+            self.assertIn("lay_refresh_token_youtube.py", out_txt)
+
+    def test_doi_refresh_token_lay_access_token_va_loi_oauth(self) -> None:
+        import urllib.parse
+
+        da_goi: list[tuple[str, str, dict[str, str], bytes | None]] = []
+
+        def fake_http_ok(
+            method: str,
+            url: str,
+            headers: dict[str, str],
+            data: bytes | None,
+            timeout: int,
+        ) -> tuple[int, dict[str, str], bytes]:
+            da_goi.append((method, url, headers, data))
+            body = json.dumps(
+                {
+                    "access_token": "mock_access_token_xyz",
+                    "expires_in": 3599,
+                    "token_type": "Bearer",
+                    "scope": "https://www.googleapis.com/auth/youtube.upload",
+                }
+            ).encode("utf-8")
+            return 200, {"content-type": "application/json"}, body
+
+        kq = doi_refresh_token_lay_access_token(
+            client_id="cid_123",
+            client_secret="csec_456",
+            refresh_token="rtok_789",
+            http_caller=fake_http_ok,
+        )
+        self.assertEqual(kq["access_token"], "mock_access_token_xyz")
+        self.assertEqual(kq["expires_in"], 3599)
+        self.assertEqual(len(da_goi), 1)
+        method, url, _, data = da_goi[0]
+        self.assertEqual(method, "POST")
+        self.assertEqual(url, "https://oauth2.googleapis.com/token")
+        form = urllib.parse.parse_qs((data or b"").decode("utf-8"))
+        self.assertEqual(form["client_id"], ["cid_123"])
+        self.assertEqual(form["client_secret"], ["csec_456"])
+        self.assertEqual(form["refresh_token"], ["rtok_789"])
+        self.assertEqual(form["grant_type"], ["refresh_token"])
+
+        # Truong hop invalid_grant -> nem LoiDangYouTube kem goi y chay lay_refresh_token_youtube.py
+        def fake_http_err(
+            method: str, url: str, headers: dict[str, str], data: bytes | None, timeout: int
+        ) -> tuple[int, dict[str, str], bytes]:
+            return 400, {}, b'{"error": "invalid_grant", "error_description": "Token has been expired or revoked."}'
+
+        with self.assertRaises(LoiDangYouTube) as ctx:
+            doi_refresh_token_lay_access_token("cid", "csec", "rtok_cu", http_caller=fake_http_err)
+        self.assertIn("lay_refresh_token_youtube.py", str(ctx.exception))
+
+    def test_tinh_thoi_diem_cong_khai_vn_chuan_plus_0700(self) -> None:
+        import datetime
+
+        # 1. Chay luc 00:00 UTC = 07:00 sang gio VN -> cach_ngay=0 ra 19:30 cung ngay +07:00
+        bay_gio_utc = datetime.datetime(2026, 11, 26, 0, 0, 0, tzinfo=datetime.timezone.utc)
+        p0 = tinh_thoi_diem_cong_khai_vn("19:30", cach_ngay=0, bay_gio=bay_gio_utc)
+        self.assertEqual(p0, "2026-11-26T19:30:00+07:00")
+
+        # 2. cach_ngay=1 ra 19:30 ngay hom sau +07:00
+        p1 = tinh_thoi_diem_cong_khai_vn("19:30", cach_ngay=1, bay_gio=bay_gio_utc)
+        self.assertEqual(p1, "2026-11-27T19:30:00+07:00")
+
+        # 3. Neu bay gio la 21:00 toi VN ma cach_ngay=0 -> tu dong day sang 19:30 ngay mai (tranh loi qua khu)
+        bay_gio_toi = datetime.datetime(2026, 11, 26, 21, 0, 0, tzinfo=MUI_GIO_VN)
+        p_day = tinh_thoi_diem_cong_khai_vn("19:30", cach_ngay=0, bay_gio=bay_gio_toi)
+        self.assertEqual(p_day, "2026-11-27T19:30:00+07:00")
+
+        # 4. Dinh dang gio khong hop le -> ValueError
+        with self.assertRaises(ValueError):
+            tinh_thoi_diem_cong_khai_vn("25:99", cach_ngay=0, bay_gio=bay_gio_utc)
+
+    def test_resumable_upload_multi_chunk_thumbnail_srt_va_bo_nho(self) -> None:
+        import datetime
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            slug = "euler_bay_cay_cau_test"
+            out_dir = root / "out"
+            dl_dir = root / "du_lieu"
+            (out_dir / slug).mkdir(parents=True)
+            (dl_dir / slug).mkdir(parents=True)
+            bo_nho_path = dl_dir / "bo_nho_hoc_hoi.json"
+
+            # Khoi tao bo_nho_hoc_hoi.json co san tap trong chu_de_da_lam (nhu sau --hoan-tat-tu-meta)
+            bn_init = tai_bo_nho(bo_nho_path)
+            ghi_nhan_tap_hoan_thanh(
+                bn_init,
+                slug=slug,
+                tieu_de="Leonhard Euler & 7 Cây Cầu Königsberg",
+                nhan_vat_chinh="Leonhard Euler",
+                tom_tat_1_cau="Câu chuyện ra đời Lý thuyết Đồ thị.",
+                thoi_luong_giay=640.0,
+            )
+            luu_bo_nho(bn_init, bo_nho_path)
+
+            # Tao du_lieu_render.json & chapters_va_mo_ta.txt
+            du_lieu_render = {
+                "tieuDe": "Leonhard Euler & 7 Cây Cầu Königsberg",
+                "chuDe": "Sự ra đời của Lý thuyết Đồ thị năm 1736",
+                "theTag": ["Euler", "Lý thuyết đồ thị", "7 cây cầu Königsberg"],
+                "danhSachNhanVat": [{"id": "euler", "ten": "Leonhard Euler"}],
+                "chuong": [
+                    {
+                        "id": "chuong_1",
+                        "tenChuong": "1. Trò cá cược thành phố",
+                        "canh": [{"id": "c1", "tuFrame": 0, "denFrame": 1800}],
+                    },
+                    {
+                        "id": "chuong_2",
+                        "tenChuong": "2. Nét bút thiên tài của Euler",
+                        "canh": [{"id": "c2", "tuFrame": 1800, "denFrame": 3600}],
+                    },
+                ],
+            }
+            (dl_dir / slug / "du_lieu_render.json").write_text(
+                json.dumps(du_lieu_render, ensure_ascii=False), encoding="utf-8"
+            )
+            (out_dir / slug / "chapters_va_mo_ta.txt").write_text(
+                tao_chapters_va_mo_ta(du_lieu_render), encoding="utf-8"
+            )
+
+            # Video 600KB chia theo chunk 256KB -> 3 chunk (256KB + 256KB + 88KB)
+            noi_dung_video = (b"MP4DATA_BLOCK_1234567890" * 26000)[: 600 * 1024]
+            (out_dir / slug / "video_hoan_chinh.mp4").write_bytes(noi_dung_video)
+            (out_dir / slug / "thumbnail_1.png").write_bytes(b"\x89PNG\r\n\x1a\nMOCK_THUMB")
+            (out_dir / slug / "phu_de.srt").write_text(
+                "1\n00:00:00,000 --> 00:00:03,000\nChào mừng đến với Königsberg năm 1736!\n",
+                encoding="utf-8",
+            )
+
+            # Mock toan bo HTTP cho OAuth, Resumable Upload (co 1 lan 503 retry), Thumbnail 403 an toan, Caption 200
+            bytes_nhan_duoc = bytearray()
+            metadata_gui_len: dict[str, Any] = {}
+            content_ranges: list[str] = []
+            caption_payloads: list[bytes] = []
+            so_lan_put = {"n": 0}
+            da_mo_phong_503 = {"flag": False}
+
+            def fake_http(
+                method: str,
+                url: str,
+                headers: dict[str, str],
+                data: bytes | None,
+                timeout: int,
+            ) -> tuple[int, dict[str, str], bytes]:
+                if url == "https://oauth2.googleapis.com/token":
+                    return 200, {}, json.dumps({"access_token": "mock_token_upload_1"}).encode("utf-8")
+
+                if "upload/youtube/v3/videos" in url and method == "POST":
+                    self.assertEqual(headers.get("Authorization"), "Bearer mock_token_upload_1")
+                    self.assertEqual(headers.get("X-Upload-Content-Length"), str(len(noi_dung_video)))
+                    metadata_gui_len.update(json.loads((data or b"{}").decode("utf-8")))
+                    return 200, {"location": "https://upload.mock/resumable/session_abc"}, b""
+
+                if url == "https://upload.mock/resumable/session_abc" and method == "PUT":
+                    if not da_mo_phong_503["flag"]:
+                        da_mo_phong_503["flag"] = True
+                        return 503, {}, b"Temporary backend error"
+                    so_lan_put["n"] += 1
+                    cr = headers.get("Content-Range", "")
+                    content_ranges.append(cr)
+                    chunk_data = data or b""
+                    bytes_nhan_duoc.extend(chunk_data)
+                    if len(bytes_nhan_duoc) < len(noi_dung_video):
+                        return 308, {"range": f"bytes=0-{len(bytes_nhan_duoc) - 1}"}, b""
+                    return 200, {}, json.dumps({"id": "yt_video_98765"}).encode("utf-8")
+
+                if "thumbnails/set" in url and method == "POST":
+                    # Mo phong kenh chua xac minh SDT (403) -> KHONG duoc lam fail luong chinh
+                    return 403, {}, b'{"error": {"message": "The authenticated user does not have permissions to upload and set custom video thumbnails."}}'
+
+                if "upload/youtube/v3/captions" in url and method == "POST":
+                    caption_payloads.append(data or b"")
+                    return 200, {}, json.dumps({"id": "cap_001"}).encode("utf-8")
+
+                raise AssertionError(f"Request khong mong doi: {method} {url}")
+
+            bay_gio_sang_vn = datetime.datetime(2026, 11, 26, 7, 15, 0, tzinfo=MUI_GIO_VN)
+            kq = dang_video_len_youtube(
+                slug=slug,
+                gio_cong_khai_vn="19:30",
+                cach_ngay=0,
+                chi_rieng_tu=False,
+                chunk_size=256 * 1024,
+                thu_muc_out=out_dir,
+                thu_muc_du_lieu=dl_dir,
+                duong_dan_bo_nho=bo_nho_path,
+                env_override={
+                    "YOUTUBE_CLIENT_ID": "cid_ok",
+                    "YOUTUBE_CLIENT_SECRET": "csec_ok",
+                    "YOUTUBE_REFRESH_TOKEN": "rtok_ok",
+                },
+                http_caller=fake_http,
+                bay_gio=bay_gio_sang_vn,
+                sleep_fn=lambda _: None,
+            )
+
+            self.assertEqual(kq["trangThai"], "thanh_cong")
+            self.assertEqual(kq["video_id"], "yt_video_98765")
+            self.assertEqual(kq["publishAt"], "2026-11-26T19:30:00+07:00")
+            # Kiem tra Resumable Upload dung 3 chunk va khop tung byte
+            self.assertEqual(so_lan_put["n"], 3)
+            self.assertEqual(kq["upload"]["so_chunk"], 3)
+            self.assertEqual(bytes(bytes_nhan_duoc), noi_dung_video)
+            self.assertTrue(content_ranges[0].startswith("bytes 0-262143/"))
+            self.assertTrue(content_ranges[-1].endswith(f"/{len(noi_dung_video)}"))
+            # Kiem tra metadata snippet + status hen gio chuan YouTube (private + publishAt +07:00)
+            self.assertIn("Leonhard Euler", metadata_gui_len["snippet"]["title"])
+            self.assertIn("00:00 1. Trò cá cược thành phố", metadata_gui_len["snippet"]["description"])
+            self.assertNotIn("TIÊU ĐỀ GỢI Ý", metadata_gui_len["snippet"]["description"])
+            self.assertIn("Euler", metadata_gui_len["snippet"]["tags"])
+            self.assertEqual(metadata_gui_len["status"]["privacyStatus"], "private")
+            self.assertEqual(metadata_gui_len["status"]["publishAt"], "2026-11-26T19:30:00+07:00")
+            # Thumbnail 403 bi bat an toan, phu de .srt thanh cong
+            self.assertFalse(kq["thumbnail"]["thanhCong"])
+            self.assertTrue(kq["phuDe"]["thanhCong"])
+            self.assertEqual(len(caption_payloads), 1)
+            self.assertIn(b"yt_video_98765", caption_payloads[0])
+            self.assertIn("Königsberg năm 1736".encode("utf-8"), caption_payloads[0])
+
+            # Kiem tra bo_nho_hoc_hoi.json da luu video_id + publishAt de dong_bo_youtube.py tu keo so lieu
+            bn_sau = tai_bo_nho(bo_nho_path)
+            tap = next(m for m in bn_sau["chu_de_da_lam"] if m["slug"] == slug)
+            self.assertEqual(tap["youtubeVideoId"], "yt_video_98765")
+            self.assertEqual(tap["youtubePublishAt"], "2026-11-26T19:30:00+07:00")
+            self.assertEqual(tap["youtubeCheDo"], "hen_gio")
+            self.assertFalse(tap["youtubeDaGanThumbnail"])
+            self.assertTrue(tap["youtubeDaTaiPhuDe"])
+            self.assertEqual(tim_video_id_tu_bo_nho(slug, duong_dan_bo_nho=bo_nho_path), "yt_video_98765")
+
+    def test_che_do_chi_rieng_tu_va_tien_ich_lay_refresh_token(self) -> None:
+        import urllib.parse
+
+        # 1. Metadata che do --chi-rieng-tu: privacyStatus='private', KHONG gan publishAt
+        meta_priv = tao_metadata_video(
+            tieu_de="Chủ đề thử nghiệm",
+            mo_ta="Mô tả ngắn",
+            the_tag=["toán học"],
+            publish_at="2026-11-26T19:30:00+07:00",
+            chi_rieng_tu=True,
+        )
+        self.assertEqual(meta_priv["status"]["privacyStatus"], "private")
+        self.assertNotIn("publishAt", meta_priv["status"])
+        self.assertEqual(KICH_THUOC_CHUNK_MAC_DINH, 8 * 1024 * 1024)
+
+        # 2. Tien ich lay_refresh_token_youtube.py: tao URL OAuth2 va doi code -> refresh_token
+        auth_url = tao_url_xac_thuc_google(
+            client_id="cid_local",
+            redirect_uri="http://127.0.0.1:8765/oauth2callback",
+            state="state_xyz",
+        )
+        parsed = urllib.parse.urlparse(auth_url)
+        qs = urllib.parse.parse_qs(parsed.query)
+        self.assertEqual(qs["access_type"], ["offline"])
+        self.assertEqual(qs["prompt"], ["consent"])
+        self.assertEqual(qs["state"], ["state_xyz"])
+        for sc in YOUTUBE_SCOPES:
+            self.assertIn(sc, qs["scope"][0])
+
+        class _FakeResp:
+            def __enter__(self) -> "_FakeResp":
+                return self
+
+            def __exit__(self, *args: Any) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return json.dumps(
+                    {"refresh_token": "rtok_moi_30s", "access_token": "atok_moi"}
+                ).encode("utf-8")
+
+        tokens = doi_code_lay_tokens(
+            client_id="cid_local",
+            client_secret="csec_local",
+            code="auth_code_123",
+            redirect_uri="http://127.0.0.1:8765/oauth2callback",
+            urlopen_fn=lambda req, timeout=30: _FakeResp(),
+        )
+        self.assertEqual(tokens["refresh_token"], "rtok_moi_30s")
+
+
+class TestNangCapV35KeChuyenOffline(unittest.TestCase):
+    """Bo unit test offline cho dot nang cap ke chuyen v3.5 (nhac 4 cam xuc, crossfade 1.5s, ngat 0.8s, 3 canh moi, Mascot & Thumbnail AI)."""
+
+    def test_v35_nhac_nen_4_cam_xuc_crossfade_15s_va_ngat_punchline_08s(self) -> None:
+        from scripts.pipeline.render_dai import (
+            CROSSFADE_NHAC_HOI_GIAY,
+            NGAT_NHAC_PUNCHLINE_GIAY,
+            TAM_TRANG_NHAC_HOP_LE,
+            tinh_lich_trinh_nhac_nen,
+            xac_dinh_nhac_nen_theo_tam_trang,
+        )
+        from scripts.pipeline.tao_am_thanh_mau import DANH_SACH_TEN_BGM_CAM_XUC
+
+        self.assertEqual(CROSSFADE_NHAC_HOI_GIAY, 1.5)
+        self.assertEqual(NGAT_NHAC_PUNCHLINE_GIAY, 0.8)
+        self.assertEqual(len(DANH_SACH_TEN_BGM_CAM_XUC), 4)
+
+        # 1. Xac minh 4 file nhac nen cam xuc ton tai trong public/bgm/
+        for mood in TAM_TRANG_NHAC_HOP_LE:
+            p = xac_dinh_nhac_nen_theo_tam_trang(mood)
+            self.assertIsNotNone(p, f"Thieu file public/bgm/{mood}.mp3")
+            assert p is not None
+            self.assertEqual(p.name, f"{mood}.mp3")
+            self.assertGreater(p.stat().st_size, 1024)
+
+        # 2. Lich trinh nhac nen da cam xuc theo hoi + ngat 0.8s truoc punchline
+        kb_nhac = {
+            "chuong": [
+                {
+                    "id": "chuong_1",
+                    "tenChuong": "1. Bi an mo man",
+                    "tamTrangNhac": "bi_an",
+                    "canh": [
+                        {"id": "canh_001", "tuFrame": 0, "denFrame": 300},
+                    ],
+                },
+                {
+                    "id": "chuong_2",
+                    "tenChuong": "2. Cao trao kich tinh",
+                    "tamTrangNhac": "kich_tinh",
+                    "canh": [
+                        {"id": "canh_002", "tuFrame": 300, "denFrame": 450},
+                        {"id": "canh_003", "tuFrame": 450, "denFrame": 600, "ngatNhacPunchline": True},
+                    ],
+                },
+                {
+                    "id": "chuong_3",
+                    "tenChuong": "3. Du am tram lang",
+                    "tamTrangNhac": "tram_lang",
+                    "canh": [
+                        {"id": "canh_004", "tuFrame": 600, "denFrame": 900},
+                    ],
+                },
+            ]
+        }
+        lich = tinh_lich_trinh_nhac_nen(kb_nhac, fps=30)
+        self.assertEqual(len(lich["cacDoanNhac"]), 3)
+        self.assertEqual(
+            [d["tamTrangNhac"] for d in lich["cacDoanNhac"]],
+            ["bi_an", "kich_tinh", "tram_lang"],
+        )
+        self.assertEqual(len(lich["cacMocNgatPunchline"]), 1)
+        moc = lich["cacMocNgatPunchline"][0]
+        self.assertEqual(moc["canhId"], "canh_003")
+        self.assertAlmostEqual(moc["thoiLuongGiay"], 0.8, places=2)
+
+        # 3. Chuoi filter_complex FFmpeg co acrossfade=d=1.50 va volume=0:enable='between(t,...)'
+        fc = tao_filter_hau_ky_audio(
+            tong_giay=30.0,
+            co_audio_chinh=True,
+            co_nhac_nen=True,
+            cac_doan_nhac=lich["cacDoanNhac"],
+            cac_moc_ngat_punchline=lich["cacMocNgatPunchline"],
+        )
+        self.assertIn("acrossfade=d=1.50:c1=tri:c2=tri", fc)
+        self.assertIn("volume=0:enable='between(t,", fc)
+        self.assertIn("sidechaincompress", fc)
+        self.assertIn("loudnorm=I=-14:TP=-1.5:LRA=11", fc)
+
+        cmd = dung_lenh_hau_ky_audio_ffmpeg(
+            file_vao=Path("in.mp4"),
+            file_xuat=Path("out.mp4"),
+            tong_giay=30.0,
+            co_audio_chinh=True,
+            cac_doan_nhac=lich["cacDoanNhac"],
+            cac_moc_ngat_punchline=lich["cacMocNgatPunchline"],
+        )
+        # 3 track BGM -> 3 lan -stream_loop -1
+        self.assertEqual(cmd.count("-stream_loop"), 3)
+
+    def test_v35_schema_3_canh_moi_mascot_thumbnail_ai_va_prompt(self) -> None:
+        from scripts.pipeline.tao_kich_ban_10p import (
+            ID_MASCOT_KENH,
+            KIEU_PHAN_UNG_CAM,
+            PHUONG_TIEN_HANH_TRINH,
+            TAM_TRANG_NHAC,
+            lay_ho_so_mascot_kenh,
+        )
+
+        # 1. Enum & Mascot tuy chinh tu env
+        for bc in ("ban_do_hanh_trinh", "bao_chi_co", "phan_ung_cam"):
+            self.assertIn(bc, LOAI_BO_CUC)
+        self.assertEqual(len(TAM_TRANG_NHAC), 4)
+        self.assertEqual(len(PHUONG_TIEN_HANH_TRINH), 4)
+        self.assertEqual(len(KIEU_PHAN_UNG_CAM), 4)
+
+        m_mac_dinh = lay_ho_so_mascot_kenh(env_override={})
+        self.assertEqual(m_mac_dinh["id"], ID_MASCOT_KENH)
+        m_tuy_chinh = lay_ho_so_mascot_kenh(
+            env_override={"MASCOT_TEN": "Cô Sigma", "MASCOT_MAU_AO": "#16A34A", "MASCOT_TRANG_PHUC": "ao_vest_co_dien"}
+        )
+        self.assertEqual(m_tuy_chinh["ten"], "Cô Sigma")
+        self.assertEqual(m_tuy_chinh["mauAo"], "#16A34A")
+        self.assertEqual(m_tuy_chinh["trangPhuc"], "ao_vest_co_dien")
+
+        # 2. Sanitizer giu nguyen 3 canh moi + tamTrangNhac + openLoopCuoiHoi + ngatNhacPunchline + endScreen + Mascot
+        kb_raw = {
+            "tieuDe": "Leonhard Euler & 7 Cây Cầu",
+            "chuDe": "Khám phá Lý thuyết Đồ thị",
+            "danhSachNhanVat": [{"id": "euler", "ten": "Leonhard Euler", "mauChuDao": "#1D4ED8"}],
+            "chuong": [
+                {
+                    "id": "chuong_1",
+                    "tenChuong": "1. Chuyến đi định mệnh",
+                    "tamTrangNhac": "bi_an",
+                    "openLoopCuoiHoi": "Nhưng điều gì khiến bức thư năm 1736 làm cả châu Âu sững sờ?",
+                    "canh": [
+                        {
+                            "boCuc": "ban_do_hanh_trinh",
+                            "loiThoai": "Bức thư vượt hàng trăm cây số từ Königsberg đến Saint Petersburg.",
+                            "banDoHanhTrinh": {
+                                "diemDi": "Königsberg",
+                                "diemDen": "Saint Petersburg",
+                                "phuongTien": "thu_tay",
+                                "khoangCachNhan": "1.000 km • 1736",
+                            },
+                            "anhBoiCanh": "boi_canh/euler/bc_01_cau.jpg",
+                            "nhanVat": [{"id": ID_MASCOT_KENH, "x": 960, "y": 810, "huong": "phai"}],
+                        },
+                        {
+                            "boCuc": "bao_chi_co",
+                            "loiThoai": "Tin chấn động xuất hiện ngay trên trang nhất giới học thuật châu Âu.",
+                            "baoChiCo": {
+                                "tenToBao": "Nhật Báo Toán Học",
+                                "tieuDeBao": "KHÔNG AI ĐI QUA ĐƯỢC BẢY CÂY CẦU!",
+                                "tieuDePhu": "Cả thành phố đi mòn giày mà vẫn bó tay",
+                                "daoCuMinhHoa": "cuon_giay",
+                            },
+                            "ngatNhacPunchline": True,
+                            "anhBoiCanh": "boi_canh/euler/bc_02_pho.jpg",
+                        },
+                        {
+                            "boCuc": "phan_ung_cam",
+                            "loiThoai": "Thị trưởng khựng lại không tin nổi.",
+                            "phanUngCam": {
+                                "nhanVatId": "euler",
+                                "kieuPhanUng": "nhap_tra",
+                                "chuHieuUng": "HẢ?!",
+                            },
+                        },
+                        {
+                            "boCuc": "ket_thuc",
+                            "loiThoai": "Cảm ơn bạn đã xem hết câu chuyện, bấm chọn tập tiếp theo bên cạnh nhé!",
+                            "endScreen": {
+                                "khungTraiNhan": "TẬP KẾ TIẾP",
+                                "khungPhaiNhan": "DANH SÁCH PHÁT",
+                                "loiDanXemTiep": "Chọn video ở hai bên để khám phá tiếp!",
+                            },
+                            "nhanVat": [{"id": ID_MASCOT_KENH, "x": 960, "y": 830, "huong": "phai"}],
+                        },
+                    ],
+                }
+            ],
+        }
+        kb_sach, _ = chuan_hoa_toan_bo_kich_ban(kb_raw)
+        ch0 = kb_sach["chuong"][0]
+        self.assertEqual(ch0["tamTrangNhac"], "bi_an")
+        self.assertIn("bức thư năm 1736", ch0["openLoopCuoiHoi"])
+        self.assertEqual(ch0["canh"][0]["banDoHanhTrinh"]["phuongTien"], "thu_tay")
+        self.assertEqual(ch0["canh"][0]["nhanVat"][0]["id"], ID_MASCOT_KENH)
+        self.assertTrue(ch0["canh"][1]["ngatNhacPunchline"])
+        self.assertEqual(ch0["canh"][1]["baoChiCo"]["tieuDeBao"], "KHÔNG AI ĐI QUA ĐƯỢC BẢY CÂY CẦU!")
+        self.assertEqual(ch0["canh"][2]["phanUngCam"]["kieuPhanUng"], "nhap_tra")
+        self.assertEqual(ch0["canh"][3]["endScreen"]["khungTraiNhan"], "TẬP KẾ TIẾP")
+        self.assertEqual(kiem_tra_dau_tieng_viet(kb_sach), [])
+
+        # 3. Thumbnail A/B uu tien anhBoiCanh AI cua tap
+        ds_thumb = chuan_bi_phuong_an_thumbnail(kb_sach)
+        self.assertEqual(len(ds_thumb), 3)
+        self.assertTrue(all(str(pa.get("anhBoiCanh") or "").startswith("boi_canh/euler/") for pa in ds_thumb))
+
+        # 4. Prompt tang 1 & tang 2 bao gom Cold Open 15s, Open Loop, an du hien dai, 3 canh moi & Mascot
+        p1 = tao_prompt_tang_1("Euler và 7 cây cầu", 11.0, "di_dom_gan_gui")
+        for kw in ("COLD OPEN 15 GIÂY", "openLoopCuoiHoi", "tamTrangNhac", "ban_do_hanh_trinh", "bao_chi_co", "phan_ung_cam", ID_MASCOT_KENH):
+            self.assertIn(kw.lower(), p1.lower(), f"Prompt tang 1 thieu '{kw}'")
+
+        bp_gia = {
+            "tieuDe": "Euler & 7 Cây Cầu",
+            "danhSachNhanVat": [{"id": "euler", "ten": "Leonhard Euler"}],
+            "hookMoMan": {"cauMoDauGaySoc": "Đi dạo mà khai sinh cả ngành Toán?"},
+        }
+        hoi_gia = {
+            "tenChuong": "1. Mở màn",
+            "boiCanhChinh": "pho_co_chau_au",
+            "thoiTietChinh": "nang_dep",
+            "tomTat": "Giới thiệu bài toán",
+            "tamTrangNhac": "bi_an",
+        }
+        p2 = tao_prompt_tang_2_hoi(bp_gia, hoi_gia, KHUNG_6_HOI[0], "di_dom_gan_gui", "")
+        for kw in ("COLD OPEN 15 GIAY", "OPEN LOOP", "AN DU HIEN DAI", "ngatNhacPunchline", "ban_do_hanh_trinh", "bao_chi_co", "phan_ung_cam", "endScreen"):
+            self.assertIn(kw.lower(), p2.lower(), f"Prompt tang 2 thieu '{kw}'")
 
 
 def main() -> int:

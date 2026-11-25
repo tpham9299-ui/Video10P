@@ -2,10 +2,10 @@ name: Tu Dong San Xuat Video Toan Hoc >10 Phut
 
 on:
   schedule:
-    # Tu dong chay 00:00 UTC = 07:00 sang hang ngay theo gio Viet Nam (UTC+7).
-    # Goi y tiet kiem quota tren repo Private (chay cach ngay thu 2, 4, 6 luc 07:00 VN):
+    # Tu dong chay 00:00 UTC = 07:00 sang theo gio Viet Nam (UTC+7), cach 2 ngay 1 lan.
+    # Dong thay the cho lich co dinh Thu 2 - Thu 4 - Thu 6 hang tuan luc 07:00 VN:
     # - cron: '0 0 * * 1,3,5'
-    - cron: '0 0 * * *'
+    - cron: '0 0 */2 * *'
   workflow_dispatch:
     inputs:
       chu_de:
@@ -38,6 +38,24 @@ on:
         required: false
         default: false
         type: boolean
+      tat_anh_ai:
+        description: 'Tat sinh anh boi canh minh hoa AI (dung lai 22 boi canh SVG)'
+        required: false
+        default: false
+        type: boolean
+      tu_dong_dang_youtube:
+        description: 'Tu dong dang video len YouTube sau khi ghep xong (thoat an toan neu chua cai Secret)'
+        required: false
+        default: true
+        type: boolean
+      che_do_dang:
+        description: 'Che do dang YouTube: hen_gio (cong khai 19:30 VN) hoac rieng_tu (Private cho duyet tay)'
+        required: false
+        default: 'hen_gio'
+        type: choice
+        options:
+          - hen_gio
+          - rieng_tu
 
 permissions:
   contents: write
@@ -104,6 +122,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-flash-latest' }}
           GEMINI_FALLBACK_MODELS: ${{ vars.GEMINI_FALLBACK_MODELS || 'gemini-flash-latest,gemini-flash-lite-latest,gemini-pro-latest' }}
+          GEMINI_IMAGE_MODELS: ${{ vars.GEMINI_IMAGE_MODELS || 'gemini-2.5-flash-image,imagen-3.0-generate-002,gemini-2.0-flash-exp-image-generation' }}
           TTS_VOICE: ${{ vars.TTS_VOICE || 'vi-VN-NamMinhNeural' }}
           TTS_VOICE_NGUOI_DAN: ${{ vars.TTS_VOICE_NGUOI_DAN || 'vi-VN-NamMinhNeural' }}
           TTS_VOICE_NHAN_VAT: ${{ vars.TTS_VOICE_NHAN_VAT || 'vi-VN-HoaiMyNeural' }}
@@ -111,6 +130,7 @@ jobs:
           CHU_DE_INPUT: ${{ inputs.chu_de || '' }}
           SLUG_INPUT: ${{ inputs.slug || '' }}
           CHI_TAO_KICH_BAN: ${{ inputs.chi_tao_kich_ban || false }}
+          TAT_ANH_AI: ${{ inputs.tat_anh_ai || false }}
         run: |
           ARGS=("--so-tap" "1" "--xuat-meta-json" "out/thong_tin_chuan_bi.json" "--nguong-chia-chunk" "120")
           if [ -n "$CHU_DE_INPUT" ]; then
@@ -118,6 +138,9 @@ jobs:
           fi
           if [ -n "$SLUG_INPUT" ]; then
             ARGS+=("--slug" "$SLUG_INPUT")
+          fi
+          if [ "$TAT_ANH_AI" = "true" ]; then
+            ARGS+=("--tat-anh-ai")
           fi
           if [ "$CHI_TAO_KICH_BAN" = "true" ]; then
             ARGS+=("--chi-tao-kich-ban")
@@ -167,6 +190,7 @@ jobs:
             du_lieu/${{ steps.xuat_output.outputs.slug }}/tu_lieu_nghien_cuu.json
             du_lieu/${{ steps.xuat_output.outputs.slug }}/doc_duyet_kich_ban.md
             public/audio/${{ steps.xuat_output.outputs.slug }}/*.mp3
+            public/boi_canh/${{ steps.xuat_output.outputs.slug }}/
 
   render-song-song:
     name: 2. Render song song Chunk ${{ matrix.chunk }}
@@ -360,6 +384,20 @@ jobs:
         run: |
           python -X utf8 scripts/pipeline/san_xuat_lien_tuc.py --hoan-tat-tu-meta out/thong_tin_chuan_bi.json
 
+      - name: Tu dong dang video len YouTube (hen gio 19:30 VN hoac rieng tu)
+        if: needs.chuan-bi.outputs.chi_tao_kich_ban != 'true' && (github.event_name != 'workflow_dispatch' || inputs.tu_dong_dang_youtube)
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          CHE_DO_DANG: ${{ inputs.che_do_dang || 'hen_gio' }}
+        run: |
+          ARGS=("--slug" "${{ needs.chuan-bi.outputs.slug }}" "--gio-cong-khai-vn" "19:30" "--cach-ngay" "0")
+          if [ "$CHE_DO_DANG" = "rieng_tu" ]; then
+            ARGS+=("--chi-rieng-tu")
+          fi
+          python -X utf8 scripts/pipeline/dang_youtube.py "${ARGS[@]}"
+
       - name: Tai len artifact san pham hoan chinh (retention 14 ngay)
         if: always()
         uses: actions/upload-artifact@v4
@@ -389,7 +427,7 @@ jobs:
           fi
 
           # Chi add cac file JSON / Markdown nhe trong du_lieu/, tuyet doi KHONG push mp4/mp3/out
-          find du_lieu -maxdepth 2 -type f \( -name "*.json" -o -name "*.md" \) ! -name "cache_audio.json" -print0 | xargs -0 -r git add --
+          find du_lieu -maxdepth 2 -type f \( -name "*.json" -o -name "*.md" \) ! -name "cache_audio.json" ! -name "cache_boi_canh.json" -print0 | xargs -0 -r git add --
 
           if [ -n "$(git status --porcelain du_lieu)" ]; then
             git commit -m "chore(ai): cap nhat bo nho hoc hoi va tu lieu/kich ban tu dong [skip ci]"

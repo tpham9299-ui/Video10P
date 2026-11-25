@@ -33,6 +33,10 @@ COMPOSITION_ID = "VideoDaiNguoiQue"
 THUMBNAIL_STILL_ID = "ThumbnailToanHoc"
 ENTRY_FILE = "src/index.ts"
 NHAC_NEN_MAC_DINH = GOC_DU_AN / "public" / "bgm" / "nhac_nen_nhe.mp3"
+THU_MUC_BGM_MAC_DINH = GOC_DU_AN / "public" / "bgm"
+TAM_TRANG_NHAC_HOP_LE: tuple[str, ...] = ("vui_tuoi", "bi_an", "kich_tinh", "tram_lang")
+CROSSFADE_NHAC_HOI_GIAY = 1.5
+NGAT_NHAC_PUNCHLINE_GIAY = 0.8
 AM_LUONG_BGM_DB = -25.0
 FADE_IN_MAC_DINH_GIAY = 2.0
 FADE_OUT_MAC_DINH_GIAY = 3.0
@@ -559,6 +563,123 @@ def xac_dinh_nhac_nen(
     return None
 
 
+def xac_dinh_nhac_nen_theo_tam_trang(
+    tam_trang: str = "",
+    thu_muc_bgm: Path | None = None,
+    duong_dan_fallback: Path | None = None,
+) -> Path | None:
+    """Chon file nhac nen theo tamTrangNhac (vui_tuoi | bi_an | kich_tinh | tram_lang), fallback nhac_nen_nhe.mp3."""
+    bgm_dir = thu_muc_bgm if thu_muc_bgm is not None else THU_MUC_BGM_MAC_DINH
+    tt = str(tam_trang or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if tt in TAM_TRANG_NHAC_HOP_LE:
+        cand = bgm_dir / f"{tt}.mp3"
+        if cand.exists() and cand.stat().st_size > 0:
+            return cand
+    fb = duong_dan_fallback if duong_dan_fallback is not None else (bgm_dir / "nhac_nen_nhe.mp3")
+    if fb.exists() and fb.stat().st_size > 0:
+        return fb
+    return None
+
+
+def tinh_lich_trinh_nhac_nen(
+    du_lieu: dict[str, Any],
+    fps: int = MAC_DINH_FPS,
+    thu_muc_bgm: Path | None = None,
+    nhac_nen_fallback: Path | None = None,
+    thoi_luong_ngat_punchline: float = NGAT_NHAC_PUNCHLINE_GIAY,
+) -> dict[str, Any]:
+    """
+    Tinh lich trinh nhac nen da cam xuc theo tung Hoi (`tamTrangNhac`) va cac khoang ngat
+    nhac 0.8s (record-scratch / im lang dot ngot) truoc canh co `ngatNhacPunchline: true`.
+    """
+    fps_an_toan = max(1, int(fps))
+    tam_trang_mac_dinh_theo_hoi = ("bi_an", "vui_tuoi", "bi_an", "kich_tinh", "vui_tuoi", "tram_lang")
+    pham_vi = tinh_pham_vi_frame_chuong(du_lieu)
+
+    cac_doan_tho: list[dict[str, Any]] = []
+    cac_moc_ngat: list[dict[str, Any]] = []
+    tong_giay_du_kien = 0.0
+
+    for idx, ch in enumerate(pham_vi):
+        ch_data = ch["chuongData"]
+        tu_s = float(ch["tuFrame"]) / float(fps_an_toan)
+        den_s = float(ch["denFrame"]) / float(fps_an_toan)
+        tong_giay_du_kien = max(tong_giay_du_kien, den_s)
+        dur_s = max(0.2, den_s - tu_s)
+
+        tt_raw = str(ch_data.get("tamTrangNhac") or "").strip().lower()
+        tt = tt_raw if tt_raw in TAM_TRANG_NHAC_HOP_LE else tam_trang_mac_dinh_theo_hoi[idx % len(tam_trang_mac_dinh_theo_hoi)]
+        file_nhac = xac_dinh_nhac_nen_theo_tam_trang(
+            tam_trang=tt,
+            thu_muc_bgm=thu_muc_bgm,
+            duong_dan_fallback=nhac_nen_fallback,
+        )
+        if file_nhac is not None:
+            cac_doan_tho.append(
+                {
+                    "soHoi": int(ch["soHoi"]),
+                    "tamTrangNhac": tt,
+                    "fileNhac": file_nhac,
+                    "tuGiay": round(tu_s, 3),
+                    "denGiay": round(den_s, 3),
+                    "thoiLuongGiay": round(dur_s, 3),
+                }
+            )
+
+        for canh in ch_data.get("canh") or []:
+            if not isinstance(canh, dict) or not canh.get("ngatNhacPunchline"):
+                continue
+            c_tu_f = int(canh.get("tuFrame") or 0)
+            c_den_f = int(canh.get("denFrame") or (c_tu_f + fps_an_toan))
+            c_tu_s = float(c_tu_f) / float(fps_an_toan)
+            c_den_s = float(c_den_f) / float(fps_an_toan)
+            ngat_d = max(0.2, min(float(thoi_luong_ngat_punchline), max(0.3, c_den_s - c_tu_s)))
+            # Ngat nhac 0.8s ngay khoanh khac vao punchline de tao nhip hai sac net
+            bat_dau_ngat = max(0.0, c_tu_s - 0.12)
+            ket_thuc_ngat = min(max(c_den_s, bat_dau_ngat + ngat_d), bat_dau_ngat + ngat_d)
+            cac_moc_ngat.append(
+                {
+                    "canhId": str(canh.get("id") or ""),
+                    "tuGiay": round(bat_dau_ngat, 3),
+                    "denGiay": round(ket_thuc_ngat, 3),
+                    "thoiLuongGiay": round(max(0.1, ket_thuc_ngat - bat_dau_ngat), 3),
+                }
+            )
+
+    # Gop cac hoi lien tiep dung cung 1 file nhac de tranh crossfade thua
+    cac_doan_gop: list[dict[str, Any]] = []
+    for doan in cac_doan_tho:
+        if cac_doan_gop and cac_doan_gop[-1]["fileNhac"] == doan["fileNhac"]:
+            cac_doan_gop[-1]["denGiay"] = doan["denGiay"]
+            cac_doan_gop[-1]["thoiLuongGiay"] = round(
+                max(0.2, cac_doan_gop[-1]["denGiay"] - cac_doan_gop[-1]["tuGiay"]), 3
+            )
+            cac_doan_gop[-1]["cacHoi"].append(doan["soHoi"])
+        else:
+            cac_doan_gop.append({**doan, "cacHoi": [doan["soHoi"]]})
+
+    return {
+        "cacDoanNhac": cac_doan_gop,
+        "cacMocNgatPunchline": cac_moc_ngat,
+        "tongGiayDuKien": round(tong_giay_du_kien, 3),
+    }
+
+
+def _tao_bo_loc_ngat_punchline(cac_moc_ngat: list[dict[str, Any]] | None) -> str:
+    """Tao chuoi bo loc FFmpeg volume=0 tai tung khoang ngat nhac 0.8s truoc punchline."""
+    if not cac_moc_ngat:
+        return ""
+    dieu_kien = [
+        f"between(t,{float(m['tuGiay']):.3f},{float(m['denGiay']):.3f})"
+        for m in cac_moc_ngat
+        if float(m.get("denGiay", 0.0)) > float(m.get("tuGiay", 0.0))
+    ]
+    if not dieu_kien:
+        return ""
+    expr = "+".join(dieu_kien)
+    return f"volume=0:enable='{expr}'"
+
+
 def tao_filter_hau_ky_audio(
     tong_giay: float,
     co_audio_chinh: bool,
@@ -566,44 +687,90 @@ def tao_filter_hau_ky_audio(
     am_luong_bgm_db: float = AM_LUONG_BGM_DB,
     fade_in_giay: float = FADE_IN_MAC_DINH_GIAY,
     fade_out_giay: float = FADE_OUT_MAC_DINH_GIAY,
+    cac_doan_nhac: list[dict[str, Any]] | None = None,
+    cac_moc_ngat_punchline: list[dict[str, Any]] | None = None,
+    crossfade_giay: float = CROSSFADE_NHAC_HOI_GIAY,
 ) -> str:
     """
-    Tao chuoi filter_complex FFmpeg cho hau ky am thanh chuan YouTube:
-    - Nhac nen lap khop thoi luong, fade-in 2s dau, fade-out 3s cuoi, muc nen ~ -24..-28dB.
-    - Auto-ducking bang sidechaincompress de ha nhac nen sau hon moi khi co tieng thoai.
-    - Chuan hoa am luong dau ra -14 LUFS (loudnorm=I=-14:TP=-1.5:LRA=11).
+    Tao chuoi filter_complex FFmpeg cho hau ky am thanh chuan YouTube (v3.5):
+    - Ho tro 1 ban nhac nen don hoac nhieu ban nhac theo tamTrangNhac tung Hoi voi acrossfade 1.5s muot.
+    - Ho tro khoang ngat nhac 0.8s (im lang dot ngot) truoc cac canh danh dau `ngatNhacPunchline: true`.
+    - Fade-in 2s dau, fade-out 3s cuoi, muc nen ~ -25dB, auto-ducking sidechaincompress + loudnorm -14 LUFS.
     """
     thoi_luong = max(0.1, float(tong_giay))
     fi = min(max(0.0, float(fade_in_giay)), thoi_luong * 0.4)
     fo = min(max(0.0, float(fade_out_giay)), thoi_luong * 0.45)
     st_out = max(0.0, thoi_luong - fo)
+    doan_list = list(cac_doan_nhac or [])
+    dung_nhac = bool(co_nhac_nen or len(doan_list) > 0)
+    bo_loc_ngat = _tao_bo_loc_ngat_punchline(cac_moc_ngat_punchline)
+    chuoi_ngat = f",{bo_loc_ngat}" if bo_loc_ngat else ""
 
-    if co_audio_chinh and co_nhac_nen:
-        return (
-            "[0:a]aformat=sample_rates=48000:channel_layouts=stereo,asplit=2[voice][sc];"
-            f"[1:a]aformat=sample_rates=48000:channel_layouts=stereo,"
-            f"atrim=0:{thoi_luong:.3f},asetpts=PTS-STARTPTS,"
-            f"volume={am_luong_bgm_db:.1f}dB,"
-            f"afade=t=in:st=0:d={fi:.2f},"
-            f"afade=t=out:st={st_out:.3f}:d={fo:.2f}[bgm_base];"
-            "[bgm_base][sc]sidechaincompress=threshold=0.02:ratio=6:attack=35:release=350:makeup=1[bgm_ducked];"
-            "[voice][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2:normalize=0,"
-            "loudnorm=I=-14:TP=-1.5:LRA=11[aout]"
-        )
+    if dung_nhac:
+        phan_nhac_truc_tiep: list[str] = []
+        if len(doan_list) >= 2:
+            # Ghep nhieu tam trang nhac voi acrossfade 1.5s giua cac doan hoi
+            cf_base = max(0.2, float(crossfade_giay))
+            nhan_cuoi = ""
+            for idx, doan in enumerate(doan_list):
+                dur_d = max(0.4, float(doan.get("thoiLuongGiay") or 10.0))
+                la_cuoi_d = idx == len(doan_list) - 1
+                # Cong them phan chong crossfade de tong thoi luong khong bi hut
+                them_cf = cf_base if not la_cuoi_d else 0.5
+                trim_len = dur_d + them_cf
+                in_idx = idx + 1  # input 0 la video goc; input 1..N la cac track BGM
+                nhan = f"bgm_s{idx}"
+                phan_nhac_truc_tiep.append(
+                    f"[{in_idx}:a]aformat=sample_rates=48000:channel_layouts=stereo,"
+                    f"atrim=0:{trim_len:.3f},asetpts=PTS-STARTPTS[{nhan}]"
+                )
+                if idx == 0:
+                    nhan_cuoi = nhan
+                else:
+                    cf_thuc = min(cf_base, dur_d * 0.4, float(doan_list[idx - 1].get("thoiLuongGiay") or dur_d) * 0.4)
+                    cf_thuc = max(0.15, cf_thuc)
+                    nhan_moi = f"bgm_xf{idx}"
+                    phan_nhac_truc_tiep.append(
+                        f"[{nhan_cuoi}][{nhan}]acrossfade=d={cf_thuc:.2f}:c1=tri:c2=tri[{nhan_moi}]"
+                    )
+                    nhan_cuoi = nhan_moi
+            nguon_bgm_label = f"[{nhan_cuoi}]"
+        else:
+            nguon_bgm_label = "[1:a]aformat=sample_rates=48000:channel_layouts=stereo,"
 
-    if co_audio_chinh and not co_nhac_nen:
+        if nguon_bgm_label.endswith(","):
+            bgm_chain = (
+                f"{nguon_bgm_label}"
+                f"atrim=0:{thoi_luong:.3f},asetpts=PTS-STARTPTS"
+                f"{chuoi_ngat},"
+                f"volume={am_luong_bgm_db:.1f}dB,"
+                f"afade=t=in:st=0:d={fi:.2f},"
+                f"afade=t=out:st={st_out:.3f}:d={fo:.2f}"
+            )
+        else:
+            bgm_chain = (
+                ";".join(phan_nhac_truc_tiep)
+                + ";"
+                + f"{nguon_bgm_label}atrim=0:{thoi_luong:.3f},asetpts=PTS-STARTPTS"
+                f"{chuoi_ngat},"
+                f"volume={am_luong_bgm_db:.1f}dB,"
+                f"afade=t=in:st=0:d={fi:.2f},"
+                f"afade=t=out:st={st_out:.3f}:d={fo:.2f}"
+            )
+
+        if co_audio_chinh:
+            return (
+                "[0:a]aformat=sample_rates=48000:channel_layouts=stereo,asplit=2[voice][sc];"
+                f"{bgm_chain}[bgm_base];"
+                "[bgm_base][sc]sidechaincompress=threshold=0.02:ratio=6:attack=35:release=350:makeup=1[bgm_ducked];"
+                "[voice][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2:normalize=0,"
+                "loudnorm=I=-14:TP=-1.5:LRA=11[aout]"
+            )
+        return f"{bgm_chain},loudnorm=I=-14:TP=-1.5:LRA=11[aout]"
+
+    if co_audio_chinh:
         return (
             "[0:a]aformat=sample_rates=48000:channel_layouts=stereo,"
-            "loudnorm=I=-14:TP=-1.5:LRA=11[aout]"
-        )
-
-    if not co_audio_chinh and co_nhac_nen:
-        return (
-            f"[1:a]aformat=sample_rates=48000:channel_layouts=stereo,"
-            f"atrim=0:{thoi_luong:.3f},asetpts=PTS-STARTPTS,"
-            f"volume={am_luong_bgm_db:.1f}dB,"
-            f"afade=t=in:st=0:d={fi:.2f},"
-            f"afade=t=out:st={st_out:.3f}:d={fo:.2f},"
             "loudnorm=I=-14:TP=-1.5:LRA=11[aout]"
         )
 
@@ -619,9 +786,13 @@ def dung_lenh_hau_ky_audio_ffmpeg(
     am_luong_bgm_db: float = AM_LUONG_BGM_DB,
     fade_in_giay: float = FADE_IN_MAC_DINH_GIAY,
     fade_out_giay: float = FADE_OUT_MAC_DINH_GIAY,
+    cac_doan_nhac: list[dict[str, Any]] | None = None,
+    cac_moc_ngat_punchline: list[dict[str, Any]] | None = None,
+    crossfade_giay: float = CROSSFADE_NHAC_HOI_GIAY,
 ) -> list[str]:
-    """Dung lenh FFmpeg hoan chinh cho buoc hau ky am thanh (auto-ducking + loudnorm -14 LUFS)."""
-    co_bgm = nhac_nen is not None
+    """Dung lenh FFmpeg hoan chinh cho buoc hau ky am thanh (da cam xuc + crossfade 1.5s + ngat 0.8s + auto-ducking -14 LUFS)."""
+    doan_list = list(cac_doan_nhac or [])
+    co_bgm = bool(nhac_nen is not None or len(doan_list) > 0)
     filter_complex = tao_filter_hau_ky_audio(
         tong_giay=tong_giay,
         co_audio_chinh=co_audio_chinh,
@@ -629,6 +800,9 @@ def dung_lenh_hau_ky_audio_ffmpeg(
         am_luong_bgm_db=am_luong_bgm_db,
         fade_in_giay=fade_in_giay,
         fade_out_giay=fade_out_giay,
+        cac_doan_nhac=doan_list if len(doan_list) >= 2 else None,
+        cac_moc_ngat_punchline=cac_moc_ngat_punchline,
+        crossfade_giay=crossfade_giay,
     )
     if not filter_complex:
         return [
@@ -644,7 +818,12 @@ def dung_lenh_hau_ky_audio_ffmpeg(
         ]
 
     cmd = ["ffmpeg", "-y", "-i", str(file_vao)]
-    if nhac_nen is not None:
+    if len(doan_list) >= 2:
+        for doan in doan_list:
+            cmd.extend(["-stream_loop", "-1", "-i", str(doan["fileNhac"])])
+    elif len(doan_list) == 1:
+        cmd.extend(["-stream_loop", "-1", "-i", str(doan_list[0]["fileNhac"])])
+    elif nhac_nen is not None:
         cmd.extend(["-stream_loop", "-1", "-i", str(nhac_nen)])
     cmd.extend(
         [
@@ -664,7 +843,7 @@ def dung_lenh_hau_ky_audio_ffmpeg(
             "48000",
         ]
     )
-    if nhac_nen is not None:
+    if co_bgm:
         cmd.append("-shortest")
     cmd.extend(["-movflags", "+faststart", str(file_xuat)])
     return cmd
@@ -678,14 +857,32 @@ def ghep_cac_hoi_ffmpeg(
     am_luong_bgm_db: float = AM_LUONG_BGM_DB,
     fade_in_giay: float = FADE_IN_MAC_DINH_GIAY,
     fade_out_giay: float = FADE_OUT_MAC_DINH_GIAY,
+    du_lieu_kich_ban: dict[str, Any] | None = None,
+    fps: int = MAC_DINH_FPS,
+    thu_muc_bgm: Path | None = None,
+    crossfade_giay: float = CROSSFADE_NHAC_HOI_GIAY,
 ) -> Path:
     """
-    Ghep toan bo cac hoi bang FFmpeg concat, tu dong tron nhac nen (neu co & khong tat),
-    auto-ducking (sidechaincompress) + fade-in 2s / fade-out 3s + chuan hoa -14 LUFS.
+    Ghep toan bo cac hoi bang FFmpeg concat, tu dong tron nhac nen da cam xuc theo tung Hoi
+    (acrossfade 1.5s + ngat 0.8s truoc punchline), auto-ducking (sidechaincompress) + fade-in/out + -14 LUFS.
     Co fallback an toan de tuyet doi khong crash neu audio rong hoac khong co nhac nen.
     """
     file_xuat.parent.mkdir(parents=True, exist_ok=True)
     nhac_nen_dung = xac_dinh_nhac_nen(nhac_nen=nhac_nen, tat_nhac_nen=tat_nhac_nen)
+
+    cac_doan_nhac: list[dict[str, Any]] | None = None
+    cac_moc_ngat: list[dict[str, Any]] | None = None
+    if not tat_nhac_nen and isinstance(du_lieu_kich_ban, dict):
+        lich = tinh_lich_trinh_nhac_nen(
+            du_lieu_kich_ban,
+            fps=fps,
+            thu_muc_bgm=thu_muc_bgm,
+            nhac_nen_fallback=nhac_nen_dung,
+        )
+        cac_moc_ngat = lich["cacMocNgatPunchline"] or None
+        # Chi dung nhac da cam xuc khi nguoi dung KHONG truyen ep 1 file --nhac-nen rieng
+        if nhac_nen is None and lich["cacDoanNhac"]:
+            cac_doan_nhac = lich["cacDoanNhac"]
 
     with tempfile.TemporaryDirectory(prefix="ghep_video_") as tmp_str:
         tmp_dir = Path(tmp_str)
@@ -716,7 +913,7 @@ def ghep_cac_hoi_ffmpeg(
         )
 
         co_audio_chinh = _co_luong_audio(file_ghep_tho)
-        if not co_audio_chinh and nhac_nen_dung is None:
+        if not co_audio_chinh and nhac_nen_dung is None and not cac_doan_nhac:
             shutil.copy2(file_ghep_tho, file_xuat)
             return file_xuat
 
@@ -730,6 +927,9 @@ def ghep_cac_hoi_ffmpeg(
             am_luong_bgm_db=am_luong_bgm_db,
             fade_in_giay=fade_in_giay,
             fade_out_giay=fade_out_giay,
+            cac_doan_nhac=cac_doan_nhac,
+            cac_moc_ngat_punchline=cac_moc_ngat,
+            crossfade_giay=crossfade_giay,
         )
         try:
             _chay_lenh(cmd_hau_ky)
@@ -926,13 +1126,24 @@ def chuan_bi_phuong_an_thumbnail(du_lieu: dict[str, Any]) -> list[dict[str, Any]
         "phuKien": "kinh_tron",
     }
 
-    # Tim cong thuc KaTeX noi bat, boi canh va dao cu dau tien trong kich ban
+    # Tim cong thuc KaTeX noi bat, boi canh, dao cu va anh boi canh AI dep nhat cua tap (v3.5)
     cong_thuc_mac_dinh = "a^2 + b^2 = c^2"
     boi_canh_mac_dinh = "quang_truong_hy_lap"
     dao_cu_mac_dinh = "compa_co"
+    danh_sach_anh_ai: list[tuple[str, dict[str, Any] | None]] = []
+    tap_anh_ai_da_them: set[str] = set()
     tim_thay_ct = False
     for ch in du_lieu.get("chuong") or []:
         for c in ch.get("canh") or []:
+            anh_ai = str(c.get("anhBoiCanh") or "").strip()
+            if anh_ai and anh_ai not in tap_anh_ai_da_them:
+                tap_anh_ai_da_them.add(anh_ai)
+                asmt = c.get("anhSangMoiTruong") if isinstance(c.get("anhSangMoiTruong"), dict) else None
+                # Uu tien anh boi canh rong (khong phai khung can canh vat the) len dau danh sach
+                if not c.get("laKhungTranhDacTa"):
+                    danh_sach_anh_ai.insert(0, (anh_ai, asmt))
+                else:
+                    danh_sach_anh_ai.append((anh_ai, asmt))
             if boi_canh_mac_dinh == "quang_truong_hy_lap" and c.get("boiCanh"):
                 boi_canh_mac_dinh = str(c["boiCanh"])
             if not tim_thay_ct and isinstance(c.get("congThucLatex"), list):
@@ -995,23 +1206,33 @@ def chuan_bi_phuong_an_thumbnail(du_lieu: dict[str, Any]) -> list[dict[str, Any]
         if nv_chon is None:
             nv_chon = ds_nv[(bt - 1) % len(ds_nv)] if ds_nv else nv_mac_dinh
 
-        ket_qua.append(
-            {
-                "bien_the": bt,
-                "tieuDeLon": _rut_gon_2_4_tu(raw.get("tieuDeLon") or md["tieuDeLon"], md["tieuDeLon"]),
-                "nhanPhu": str(raw.get("nhanPhu") or md["nhanPhu"]).strip()[:36],
-                "congThucLatex": str(raw.get("congThucLatex") or cong_thuc_mac_dinh).strip(),
-                "daoCuNoiBat": str(raw.get("daoCuNoiBat") or md["daoCuNoiBat"]).strip(),
-                "boiCanh": str(raw.get("boiCanh") or boi_canh_mac_dinh).strip(),
-                "thoiTiet": str(raw.get("thoiTiet") or "nang_dep").strip(),
-                "nhanVat": nv_chon,
-                "bieuCam": str(raw.get("bieuCam") or md["bieuCam"]).strip(),
-                "hanhDong": str(raw.get("hanhDong") or md["hanhDong"]).strip(),
-                "vatCamTay": str(raw.get("vatCamTay") or "cuon_giay").strip(),
-                "mauNhan": str(raw.get("mauNhan") or md["mauNhan"]).strip(),
-                "tieuDeVideo": tieu_de_video,
-            }
-        )
+        anh_ai_chon = str(raw.get("anhBoiCanh") or "").strip()
+        asmt_chon = raw.get("anhSangMoiTruong") if isinstance(raw.get("anhSangMoiTruong"), dict) else None
+        if not anh_ai_chon and danh_sach_anh_ai:
+            anh_ai_chon, asmt_fb = danh_sach_anh_ai[(bt - 1) % len(danh_sach_anh_ai)]
+            if asmt_chon is None:
+                asmt_chon = asmt_fb
+
+        muc_thumb: dict[str, Any] = {
+            "bien_the": bt,
+            "tieuDeLon": _rut_gon_2_4_tu(raw.get("tieuDeLon") or md["tieuDeLon"], md["tieuDeLon"]),
+            "nhanPhu": str(raw.get("nhanPhu") or md["nhanPhu"]).strip()[:36],
+            "congThucLatex": str(raw.get("congThucLatex") or cong_thuc_mac_dinh).strip(),
+            "daoCuNoiBat": str(raw.get("daoCuNoiBat") or md["daoCuNoiBat"]).strip(),
+            "boiCanh": str(raw.get("boiCanh") or boi_canh_mac_dinh).strip(),
+            "thoiTiet": str(raw.get("thoiTiet") or "nang_dep").strip(),
+            "nhanVat": nv_chon,
+            "bieuCam": str(raw.get("bieuCam") or md["bieuCam"]).strip(),
+            "hanhDong": str(raw.get("hanhDong") or md["hanhDong"]).strip(),
+            "vatCamTay": str(raw.get("vatCamTay") or "cuon_giay").strip(),
+            "mauNhan": str(raw.get("mauNhan") or md["mauNhan"]).strip(),
+            "tieuDeVideo": tieu_de_video,
+        }
+        if anh_ai_chon:
+            muc_thumb["anhBoiCanh"] = anh_ai_chon
+        if asmt_chon:
+            muc_thumb["anhSangMoiTruong"] = asmt_chon
+        ket_qua.append(muc_thumb)
     return ket_qua
 
 
@@ -1591,15 +1812,17 @@ def render_toan_bo_video(
         danh_sach_chunk=ds_chunk,
     )
 
-    # 1. Ghep video tong (+ nhac nen auto-ducking & chuan hoa -14 LUFS) vao out/<slug>/video_hoan_chinh.mp4 va dong bo out/<slug>.mp4
+    # 1. Ghep video tong (+ nhac nen da cam xuc theo hoi, ngat punchline 0.8s, auto-ducking & -14 LUFS)
     t_ghep = time.perf_counter()
     file_video_cuoi = thu_muc_slug / "video_hoan_chinh.mp4"
-    ham_ghep(
-        ds_file_hoi,
-        file_video_cuoi,
-        nhac_nen=nhac_nen,
-        tat_nhac_nen=tat_nhac_nen,
-    )
+    ghep_kwargs: dict[str, Any] = {
+        "nhac_nen": nhac_nen,
+        "tat_nhac_nen": tat_nhac_nen,
+    }
+    if merge_fn is None:
+        ghep_kwargs["du_lieu_kich_ban"] = du_lieu
+        ghep_kwargs["fps"] = fps
+    ham_ghep(ds_file_hoi, file_video_cuoi, **ghep_kwargs)
     print(f"[OK] Video hoan chinh: {file_video_cuoi} ({time.perf_counter() - t_ghep:.2f}s)")
 
     file_video_legacy = out_root / f"{slug}.mp4"

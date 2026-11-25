@@ -1,7 +1,8 @@
 import React from 'react';
 import { useCurrentFrame } from 'remotion';
-import type { HieuUngHoatHinhItem } from '../kieu_dai';
+import type { HieuUngHoatHinhItem, NhanVatTrongCanh } from '../kieu_dai';
 import { bamTatDinh } from './tat_dinh';
+import { tinhToaDoHieuUngAnToan } from './vi_tri_vfx';
 import {
   easeInOutCubic,
   kepGiaTri,
@@ -11,6 +12,9 @@ import {
 
 type HieuUngHoatHinhProps = {
   danhSach?: HieuUngHoatHinhItem[];
+  /** Danh sach nhan vat trong canh de dinh vi bong_den tren dau (headY - 75) & tranh de mat/than */
+  nhanVat?: readonly NhanVatTrongCanh[];
+  tiLeNhanVat?: number;
 };
 
 const veBongDenNaySo = (delta: number, t: number, frame: number, mau: string) => {
@@ -276,7 +280,239 @@ const veNhanChuHaiHuoc = (delta: number, t: number, chu: string, mau: string) =>
   );
 };
 
-export const HieuUngHoatHinh: React.FC<HieuUngHoatHinhProps> = ({ danhSach }) => {
+const veMoHoiLon = (delta: number, t: number) => {
+  const pop = kepGiaTri(springTatDinh(delta, 10, 230), 0, 1.32);
+  const truotY = easeInOutCubic(t) * 44;
+  const keoY = 1 + Math.sin(t * Math.PI) * 0.16;
+  const epX = 1 / keoY;
+  const fade = t > 0.85 ? kepGiaTri((1 - t) / 0.15, 0, 1) : 1;
+  return (
+    <g
+      transform={`translate(0, ${truotY.toFixed(1)}) scale(${(pop * epX).toFixed(3)}, ${(pop * keoY).toFixed(3)})`}
+      opacity={fade}
+    >
+      <path
+        d="M 0 -34 C 18 -8, 22 12, 17 25 C 12 36, -12 36, -17 25 C -22 12, -18 -8, 0 -34 Z"
+        fill="#38BDF8"
+        stroke="#1A1A1A"
+        strokeWidth={3.6}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M 3 -26 C 14 -6, 16 12, 12 22 C 9 29, 2 31, 0 31 C 7 25, 11 10, 3 -26 Z"
+        fill="#0284C7"
+        fillOpacity={0.35}
+      />
+      <ellipse cx={-5.5} cy={7} rx={4.2} ry={9} fill="#E0F2FE" transform="rotate(-14, -5.5, 7)" />
+      <circle cx={-4.5} cy={20} r={2.8} fill="#FFFFFF" />
+    </g>
+  );
+};
+
+const veKhoiBocTai = (delta: number, t: number, frame: number) => {
+  const pop = kepGiaTri(springTatDinh(delta, 10, 240), 0, 1.25);
+  const fade = t > 0.82 ? kepGiaTri((1 - t) / 0.18, 0, 1) : 1;
+  const lanRa = easeInOutCubic(t);
+  return (
+    <g opacity={fade}>
+      {[-1, 1].map((ben) => (
+        <g key={`tai-${ben}`}>
+          {[0, 1, 2].map((i) => {
+            const pha = ((t * 1.4 + i * 0.28) % 1);
+            const dx = ben * (32 + pha * 64);
+            const dy = -4 - pha * 26 + Math.sin(frame * 0.3 + i) * 3;
+            const r = (9 + i * 3.5) * (0.65 + pha * 0.65) * pop;
+            const op = Math.max(0, (1 - pha * 0.85) * 0.92);
+            return (
+              <circle
+                key={`khoi-t-${ben}-${i}`}
+                cx={dx.toFixed(1)}
+                cy={dy.toFixed(1)}
+                r={r.toFixed(1)}
+                fill={i === 0 ? '#FEE2E2' : '#F8FAFC'}
+                stroke="#1A1A1A"
+                strokeWidth={2.4}
+                fillOpacity={op}
+                strokeOpacity={op}
+              />
+            );
+          })}
+          {/* Tia nong do boc ngang tai */}
+          <line
+            x1={(ben * 28).toFixed(1)}
+            y1={-2}
+            x2={(ben * (48 + lanRa * 16)).toFixed(1)}
+            y2={-8}
+            stroke="#DC2626"
+            strokeWidth={3.2}
+            strokeLinecap="round"
+          />
+        </g>
+      ))}
+    </g>
+  );
+};
+
+const veMatXoanOc = (delta: number, t: number, frame: number) => {
+  const pop = kepGiaTri(springTatDinh(delta, 11, 210), 0, 1.25);
+  const fade = t > 0.85 ? kepGiaTri((1 - t) / 0.15, 0, 1) : 1;
+  const rot = (frame * 11) % 360;
+  const dXoan =
+    'M 0 0 C 3 -3, 7 0, 6 5 C 4 11, -5 12, -9 7 C -14 0, -10 -12, 0 -14 C 12 -16, 20 -4, 17 9';
+  return (
+    <g opacity={fade} transform={`scale(${pop.toFixed(3)})`}>
+      {[-16, 16].map((cx, idx) => (
+        <g
+          key={`xoan-${idx}`}
+          transform={`translate(${cx}, -6) rotate(${(idx === 0 ? rot : -rot).toFixed(1)})`}
+        >
+          <circle cx={0} cy={0} r={14} fill="#FFFBEB" fillOpacity={0.92} stroke="#1A1A1A" strokeWidth={2.2} />
+          <path
+            d={dXoan}
+            transform="scale(0.68)"
+            fill="none"
+            stroke="#1A1A1A"
+            strokeWidth={3.2}
+            strokeLinecap="round"
+          />
+        </g>
+      ))}
+      {/* Vong sao chong mat tren dinh dau */}
+      {[0, 1, 2].map((i) => {
+        const goc = frame * 0.14 + (i * Math.PI * 2) / 3;
+        const sx = Math.cos(goc) * 38;
+        const sy = -36 + Math.sin(goc) * 10;
+        return (
+          <path
+            key={`sao-xm-${i}`}
+            d="M 0 -8 L 2.5 -2.5 L 8 0 L 2.5 2.5 L 0 8 L -2.5 2.5 L -8 0 L -2.5 -2.5 Z"
+            transform={`translate(${sx.toFixed(1)}, ${sy.toFixed(1)})`}
+            fill="#FACC15"
+            stroke="#1A1A1A"
+            strokeWidth={1.6}
+          />
+        );
+      })}
+    </g>
+  );
+};
+
+const veChamHoiNay = (delta: number, t: number, frame: number, mau: string) => {
+  const fade = t > 0.85 ? kepGiaTri((1 - t) / 0.15, 0, 1) : 1;
+  const ds = [
+    { dx: -30, dy: 4, rot: -15, s: 0.86, tre: 4 },
+    { dx: 0, dy: -12, rot: 0, s: 1.2, tre: 0 },
+    { dx: 30, dy: 6, rot: 15, s: 0.84, tre: 7 },
+  ];
+  return (
+    <g opacity={fade}>
+      {ds.map((d, idx) => {
+        const sp = kepGiaTri(springTatDinh(delta - d.tre, 9.5, 250), 0, 1.38);
+        const nay = -Math.abs(Math.sin(frame * 0.28 + idx * 1.1)) * 12;
+        if (sp <= 0.01) return null;
+        return (
+          <g
+            key={`chn-${idx}`}
+            transform={`translate(${d.dx}, ${(d.dy + nay).toFixed(1)}) rotate(${d.rot}) scale(${(d.s * sp).toFixed(3)})`}
+          >
+            <text
+              x={0}
+              y={14}
+              textAnchor="middle"
+              fill={idx === 1 ? mau : '#FACC15'}
+              stroke="#1A1A1A"
+              strokeWidth={4}
+              paintOrder="stroke"
+              fontSize={46}
+              fontWeight={900}
+              fontFamily="Segoe UI, Arial, sans-serif"
+            >
+              ?
+            </text>
+          </g>
+        );
+      })}
+    </g>
+  );
+};
+
+const veTiaTocDo = (delta: number, t: number, frame: number, mau: string) => {
+  const pop = kepGiaTri(springTatDinh(delta, 10, 260), 0, 1.25);
+  const fade = t > 0.84 ? kepGiaTri((1 - t) / 0.16, 0, 1) : 1;
+  return (
+    <g opacity={fade} transform={`scale(${pop.toFixed(3)})`}>
+      {Array.from({ length: 16 }).map((_, i) => {
+        const goc = (i / 16) * Math.PI * 2 + (frame % 3) * 0.04;
+        const r1 = 56 + ((i * 19 + frame * 7) % 18);
+        const r2 = 128 + (i % 3) * 26;
+        const lech = 0.045;
+        const x1 = Math.cos(goc) * r1;
+        const y1 = Math.sin(goc) * r1;
+        const x2 = Math.cos(goc - lech) * r2;
+        const y2 = Math.sin(goc - lech) * r2;
+        const x3 = Math.cos(goc + lech) * r2;
+        const y3 = Math.sin(goc + lech) * r2;
+        return (
+          <polygon
+            key={`ttd-${i}`}
+            points={`${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)} ${x3.toFixed(1)},${y3.toFixed(1)}`}
+            fill={i % 2 === 0 ? '#1A1A1A' : mau}
+            fillOpacity={i % 2 === 0 ? 0.72 : 0.82}
+          />
+        );
+      })}
+    </g>
+  );
+};
+
+const veBongDenYTuong = (delta: number, t: number, frame: number, mau: string) => {
+  const pop = kepGiaTri(springTatDinh(delta, 9.5, 250), 0, 1.38);
+  const fade = t > 0.85 ? kepGiaTri((1 - t) / 0.15, 0, 1) : 1;
+  const nhip = 1 + 0.14 * Math.sin(frame * 0.42);
+  return (
+    <g transform={`scale(${pop.toFixed(3)})`} opacity={fade}>
+      <circle cx={0} cy={-12} r={48 * nhip} fill="#FEF08A" fillOpacity={0.32} />
+      {Array.from({ length: 8 }).map((_, i) => {
+        const goc = -Math.PI * 1.18 + (i / 7) * Math.PI * 1.36;
+        return (
+          <line
+            key={`tia-yt-${i}`}
+            x1={(Math.cos(goc) * 34).toFixed(1)}
+            y1={(-12 + Math.sin(goc) * 34).toFixed(1)}
+            x2={(Math.cos(goc) * 54 * nhip).toFixed(1)}
+            y2={(-12 + Math.sin(goc) * 54 * nhip).toFixed(1)}
+            stroke={mau}
+            strokeWidth={4.6}
+            strokeLinecap="round"
+          />
+        );
+      })}
+      <path
+        d="M -23 -14 A 25 25 0 1 1 23 -14 C 21 2 14 8 12 19 L -12 19 C -14 8 -21 2 -23 -14 Z"
+        fill="#FEF08A"
+        stroke="#1A1A1A"
+        strokeWidth={3.6}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M -7 14 L -7 -4 L 0 3 L 7 -4 L 7 14"
+        fill="none"
+        stroke="#B45309"
+        strokeWidth={2.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect x={-12} y={19} width={24} height={11} rx={3} fill="#94A3B8" stroke="#1A1A1A" strokeWidth={2.6} />
+      <line x1={-9} y1={24.5} x2={9} y2={24.5} stroke="#1A1A1A" strokeWidth={2} />
+    </g>
+  );
+};
+
+export const HieuUngHoatHinh: React.FC<HieuUngHoatHinhProps> = ({
+  danhSach,
+  nhanVat,
+  tiLeNhanVat = 1.25,
+}) => {
   const frame = useCurrentFrame();
 
   if (!danhSach || danhSach.length === 0) {
@@ -294,6 +530,7 @@ export const HieuUngHoatHinh: React.FC<HieuUngHoatHinhProps> = ({ danhSach }) =>
         const t = delta / thoiLuong;
         const tiLe = item.tiLe ?? 1;
         const seed = (idx + 1) * 47;
+        const pos = tinhToaDoHieuUngAnToan(item, nhanVat, tiLeNhanVat);
 
         let noiDung: React.ReactNode = null;
         switch (item.loai) {
@@ -326,12 +563,30 @@ export const HieuUngHoatHinh: React.FC<HieuUngHoatHinhProps> = ({ danhSach }) =>
               item.mau ?? '#FDE047',
             );
             break;
+          case 'mo_hoi_lon':
+            noiDung = veMoHoiLon(delta, t);
+            break;
+          case 'khoi_boc_tai':
+            noiDung = veKhoiBocTai(delta, t, frame);
+            break;
+          case 'mat_xoan_oc':
+            noiDung = veMatXoanOc(delta, t, frame);
+            break;
+          case 'cham_hoi_nay':
+            noiDung = veChamHoiNay(delta, t, frame, item.mau ?? '#F97316');
+            break;
+          case 'tia_toc_do':
+            noiDung = veTiaTocDo(delta, t, frame, item.mau ?? '#FACC15');
+            break;
+          case 'bong_den_y_tuong':
+            noiDung = veBongDenYTuong(delta, t, frame, item.mau ?? '#F59E0B');
+            break;
         }
 
         return (
           <g
             key={`${item.loai}-${idx}`}
-            transform={`translate(${item.x}, ${item.y}) scale(${tiLe})`}
+            transform={`translate(${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}) scale(${tiLe})`}
           >
             {noiDung}
           </g>

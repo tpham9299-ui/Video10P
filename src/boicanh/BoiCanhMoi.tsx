@@ -73,7 +73,7 @@ const NhaCoPhongSinhLop3Tinh = React.memo(() => (
 export const NhaCoPhongSinh: React.FC<BoiCanhMoiProps> = ({
   frame,
   px,
-  anNoiNen = false,
+  anNoiNen = true,
 }) => {
   const lacNoi = Math.sin(frame * 0.085) * 4.2;
   const nhipDen = 1 + Math.sin(frame * 0.16) * 0.06;

@@ -101,6 +101,7 @@
     {
       "id": "chuong_1",
       "tenChuong": "1. Khởi đầu ở Ấn Độ & Chuyến tàu tới Cambridge",
+      "phuDeHoi": "Từ căn nhà nhỏ ở Erode đến bức thư chín trang mở cánh cửa đại học Cambridge",
       "canh": [
         {
           "id": "canh_001",
@@ -214,6 +215,7 @@
     {
       "id": "chuong_2",
       "tenChuong": "2. Bệnh viện Putney & Câu đố số Taxi 1729",
+      "phuDeHoi": "Cuộc ghé thăm phòng bệnh và bí mật toán học ẩn sau biển số chiếc taxi cổ 1729",
       "canh": [
         {
           "id": "canh_003",
@@ -429,6 +431,7 @@
     {
       "id": "chuong_3",
       "tenChuong": "3. Giải mã trên bảng giảng đường & Di sản",
+      "phuDeHoi": "Giải mã hai tổng lập phương của số Taxicab 1729 và di sản gần 3.900 đẳng thức bất tử",
       "canh": [
         {
           "id": "canh_006",

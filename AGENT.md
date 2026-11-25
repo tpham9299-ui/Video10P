@@ -1,35 +1,23 @@
 # Trạng thái bàn giao tác vụ (AGENT.md)
 
-## Mốc hiện tại: `v2.0` — Hệ thống hoạt hình kể chuyện lịch sử Toán học điện ảnh, tương tác đa giọng & tự vận hành hằng ngày trên GitHub Actions
+## Mốc hiện tại: `v3.5` — Nâng Cấp Kể Chuyện Điện Ảnh, Nhạc Nền Đa Cảm Xúc & Tự Động Đăng YouTube (Pure Stdlib)
 
-Toàn bộ 6 bước nâng cấp `v2.0` đã hoàn thiện và kiểm định end-to-end 100%:
+Toàn bộ nền tảng `v3.0` (Lai 2.5D + Clean Cinema UI + Khóa dấu tiếng Việt 100%) đã được nâng cấp lên **`v3.5`** cùng tính năng tự động đăng YouTube định kỳ cách 2 ngày; toàn bộ kiểm định offline (`npm run kiem-tra:all` ở cả thường và `CI=true`: 0 lỗi TS, toàn bộ kiểm khung Remotion xanh, 70/70 unit test Python xanh) đều đạt:
 
-1. **Bước 1/6 — Dọn sạch lỗi hardcode, banner kết thúc sớm & khung hình đen**:
-   - Xóa sạch toàn bộ dữ liệu fallback hardcode của tập Pythagoras trong `src/canh/`, `src/daocu/MinhHoaToan.tsx` và [minh_hoa_hop_le.ts](file:///e:/Video10P/src/daocu/minh_hoa_hop_le.ts); render khung trống sạch hoặc báo lỗi schema rõ ràng khi thiếu dữ liệu.
-   - Giới hạn banner kết thúc (`boCuc="ket_thuc"`) duy nhất ở cảnh cuối cùng của hồi cuối cùng toàn tập ([VideoDai.tsx](file:///e:/Video10P/src/VideoDai.tsx), [dieu_phoi_canh.ts](file:///e:/Video10P/src/canh/dieu_phoi_canh.ts), [chuanbi_dai.py](file:///e:/Video10P/scripts/pipeline/chuanbi_dai.py), [render_dai.py](file:///e:/Video10P/scripts/pipeline/render_dai.py)).
-   - Xóa sạch gap frame giữa các `<Sequence>`, đảm bảo liền mạch tuyệt đối từ frame 0 đến frame cuối.
-   - Hộp nhãn tên nhân vật tự co giãn theo độ dài chuỗi ([ten_nhan_vat.ts](file:///e:/Video10P/src/nhanvat/ten_nhan_vat.ts), [NguoiQueDong.tsx](file:///e:/Video10P/src/nhanvat/NguoiQueDong.tsx)) — không cắt tên dài như `"Srinivasa Ramanujan"`.
-   - Khóa góc xoay đầu/cổ an toàn trong [he_xuong.ts](file:///e:/Video10P/src/xuong/he_xuong.ts) & [dong_tac.ts](file:///e:/Video10P/src/xuong/dong_tac.ts) trên cả 20 động tác FK.
+1. **Nhạc nền đa cảm xúc 4 sắc thái & Nhịp ngắt hài punchline (`tao_am_thanh_mau.py`, `render_dai.py`)**:
+   - Sinh sẵn 4 sắc thái nhạc nền loop mượt trong `public/bgm/`: `vui_tuoi.mp3`, `bi_an.mp3`, `kich_tinh.mp3`, `tram_lang.mp3` (giữ nguyên `nhac_nen_nhe.mp3` và không ghi đè file người dùng tự chép đè).
+   - AI gán `tamTrangNhac` theo từng Hồi; [render_dai.py](file:///e:/Video10P/scripts/pipeline/render_dai.py) tự lập lịch `tinh_lich_trinh_nhac_nen()`, ghép chuyển đổi mượt giữa các hồi bằng FFmpeg `acrossfade=d=1.50` và chèn khoảng ngắt nhạc đột ngột `0.8s` (`volume=0:enable='between(t,...)'`) trước các cảnh đánh dấu `ngatNhacPunchline: true`, rồi chạy auto-ducking `-14 LUFS`.
 
-2. **Bước 2/6 — Đạo diễn Camera 8 góc quay, Diễn xuất đa độ tuổi/tư thế & Tương tác khán giả**:
-   - Nâng cấp máy quay đạo diễn [MayQuayDong.tsx](file:///e:/Video10P/src/vfx/MayQuayDong.tsx) hỗ trợ 8 `gocQuay` (`toan_canh`, `trung_canh`, `can_mat`, `focus_trai`, `focus_phai`, `zoom_dao_cu`, `pan_ngang`, `chia_doi_man_hinh`) + `tuDongFocusNguoiNoi` (tự lia & zoom 1.2x–1.45x bám đúng nhân vật đang nói theo `luotThoai[]` / RMS).
-   - Mở rộng nhân vật hỗ trợ 4 `doTuoi` (`so_sinh`, `thieu_nien`, `truong_thanh`, `gia`), 5 `tuThe` (`dung`, `ngoi_ban`, `nam_giuong`, `om_em_be`, `mac_ao_khoac`), 6 động tác tương tác mới (tổng 20 `LoaiHanhDong`), `bieuCamTheoMoc[]`, `tuongTacVoi`.
-   - Thêm cảnh tương tác khán giả đếm ngược 3 giây ([CanhTuongTacKhanGia.tsx](file:///e:/Video10P/src/canh/CanhTuongTacKhanGia.tsx)) và bố cục chia đôi màn hình ([CanhChiaDoiManHinh.tsx](file:///e:/Video10P/src/canh/CanhChiaDoiManHinh.tsx)).
+2. **3 kiểu khung hình kể chuyện mới (`src/canh/`)**:
+   - [CanhBanDoHanhTrinh.tsx](file:///e:/Video10P/src/canh/CanhBanDoHanhTrinh.tsx): bản đồ giấy da cổ 2 sắc độ có đường cong nét đứt chạy dần theo frame nối `diemDi` → `diemDen` cùng 4 biểu tượng (`tau_thuy`, `thu_tay`, `nguoi_di_bo`, `xe_ngua`) di chuyển mượt theo tiếp tuyến Bezier.
+   - [CanhBaoChiCo.tsx](file:///e:/Video10P/src/canh/CanhBaoChiCo.tsx): tờ báo giấy cổ xoay/phóng ra màn hình tất định (`tinhBienDoiBaoChiCo`) với tiêu đề giật gân (`tieuDeBao`), ảnh/đạo cụ minh họa nhỏ và tiêu đề phụ hài hước (`tieuDePhu`).
+   - [CanhPhanUngCam.tsx](file:///e:/Video10P/src/canh/CanhPhanUngCam.tsx): cắt nhanh 1.5–2.5 giây cận mặt nhân vật phụ (`nhap_tra`, `nhuong_may`, `tron_mat`, `can_loi`) trên nền tia tốc độ phẳng kèm VFX hài và tem chữ.
 
-3. **Bước 3/6 — 22 Bối cảnh 3 lớp Parallax, Thế giới sống động tất định & Tối ưu SVG `React.memo`**:
-   - Mở rộng kho bối cảnh lên **22 bối cảnh** (12 cũ + 10 bối cảnh đời thường/lịch sử mới trong [BoiCanhMoi.tsx](file:///e:/Video10P/src/boicanh/BoiCanhMoi.tsx)), bọc toàn bộ nền tĩnh bằng `React.memo` cho tốc độ render CI cao, 100% vector SVG phẳng không blur.
-   - Tạo lớp thế giới sống động tất định [SinhVatVaMoiTruong.tsx](file:///e:/Video10P/src/boicanh/SinhVatVaMoiTruong.tsx) với 10 vật thể/sinh vật (`chim_hai_au`, `chim_san_truong`, `ca_gon_song`, `buom_vuon`, `hoi_khoi`, `ngon_nen_den_dau`, `la_vang_gio`, `tuyet_cua_so`, `xe_taxi_co` gắn `bienSoXe` động từ JSON, `dong_ho_qua_lac`).
-   - Mở rộng [DaoCu.tsx](file:///e:/Video10P/src/daocu/DaoCu.tsx) lên **20 đạo cụ** (+9 đạo cụ kể chuyện mới) và tham số hóa 100% [MinhHoaToan.tsx](file:///e:/Video10P/src/daocu/MinhHoaToan.tsx) từ JSON (`buoc[]`, trục tọa độ, màu nhấn).
+3. **Mascot kênh cố định, Khung End-Screen 15s & Thumbnail ưu tiên ảnh AI**:
+   - [mascot_kenh.ts](file:///e:/Video10P/src/nhanvat/mascot_kenh.ts) & `lay_ho_so_mascot_kenh()` trong [tao_kich_ban_10p.py](file:///e:/Video10P/scripts/pipeline/tao_kich_ban_10p.py): hồ sơ Mascot mặc định `mascot_pi` (*Giáo Sư Pi*, dễ tùy chỉnh tên/trang phục/màu áo qua `mascotKenh` hoặc `.env`), xuất hiện ở 15 giây Cold Open mở màn, cảnh đố `tuong_tac_khan_gia` và 15 giây End-Screen.
+   - [CanhKet.tsx](file:///e:/Video10P/src/canh/CanhKet.tsx): nâng cấp cảnh `ket_thuc` (15 giây cuối) chừa sẵn 2 khung viền 16:9 đúng vùng chuẩn YouTube End-Screen (trái & phải) cùng mũi tên dẫn hướng từ Mascot ở giữa.
+   - [Thumbnail.tsx](file:///e:/Video10P/src/Thumbnail.tsx) & `chuan_bi_phuong_an_thumbnail()`: ưu tiên lấy ảnh bối cảnh AI đẹp nhất của tập (`anhBoiCanh`) làm phông nền cho cả 3 biến thể A/B (fallback mượt về SVG khi không có ảnh AI).
 
-4. **Bước 4/6 — Chuỗi AI 2 vai, Guardrail tự động, Từ điển phát âm & Hội thoại đa giọng**:
-   - [san_tim_chu_de.py](file:///e:/Video10P/scripts/pipeline/san_tim_chu_de.py): xuất thêm `timeline_su_kien[]`, `tu_dien_phat_am{}` và `goi_y_boi_canh_va_dao_cu[]` vào `tu_lieu_nghien_cuu.json`; tự săn 6 chủ đề giàu giai thoại khi hàng đợi `< 3`.
-   - [tao_kich_ban_10p.py](file:///e:/Video10P/scripts/pipeline/tao_kich_ban_10p.py): prompt 2 vai (**Biên kịch kể chuyện** + **Đạo diễn Storyboard**), khớp 1-1 beat câu chuyện, chống lặp ý giữa các hồi và bộ **Guardrail Python** (`kiem_dinh_guardrail_kich_ban`, `sua_loi_guardrail_cuc_bo`) kiểm định + sửa cục bộ 4 luật cứng (không trùng liên tiếp `boiCanh + gocQuay`, cấm rỗng `giang_toan`/`timeline`, cấm `"CẢM ƠN"` ở hồi giữa, ≥25% đối thoại/tương tác & ≥6 bối cảnh).
-   - [chuan_hoa_doc_toan.py](file:///e:/Video10P/scripts/pipeline/chuan_hoa_doc_toan.py) & [chuanbi_dai.py](file:///e:/Video10P/scripts/pipeline/chuanbi_dai.py): tự nạp `tu_dien_phat_am` trước Edge TTS (giữ chính tả gốc đẹp cho phụ đề & `.srt`), phân giọng riêng cho Người dẫn chuyện và từng Nhân vật trong `luotThoai[]`, tính RMS 30fps & lưu chính xác `batDauFrame`/`ketThucFrame` từng lượt thoại.
-
-5. **Bước 5/6 & Tự động hằng ngày — Chunking thông minh, CI chống OOM/Timeout & Lịch chạy 07:00 VN**:
-   - [render_dai.py](file:///e:/Video10P/scripts/pipeline/render_dai.py) & [san_xuat_lien_tuc.py](file:///e:/Video10P/scripts/pipeline/san_xuat_lien_tuc.py): tự động chia nhỏ hồi dài `> 120s` thành 2 mảnh cân bằng (`--chi-render-chunk`, giữ tương thích ngược `--chi-render-hoi`), tự nhận diện `CI=true` áp dụng `--concurrency=2 --jpeg-quality=85 --log=warn` và `NODE_OPTIONS=--max-old-space-size=4096`, trích 18 khung Visual QA bằng fast keyframe seek FFmpeg.
-   - [.github/workflows/tu-dong-video10p.yml](file:///e:/Video10P/.github/workflows/tu-dong-video10p.yml): lịch chạy tự động `0 0 * * *` (**07:00 sáng hằng ngày giờ Việt Nam UTC+7**), `permissions: contents: write`, `concurrency` theo workflow (`cancel-in-progress: false`), `timeout-minutes` (25/35/25), `strategy.fail-fast: false`, `max-parallel: 8`, cache `node_modules` + Chromium + pip, artifact trung gian `retention-days: 1` / sản phẩm cuối `retention-days: 14`, hoàn tất xóa chủ đề khỏi hàng đợi & `git pull --rebase origin main` trước khi push. `YOUTUBE_API_KEY` hoàn toàn tùy chọn.
-
-6. **Bước 6/6 — Kịch bản mẫu v2.0 & Kiểm định tổng thể End-to-End**:
-   - Bổ sung kịch bản mẫu tương tác [mau_v2_tuong_tac.json](file:///e:/Video10P/du_lieu/mau_v2_tuong_tac.json) (giữ nguyên tương thích [mau_pythagoras.json](file:///e:/Video10P/du_lieu/mau_pythagoras.json)).
-   - Xác nhận pass 100%: `npm run kiem-tra:all`, `npm run render:mau`, render Still `ThumbnailToanHoc`, kiểm định cú pháp YAML workflow, và quét sạch `Math.random()` / `blur` / hardcode Pythagoras / API key.
+4. **Prompt biên kịch `v3.5` & Tự động đăng YouTube cách 2 ngày**:
+   - [tao_kich_ban_10p.py](file:///e:/Video10P/scripts/pipeline/tao_kich_ban_10p.py): nâng cấp prompt dùng **Cold Open 15 giây đầu**, **Open Loop cuối mỗi hồi (`openLoopCuoiHoi`)**, **ẩn dụ hiện đại hài hước**, `tamTrangNhac`, `ngatNhacPunchline`, Mascot & phân bổ hợp lý 3 khung hình mới; mở rộng Guardrail khóa dấu tiếng Việt bao phủ toàn bộ trường mới.
+   - [dang_youtube.py](file:///e:/Video10P/scripts/pipeline/dang_youtube.py), [lay_refresh_token_youtube.py](file:///e:/Video10P/scripts/pipeline/lay_refresh_token_youtube.py) & [tu-dong-video10p.yml](file:///e:/Video10P/.github/workflows/tu-dong-video10p.yml): tự chạy cách 2 ngày (`cron: '0 0 */2 * *'`), Resumable Upload 8MB thuần stdlib, hẹn giờ công khai `publishAt` `+07:00` (hoặc `--chi-rieng-tu`), gắn `thumbnail_1.png`, tải `phu_de.srt` và lưu `youtubeVideoId` vào `du_lieu/bo_nho_hoc_hoi.json`.

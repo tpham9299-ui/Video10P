@@ -27,6 +27,15 @@ DANH_SACH_TEN_SFX: tuple[str, ...] = (
     "dramatic.mp3",
 )
 TEN_FILE_BGM_MAC_DINH = "nhac_nen_nhe.mp3"
+DANH_SACH_TAM_TRANG_BGM: tuple[str, ...] = (
+    "vui_tuoi",
+    "bi_an",
+    "kich_tinh",
+    "tram_lang",
+)
+DANH_SACH_TEN_BGM_CAM_XUC: tuple[str, ...] = tuple(
+    f"{tam_trang}.mp3" for tam_trang in DANH_SACH_TAM_TRANG_BGM
+)
 
 
 def _gioi_han_mem(mau: float) -> float:
@@ -543,6 +552,178 @@ def _tao_nhac_nen_nhe(sr: int = SAMPLE_RATE, so_giay: float = 48.0) -> tuple[lis
     return _chuan_hoa_peak(trai, phai, peak_muc_tieu=0.78)
 
 
+def _tao_nhac_nen_vui_tuoi(sr: int = SAMPLE_RATE, so_giay: float = 48.0) -> tuple[list[float], list[float]]:
+    """Nhac nen vui tuoi (v3.5): marimba/acoustic nhip nhang sang sua (96 BPM), hop cho giai thoai di dom."""
+    beat = 0.625  # 96 BPM -> 1 o nhip = 2.5s, 48s ~ 19.2 o nhip (lam tron vua khit vong loop)
+    n = int(round(sr * so_giay))
+    trai = [0.0] * n
+    phai = [0.0] * n
+    so_o_nhip = max(4, int(round(so_giay / (4.0 * beat))))
+    beat_chuan = so_giay / float(so_o_nhip * 4)
+
+    vong_hop_am: list[tuple[int, tuple[int, ...], tuple[int, ...]]] = [
+        (50, (62, 66, 69, 74), (62, 66, 69, 74, 78, 74, 69, 66)),  # Dmaj7
+        (45, (57, 61, 64, 69), (61, 64, 69, 73, 69, 64, 61, 64)),  # A6
+        (47, (59, 62, 66, 69), (59, 62, 66, 71, 66, 62, 69, 66)),  # Bm7
+        (43, (55, 59, 62, 66), (62, 66, 67, 71, 67, 66, 62, 67)),  # Gmaj7
+    ]
+    giai_dieu: list[list[tuple[float, int, float]]] = [
+        [(0.0, 78, 0.22), (1.0, 81, 0.20), (2.5, 78, 0.18), (3.0, 74, 0.20)],
+        [(0.5, 76, 0.20), (1.5, 73, 0.18), (2.5, 76, 0.20), (3.5, 74, 0.18)],
+        [(0.0, 74, 0.22), (1.5, 78, 0.20), (2.5, 76, 0.18), (3.0, 74, 0.20)],
+        [(0.0, 71, 0.20), (1.0, 74, 0.20), (2.0, 76, 0.22), (3.0, 78, 0.18)],
+    ]
+
+    for bar in range(so_o_nhip):
+        t_bar = bar * 4.0 * beat_chuan
+        vi_tri = bar % 4
+        bass_midi, pad_chord, arp = vong_hop_am[vi_tri]
+        _cong_pad_hop_am_vong(trai, phai, t_bar, pad_chord, bien_do=0.11, do_dai_giay=4.0 * beat_chuan + 0.25, sr=sr)
+        _cong_not_bass_vong(trai, phai, t_bar, bass_midi, bien_do=0.26, do_dai_giay=1.1, sr=sr)
+        _cong_not_bass_vong(trai, phai, t_bar + 2.0 * beat_chuan, bass_midi + 7, bien_do=0.20, do_dai_giay=1.0, sr=sr)
+        for step, note_midi in enumerate(arp):
+            _cong_not_marimba_vong(
+                trai, phai, t_bar + step * (0.5 * beat_chuan), note_midi,
+                bien_do=0.21 if step in (0, 4) else 0.13,
+                do_dai_giay=0.68, pan=-0.34 if step % 2 == 0 else 0.34, sr=sr,
+            )
+        if bar >= 4:
+            for offset_b, note_midi, amp in giai_dieu[vi_tri]:
+                _cong_not_marimba_vong(
+                    trai, phai, t_bar + offset_b * beat_chuan, note_midi,
+                    bien_do=amp, do_dai_giay=0.82, pan=0.2 if vi_tri % 2 == 0 else -0.2, sr=sr,
+                )
+
+    trai = [_gioi_han_mem(s * 0.92) for s in trai]
+    phai = [_gioi_han_mem(s * 0.92) for s in phai]
+    return _chuan_hoa_peak(trai, phai, peak_muc_tieu=0.78)
+
+
+def _tao_nhac_nen_bi_an(sr: int = SAMPLE_RATE, so_giay: float = 48.0) -> tuple[list[float], list[float]]:
+    """Nhac nen bi an (v3.5): hoa am thu tinh te (Am - Em - Fmaj7 - E7sus4, 72 BPM) cho kham pha & nghich ly."""
+    beat = 0.833333
+    n = int(round(sr * so_giay))
+    trai = [0.0] * n
+    phai = [0.0] * n
+    so_o_nhip = max(4, int(round(so_giay / (4.0 * beat))))
+    beat_chuan = so_giay / float(so_o_nhip * 4)
+
+    vong_hop_am: list[tuple[int, tuple[int, ...], tuple[int, ...]]] = [
+        (45, (57, 60, 64, 71), (64, 69, 72, 71, 69, 64, 60, 64)),  # Am9
+        (40, (52, 55, 59, 66), (59, 64, 67, 66, 64, 59, 55, 59)),  # Em9
+        (41, (53, 57, 60, 64), (60, 64, 69, 67, 64, 60, 57, 60)),  # Fmaj7
+        (40, (52, 57, 59, 64), (59, 64, 68, 64, 59, 57, 56, 59)),  # Esus4 -> E
+    ]
+    diem_chuong: list[list[tuple[float, int, float]]] = [
+        [(0.5, 81, 0.14), (2.5, 79, 0.12)],
+        [(1.0, 78, 0.13), (3.0, 76, 0.11)],
+        [(0.5, 76, 0.14), (2.5, 72, 0.12)],
+        [(1.0, 76, 0.13), (3.0, 75, 0.11)],
+    ]
+
+    for bar in range(so_o_nhip):
+        t_bar = bar * 4.0 * beat_chuan
+        vi_tri = bar % 4
+        bass_midi, pad_chord, arp = vong_hop_am[vi_tri]
+        _cong_pad_hop_am_vong(trai, phai, t_bar, pad_chord, bien_do=0.18, do_dai_giay=4.0 * beat_chuan + 0.45, sr=sr)
+        _cong_not_bass_vong(trai, phai, t_bar, bass_midi, bien_do=0.25, do_dai_giay=2.4, sr=sr)
+        for step, note_midi in enumerate(arp):
+            if step % 2 == 0 or (bar % 2 == 1 and step in (3, 7)):
+                _cong_not_marimba_vong(
+                    trai, phai, t_bar + step * (0.5 * beat_chuan), note_midi,
+                    bien_do=0.17 if step in (0, 4) else 0.11,
+                    do_dai_giay=1.15, pan=-0.42 if step % 2 == 0 else 0.42, sr=sr,
+                )
+        for offset_b, note_midi, amp in diem_chuong[vi_tri]:
+            _cong_not_marimba_vong(
+                trai, phai, t_bar + offset_b * beat_chuan, note_midi,
+                bien_do=amp, do_dai_giay=1.45, pan=0.28 if bar % 2 == 0 else -0.28, sr=sr,
+            )
+
+    trai = [_gioi_han_mem(s * 0.92) for s in trai]
+    phai = [_gioi_han_mem(s * 0.92) for s in phai]
+    return _chuan_hoa_peak(trai, phai, peak_muc_tieu=0.76)
+
+
+def _tao_nhac_nen_kich_tinh(sr: int = SAMPLE_RATE, so_giay: float = 48.0) -> tuple[list[float], list[float]]:
+    """Nhac nen kich tinh (v3.5): nhip bass don dap (Dm - Bb - Gm - A7, 104 BPM) cho cao trao & tranh luan."""
+    beat = 0.5769
+    n = int(round(sr * so_giay))
+    trai = [0.0] * n
+    phai = [0.0] * n
+    so_o_nhip = max(4, int(round(so_giay / (4.0 * beat))))
+    beat_chuan = so_giay / float(so_o_nhip * 4)
+
+    vong_hop_am: list[tuple[int, tuple[int, ...], tuple[int, ...]]] = [
+        (38, (50, 53, 57, 62), (62, 65, 69, 65, 62, 65, 70, 69)),  # Dm
+        (34, (46, 50, 53, 58), (58, 62, 65, 62, 58, 62, 69, 65)),  # Bb
+        (43, (55, 58, 62, 67), (67, 70, 74, 70, 67, 65, 62, 65)),  # Gm
+        (45, (57, 61, 64, 67), (64, 67, 69, 67, 64, 61, 64, 69)),  # A7
+    ]
+
+    for bar in range(so_o_nhip):
+        t_bar = bar * 4.0 * beat_chuan
+        vi_tri = bar % 4
+        bass_midi, pad_chord, arp = vong_hop_am[vi_tri]
+        _cong_pad_hop_am_vong(trai, phai, t_bar, pad_chord, bien_do=0.16, do_dai_giay=4.0 * beat_chuan + 0.2, sr=sr)
+        # Nhip trong/bass don dap phach 1, 2.5, 3, 4
+        for off_b, amp_b, len_b in ((0.0, 0.34, 0.85), (1.5, 0.22, 0.55), (2.0, 0.30, 0.80), (3.5, 0.24, 0.45)):
+            _cong_not_bass_vong(trai, phai, t_bar + off_b * beat_chuan, bass_midi, bien_do=amp_b, do_dai_giay=len_b, sr=sr)
+        for step, note_midi in enumerate(arp):
+            _cong_not_marimba_vong(
+                trai, phai, t_bar + step * (0.5 * beat_chuan), note_midi,
+                bien_do=0.22 if step in (0, 3, 6) else 0.14,
+                do_dai_giay=0.48, pan=-0.38 if step % 2 == 0 else 0.38, sr=sr,
+            )
+
+    trai = [_gioi_han_mem(s * 0.94) for s in trai]
+    phai = [_gioi_han_mem(s * 0.94) for s in phai]
+    return _chuan_hoa_peak(trai, phai, peak_muc_tieu=0.80)
+
+
+def _tao_nhac_nen_tram_lang(sr: int = SAMPLE_RATE, so_giay: float = 48.0) -> tuple[list[float], list[float]]:
+    """Nhac nen tram lang (v3.5): hop am am ap em diu (Fmaj7 - Cmaj7 - Dm7 - Gsus4, 64 BPM) cho du am & ket thuc."""
+    beat = 0.9375
+    n = int(round(sr * so_giay))
+    trai = [0.0] * n
+    phai = [0.0] * n
+    so_o_nhip = max(4, int(round(so_giay / (4.0 * beat))))
+    beat_chuan = so_giay / float(so_o_nhip * 4)
+
+    vong_hop_am: list[tuple[int, tuple[int, ...], tuple[int, ...]]] = [
+        (41, (57, 60, 64, 69), (60, 64, 69, 72)),  # Fmaj7
+        (48, (55, 60, 64, 67), (60, 64, 67, 71)),  # Cmaj7
+        (38, (53, 57, 60, 64), (57, 60, 64, 69)),  # Dm9
+        (43, (55, 60, 62, 67), (60, 62, 67, 71)),  # Gsus4
+    ]
+
+    for bar in range(so_o_nhip):
+        t_bar = bar * 4.0 * beat_chuan
+        vi_tri = bar % 4
+        bass_midi, pad_chord, arp = vong_hop_am[vi_tri]
+        _cong_pad_hop_am_vong(trai, phai, t_bar, pad_chord, bien_do=0.22, do_dai_giay=4.0 * beat_chuan + 0.65, sr=sr)
+        _cong_not_bass_vong(trai, phai, t_bar, bass_midi, bien_do=0.22, do_dai_giay=2.8, sr=sr)
+        for step, note_midi in enumerate(arp):
+            _cong_not_marimba_vong(
+                trai, phai, t_bar + step * beat_chuan, note_midi,
+                bien_do=0.16 if step == 0 else 0.12,
+                do_dai_giay=1.65, pan=-0.25 if step % 2 == 0 else 0.25, sr=sr,
+            )
+
+    trai = [_gioi_han_mem(s * 0.90) for s in trai]
+    phai = [_gioi_han_mem(s * 0.90) for s in phai]
+    return _chuan_hoa_peak(trai, phai, peak_muc_tieu=0.74)
+
+
+BAN_DO_HAM_TAO_BGM: dict[str, Callable[[int, float], tuple[list[float], list[float]]]] = {
+    TEN_FILE_BGM_MAC_DINH: _tao_nhac_nen_nhe,
+    "vui_tuoi.mp3": _tao_nhac_nen_vui_tuoi,
+    "bi_an.mp3": _tao_nhac_nen_bi_an,
+    "kich_tinh.mp3": _tao_nhac_nen_kich_tinh,
+    "tram_lang.mp3": _tao_nhac_nen_tram_lang,
+}
+
+
 BAN_DO_HAM_TAO_SFX: dict[str, Callable[[int], tuple[list[float], list[float]]]] = {
     "pop.mp3": _tao_sfx_pop,
     "ding.mp3": _tao_sfx_ding,
@@ -589,13 +770,14 @@ def tao_tat_ca_am_thanh_mau(
             print(f"[OK] Da tao SFX: {dich} ({dich.stat().st_size:,} bytes)")
             da_tao.append(dich)
 
-        dich_bgm = bgm_dir / TEN_FILE_BGM_MAC_DINH
-        if dich_bgm.exists() and dich_bgm.stat().st_size > 0 and not ghi_de:
-            print(f"[Bo qua] Da ton tai {dich_bgm} (dung --ghi-de de tao lai)")
-            bo_qua.append(dich_bgm)
-        else:
-            trai_bgm, phai_bgm = _tao_nhac_nen_nhe(sr=SAMPLE_RATE, so_giay=thoi_luong_bgm_giay)
-            wav_bgm = tmp_dir / "nhac_nen_nhe.wav"
+        for ten_bgm, ham_bgm in BAN_DO_HAM_TAO_BGM.items():
+            dich_bgm = bgm_dir / ten_bgm
+            if dich_bgm.exists() and dich_bgm.stat().st_size > 0 and not ghi_de:
+                print(f"[Bo qua] Da ton tai {dich_bgm} (dung --ghi-de de tao lai)")
+                bo_qua.append(dich_bgm)
+                continue
+            trai_bgm, phai_bgm = ham_bgm(SAMPLE_RATE, thoi_luong_bgm_giay)
+            wav_bgm = tmp_dir / f"{dich_bgm.stem}.wav"
             _ghi_wav_stereo(wav_bgm, trai_bgm, phai_bgm, sr=SAMPLE_RATE)
             _chuyen_wav_sang_mp3(wav_bgm, dich_bgm, bitrate="192k")
             print(f"[OK] Da tao nhac nen ({thoi_luong_bgm_giay:.0f}s loop): {dich_bgm} ({dich_bgm.stat().st_size:,} bytes)")

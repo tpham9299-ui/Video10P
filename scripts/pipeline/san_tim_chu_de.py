@@ -31,6 +31,7 @@ from scripts.pipeline.tao_kich_ban_10p import (
     LOAI_DAO_CU,
     LOAI_VAT_THE_XUNG_QUANH,
     TU_THE_NHAN_VAT,
+    cat_gon_theo_tu,
     chuan_hoa_enum,
     kiem_tra_latex,
     tao_slug,
@@ -180,15 +181,16 @@ def nap_hang_doi_chu_de(
 
     so_goi_y = so_can_them + 3
     prompt = f"""
-Hay tim kiem tren mang va de xuat {so_goi_y} chu de cau chuyen LICH SU TOAN HOC CO THAT cuc ky hap dan de lam phim hoat hinh ke chuyen dai >10 phut (phong cach thien nhien + hai huoc di dom, KHONG danh dam bao luc).
+Hãy tìm kiếm trên mạng và đề xuất {so_goi_y} chủ đề câu chuyện LỊCH SỬ TOÁN HỌC CÓ THẬT cực kỳ hấp dẫn để làm phim hoạt hình kể chuyện dài >10 phút (phong cách thiên nhiên + hài hước dí dỏm, KHÔNG đánh đấm bạo lực).
 
-TIEU CHI BAT BUOC:
-1. UU TIEN CHU DE CO TINH KE CHUYEN CAO & NHIEU GIAI THOAI DOI THUC: co nhan vat ca tinh, tinh huong doi thuong dở khóc dở cười, cuoc doi thoai kich tinh, tranh luan hoc thuat gay can hoac nghich ly lam dao lon tu duy, de dung boi canh hoat hinh sinh dong (vi du: Evariste Galois va dem trang ly thuyet nhom, Leonhard Euler & 7 cay cau Konigsberg, Srinivasa Ramanujan & con so 1729, Georg Cantor & cac cap do vo cuc, Cardano vs Tartaglia & phuong trinh bac 3, Archimedes & chiec vuong mien, Emmy Noether & dinh ly doi xung, Carl Friedrich Gauss & giai thoai tong 1..100, Alan Turing & co may Enigma, Hypatia, Al-Khwarizmi, Ada Lovelace, John Nash, Maryam Mirzakhani...).
-2. Goc khai thac phai gan gui, hai huoc di dom, co tinh huong doi thuong va lien he ro rang toi cong nghe / doi song hien dai.
-3. TUYET DOI KHONG trung lap voi bat ky chu de nao trong danh sach DA LAM hoac HANG DOI duoi day:
+TIÊU CHÍ BẮT BUỘC:
+1. ƯU TIÊN CHỦ ĐỀ CÓ TÍNH KỂ CHUYỆN CAO & NHIỀU GIAI THOẠI ĐỜI THỰC: có nhân vật cá tính, tình huống đời thường dở khóc dở cười, cuộc đối thoại kịch tính, tranh luận học thuật gay cấn hoặc nghịch lý làm đảo lộn tư duy, dễ dựng bối cảnh hoạt hình sinh động (ví dụ: Évariste Galois và đêm trắng lý thuyết nhóm, Leonhard Euler & 7 cây cầu Königsberg, Srinivasa Ramanujan & con số 1729, Georg Cantor & các cấp độ vô cực, Cardano vs Tartaglia & phương trình bậc 3, Archimedes & chiếc vương miện, Emmy Noether & định lý đối xứng, Carl Friedrich Gauss & giai thoại tổng 1..100, Alan Turing & cỗ máy Enigma, Hypatia, Al-Khwarizmi, Ada Lovelace, John Nash, Maryam Mirzakhani...).
+2. Góc khai thác phải gần gũi, hài hước dí dỏm, có tình huống đời thường và liên hệ rõ ràng tới công nghệ / đời sống hiện đại.
+3. BẮT BUỘC 100% `tieuDe` và `gocKhaiThac` phải viết bằng TIẾNG VIỆT CÓ DẤU đầy đủ, chuẩn chính tả; TUYỆT ĐỐI CẤM viết tiếng Việt không dấu.
+4. TUYỆT ĐỐI KHÔNG trùng lặp với bất kỳ chủ đề nào trong danh sách ĐÃ LÀM hoặc HÀNG ĐỢI dưới đây:
 {danh_sach_tranh}
 
-Tra ve DUY NHAT JSON hop le dung cau truc:
+Trả về DUY NHẤT JSON hợp lệ đúng cấu trúc:
 {{
   "chuDeDeXuat": [
     {{
@@ -205,8 +207,8 @@ Tra ve DUY NHAT JSON hop le dung cau truc:
     phan_hoi = gemini.tao_json(
         prompt=prompt,
         system_instruction=(
-            "Ban la bien tap vien lich su Toan hoc kiem dao dien noi dung YouTube giao duc. "
-            "Su dung tim kiem web de dam bao su kien lich su co that va tra ve DUY NHAT JSON hop le."
+            "Bạn là biên tập viên lịch sử Toán học kiêm đạo diễn nội dung YouTube giáo dục. "
+            "Sử dụng tìm kiếm web để đảm bảo sự kiện lịch sử có thật và trả về DUY NHẤT JSON hợp lệ với 100% tiếng Việt có dấu."
         ),
         nhiet_do=0.75,
         max_output_tokens=4096,
@@ -306,7 +308,10 @@ def _chuan_hoa_tu_lieu_nghien_cuu(
                 nam = str(item.get("nam") or "").strip()
                 sk = str(item.get("suKien") or item.get("moTa") or "").strip()
                 if nam or sk:
-                    muc_tl: dict[str, Any] = {"nam": nam[:30] or "...", "suKien": sk[:160] or "..."}
+                    muc_tl: dict[str, Any] = {
+                        "nam": cat_gon_theo_tu(nam, 30) or "...",
+                        "suKien": cat_gon_theo_tu(sk, 160) or "...",
+                    }
                     if isinstance(item.get("noiBat"), bool):
                         muc_tl["noiBat"] = item["noiBat"]
                     timeline_su_kien.append(muc_tl)
@@ -352,13 +357,13 @@ def _chuan_hoa_tu_lieu_nghien_cuu(
                     vat_the_list.append(vt_clean)
             goi_y_boi_canh_va_dao_cu.append(
                 {
-                    "giaiDoan": giai_doan[:100] or "Giai đoạn chính",
+                    "giaiDoan": cat_gon_theo_tu(giai_doan, 100) or "Giai đoạn chính",
                     "doTuoi": do_tuoi,
                     "tuThe": tu_the,
                     "boiCanh": boi_canh or "thu_vien_co_dien",
                     "daoCu": dao_cu_list,
                     "vatTheXungQuanh": vat_the_list,
-                    "ghiChu": str(item.get("ghiChu") or item.get("ghi_chu") or "").strip()[:160],
+                    "ghiChu": cat_gon_theo_tu(str(item.get("ghiChu") or item.get("ghi_chu") or "").strip(), 160),
                 }
             )
 
@@ -454,38 +459,39 @@ def nghien_cuu_chu_de(
 
     gemini = client or GeminiClient()
     prompt = f"""
-Hay nghien cuu va kiem chung tu lieu lich su - Toan hoc CHINH XAC 100% bang Google Search cho chu de:
-- Chu de: "{chu_de}"
-- Goc khai thac goi y: "{goc_khai_thac or 'Ke chuyen lich su Toan hoc thien nhien + hai huoc di dom, KHONG danh dam'}"
+Hãy nghiên cứu và kiểm chứng tư liệu lịch sử - Toán học CHÍNH XÁC 100% bằng Google Search cho chủ đề:
+- Chủ đề: "{chu_de}"
+- Góc khai thác gợi ý: "{goc_khai_thac or 'Kể chuyện lịch sử Toán học thiên nhiên + hài hước dí dỏm, KHÔNG đánh đấm'}"
 
-TU LIEU THAM KHAO TU WIKIPEDIA:
+TƯ LIỆU THAM KHẢO TỪ WIKIPEDIA:
 {tom_tat_wiki_txt}
 
-YEU CAU BAT BUOC:
-1. Doi chieu nien dai chuan (nam sinh/mat, moc su kien chinh xac, KHONG bia dat).
-2. Xuat `timeline_su_kien` gom 5 den 8 moc nam & su kien lich su THAT cua DUNG nhan vat/chu de tap nay (theo thu tu thoi gian, co `noiBat: true` cho 1-2 moc buoc ngoat).
-3. Xuat `tu_dien_phat_am`: anh xa tat ca ten rieng, dia danh, truong dai hoc, thuat ngu Toan nuoc ngoai sang cach doc phien am tieng Viet tu nhien cho Edge TTS (vi du: `"Ramanujan": "Ra-ma-nu-gian"`, `"Hardy": "Ha-đi"`, `"Madras": "Ma-đơ-rát"`, `"Littlewood": "Lít-tơ-út"`, `"Cambridge": "Kem-brít"`, `"Namagiri": "Na-ma-ghi-ri"`, `"mock theta": "móc thê-ta"`).
-4. Xuat `goi_y_boi_canh_va_dao_cu` gom 4 den 7 giai doan cuoc doi / tinh tiet chinh, chi ro `doTuoi`, `tuThe`, `boiCanh`, `daoCu[]`, `vatTheXungQuanh[]` KHOP 1-1 voi cau chuyen. Chi duoc dung cac enum hop le sau:
+YÊU CẦU BẮT BUỘC:
+1. Đối chiếu niên đại chuẩn (năm sinh/mất, mốc sự kiện chính xác, KHÔNG bịa đặt).
+2. Xuất `timeline_su_kien` gồm 5 đến 8 mốc năm & sự kiện lịch sử THẬT của ĐÚNG nhân vật/chủ đề tập này (theo thứ tự thời gian, có `noiBat: true` cho 1-2 mốc bước ngoặt; mỗi `suKien` ngắn gọn 10-18 từ, trọn vẹn ý).
+3. Xuất `tu_dien_phat_am`: ánh xạ tất cả tên riêng, địa danh, trường đại học, thuật ngữ Toán nước ngoài sang cách đọc phiên âm tiếng Việt tự nhiên cho Edge TTS (ví dụ: `"Ramanujan": "Ra-ma-nu-gian"`, `"Hardy": "Ha-đi"`, `"Madras": "Ma-đơ-rát"`, `"Littlewood": "Lít-tơ-út"`, `"Cambridge": "Kem-brít"`, `"Namagiri": "Na-ma-ghi-ri"`, `"mock theta": "móc thê-ta"`).
+4. Xuất `goi_y_boi_canh_va_dao_cu` gồm 4 đến 7 giai đoạn cuộc đời / tình tiết chính, chỉ rõ `doTuoi`, `tuThe`, `boiCanh`, `daoCu[]`, `vatTheXungQuanh[]` KHỚP 1-1 với câu chuyện. Lưu ý: KHÔNG chọn `nha_co_phong_sinh` cho cảnh người già/nhận giải thưởng/cuối đời; KHÔNG đặt `la_vang_gio` trong phòng kín; KHÔNG đặt `ngon_nen_den_dau` trong `khong_gian_vu_tru_toan`. Chỉ được dùng các enum hợp lệ sau:
    - boiCanh: {", ".join(LOAI_BOI_CANH)}
    - doTuoi: {", ".join(DO_TUOI_NHAN_VAT)}
    - tuThe: {", ".join(TU_THE_NHAN_VAT)}
    - daoCu: {", ".join(LOAI_DAO_CU)}
    - vatTheXungQuanh: {", ".join(LOAI_VAT_THE_XUNG_QUANH)}
-5. Liet ke nhan vat lich su co that va net tinh cach doi thuong thu vi cua ho.
-6. Chon 3 den 4 GIAI THOAI DOI THUONG / DI DOM CO THAT (hoac giai thoai duoc ghi nhan ro rang la giai thoai truyen mieng, ghi chu minh bach).
-7. Trinh bay 2 den 3 KIEN THUC / CHUNG MINH TOAN COT LOI kem cong thuc LaTeX chuan KaTeX (thoat \\ thanh \\\\ trong JSON, khong boc dau $).
-8. Neu 2 den 4 ung dung thuc te trong the gioi hien dai va liet ke URL nguon tham khao uy tin da doi chieu.
+5. Liệt kê nhân vật lịch sử có thật và nét tính cách đời thường thú vị của họ.
+6. Chọn 3 đến 4 GIAI THOẠI ĐỜI THƯỜNG / DÍ DỎM CÓ THẬT (hoặc giai thoại được ghi nhận rõ ràng là giai thoại truyền miệng, ghi chú minh bạch).
+7. Trình bày 2 đến 3 KIẾN THỨC / CHỨNG MINH TOÁN CỐT LÕI kèm công thức LaTeX chuẩn KaTeX (thoát \\ thành \\\\ trong JSON, không bọc dấu $).
+8. Nêu 2 đến 4 ứng dụng thực tế trong thế giới hiện đại và liệt kê URL nguồn tham khảo uy tín đã đối chiếu.
+9. BẮT BUỘC 100% mọi chuỗi tiếng Việt trong JSON phải viết CÓ DẤU ĐẦY ĐỦ, đúng chính tả; TUYỆT ĐỐI CẤM viết tiếng Việt không dấu.
 
-Tra ve DUY NHAT JSON hop le dung cau truc:
+Trả về DUY NHẤT JSON hợp lệ đúng cấu trúc:
 {{
-  "tieuDe": "Tieu de tieng Viet hap dan cho tap phim",
-  "tomTat1Cau": "Tom tat tron ven cau chuyen trong 1 cau ngan gon.",
+  "tieuDe": "Tiêu đề tiếng Việt hấp dẫn cho tập phim",
+  "tomTat1Cau": "Tóm tắt trọn vẹn câu chuyện trong 1 câu ngắn gọn.",
   "nienDaiChuan": [
-    {{"nam": "1736", "suKien": "Leonhard Euler cong bo bai bao giai bai toan 7 cay cau Konigsberg."}}
+    {{"nam": "1736", "suKien": "Leonhard Euler công bố bài báo giải bài toán 7 cây cầu Königsberg."}}
   ],
   "timeline_su_kien": [
-    {{"nam": "1887", "suKien": "Srinivasa Ramanujan chao doi tai Erode, An Do.", "noiBat": false}},
-    {{"nam": "1913", "suKien": "Gui buc thu 9 trang chua hon 100 cong thuc toi giao su G. H. Hardy o Cambridge.", "noiBat": true}}
+    {{"nam": "1887", "suKien": "Srinivasa Ramanujan chào đời tại Erode, Ấn Độ.", "noiBat": false}},
+    {{"nam": "1913", "suKien": "Gửi bức thư 9 trang chứa hơn 100 công thức tới giáo sư G. H. Hardy ở Cambridge.", "noiBat": true}}
   ],
   "tu_dien_phat_am": {{
     "Ramanujan": "Ra-ma-nu-gian",
@@ -498,41 +504,41 @@ Tra ve DUY NHAT JSON hop le dung cau truc:
   }},
   "goi_y_boi_canh_va_dao_cu": [
     {{
-      "giaiDoan": "Chao doi va tuoi tho o An Do",
+      "giaiDoan": "Chào đời và tuổi thơ ở Ấn Độ",
       "doTuoi": "so_sinh",
       "tuThe": "om_em_be",
       "boiCanh": "nha_co_phong_sinh",
       "daoCu": ["noi_em_be", "ban_hoc_den_dau"],
       "vatTheXungQuanh": ["ngon_nen_den_dau"],
-      "ghiChu": "Canh mo dau tuoi tho voi noi em be va anh den am."
+      "ghiChu": "Cảnh mở đầu tuổi thơ với nôi em bé và ánh đèn ấm."
     }}
   ],
   "nhanVatThat": [
     {{
       "ten": "Leonhard Euler",
-      "vaiTro": "Nha Toan hoc Thuy Si kiet xuat",
+      "vaiTro": "Nhà Toán học Thụy Sĩ kiệt xuất",
       "nienDai": "1707-1783",
-      "tinhCachDoiThuong": "Lam viec sieu nhanh ngay ca khi con cai choi dua quanh ban."
+      "tinhCachDoiThuong": "Làm việc siêu nhanh ngay cả khi con cái chơi đùa quanh bàn."
     }}
   ],
   "giaiThoaiDoiThuong": [
     {{
-      "tieuDe": "Tro do di dao cuoi tuan",
-      "noiDung": "Nguoi dan Konigsberg thuong ca cuoc xem ai di qua ca 7 cay cau dung 1 lan...",
-      "diemHaiHuoc": "Ca thanh pho di mon giay ma van khong qua duoc cau cuoi."
+      "tieuDe": "Trò đố đi dạo cuối tuần",
+      "noiDung": "Người dân Königsberg thường cá cược xem ai đi qua cả 7 cây cầu đúng 1 lần...",
+      "diemHaiHuoc": "Cả thành phố đi mòn giày mà vẫn không qua được cây cầu cuối."
     }}
   ],
   "kienThucToanCotLoi": [
     {{
-      "tenKienThuc": "Dieu kien ton tai duong di Euler",
-      "giaiThichDeHieu": "Moi vung dat la 1 nut, moi cay cau la 1 canh noi...",
+      "tenKienThuc": "Điều kiện tồn tại đường đi Euler",
+      "giaiThichDeHieu": "Mỗi vùng đất là 1 nút, mỗi cây cầu là 1 cạnh nối...",
       "congThucLatex": "\\\\sum_{{v \\\\in V}} \\\\deg(v) = 2|E|",
-      "yNghia": "Dat nen mong cho Ly thuyet Do thi."
+      "yNghia": "Đặt nền móng cho Lý thuyết Đồ thị."
     }}
   ],
   "ungDungHienDai": [
-    "Thuat toan dan duong GPS va Google Maps",
-    "Toi uu hoa mang vien thong va giao hang"
+    "Thuật toán dẫn đường GPS và Google Maps",
+    "Tối ưu hóa mạng viễn thông và giao hàng"
   ],
   "nguonThamKhao": [
     "https://en.wikipedia.org/wiki/Seven_Bridges_of_K%C3%B6nigsberg"
@@ -543,8 +549,8 @@ Tra ve DUY NHAT JSON hop le dung cau truc:
     ket_qua_raw = gemini.tao_json(
         prompt=prompt,
         system_instruction=(
-            "Ban la nha nghien cuu lich su Toan hoc ky tinh. "
-            "Kiem chung su kien qua Google Search va tra ve DUY NHAT JSON hop le."
+            "Bạn là nhà nghiên cứu lịch sử Toán học kỹ tính. "
+            "Kiểm chứng sự kiện qua Google Search và trả về DUY NHẤT JSON hợp lệ với 100% tiếng Việt có dấu đầy đủ."
         ),
         nhiet_do=0.35,
         max_output_tokens=6144,

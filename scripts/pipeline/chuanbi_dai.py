@@ -21,7 +21,15 @@ if str(GOC_DU_AN) not in sys.path:
     sys.path.insert(0, str(GOC_DU_AN))
 
 from scripts.pipeline.chuan_hoa_doc_toan import chuan_hoa_doc_toan, tai_tu_dien_phat_am
-from scripts.pipeline.gemini_client import tai_env
+from scripts.pipeline.gemini_client import GeminiClient, tai_env
+from scripts.pipeline.tao_boi_canh_ai import (
+    SO_LUONG_BOI_CANH_TOI_DA_MAC_DINH,
+    sinh_boi_canh_cho_tap,
+)
+from scripts.pipeline.tao_kich_ban_10p import (
+    kiem_tra_dau_tieng_viet,
+    tu_dong_sua_dau_tieng_viet,
+)
 
 MAC_DINH_VOICE = "vi-VN-NamMinhNeural"
 MAC_DINH_VOICE_NHAN_VAT = "vi-VN-HoaiMyNeural"
@@ -32,20 +40,22 @@ MAC_DINH_FPS = 30
 NGHI_GIUA_CANH_GIAY = 0.25
 NGHI_CHUYEN_HOI_GIAY = 0.75
 NGHI_TRUOC_PUNCHLINE_GIAY = 0.35
-NGHI_GIUA_LUOT_THOAI_GIAY = 0.20
+NGHI_GIUA_LUOT_THOAI_GIAY = 0.30
+NGHI_LUOT_THOAI_HAI_HUOC_GIAY = 0.38
 NGUONG_TOI_THIEU_GIAY = 600.0
+THOI_GIAN_HIEN_DAP_AN_TOI_THIEU_GIAY = 2.8
 RMS_SAMPLE_RATE = 16000
 RMS_NGUONG_IM_LANG = 0.008
 RMS_SAN_CHUAN_HOA = 0.08
 
 VAI_NOI_HOP_LE: tuple[str, ...] = ("nguoi_dan", "nhan_vat", "binh_luan_hai")
 
-# Ho so giong on dinh phan biet ro rang tung nhan vat voi nguoi dan chuyen (vi-VN-NamMinhNeural, +0%, +0Hz)
+# Ho so giong on dinh phan biet ro rang cao do/toc do tung nhan vat voi nguoi dan chuyen (vi-VN-NamMinhNeural, +0%, +0Hz)
 HO_SO_GIONG_NHAN_VAT: tuple[dict[str, str], ...] = (
-    {"voice": "vi-VN-HoaiMyNeural", "rate": "-2%", "pitch": "+0Hz"},
-    {"voice": "vi-VN-NamMinhNeural", "rate": "-5%", "pitch": "-5Hz"},
-    {"voice": "vi-VN-HoaiMyNeural", "rate": "+4%", "pitch": "+5Hz"},
-    {"voice": "vi-VN-NamMinhNeural", "rate": "+4%", "pitch": "+4Hz"},
+    {"voice": "vi-VN-HoaiMyNeural", "rate": "-3%", "pitch": "+2Hz"},
+    {"voice": "vi-VN-NamMinhNeural", "rate": "-6%", "pitch": "-7Hz"},
+    {"voice": "vi-VN-HoaiMyNeural", "rate": "+6%", "pitch": "+7Hz"},
+    {"voice": "vi-VN-NamMinhNeural", "rate": "+5%", "pitch": "+6Hz"},
 )
 
 # Cau hinh mac dinh theo vai noi (co the ghi de bang bien moi truong trong .env)
@@ -176,19 +186,39 @@ def lay_cau_hinh_giong_nhan_vat(
     )
 
 
+def tinh_nghi_nhip_hai_luot_thoai(
+    luot_sau: dict[str, Any] | None,
+    mac_dinh: float = NGHI_GIUA_LUOT_THOAI_GIAY,
+) -> float:
+    """
+    Tinh khoang nghi nhip hai (0.25s-0.40s) giua 2 luot thoai:
+    - Luot doi dap thuong: mac_dinh (0.30s).
+    - Luot punchline / ca khia / quat thao / giat minh: 0.38s de tao nhip dien anh & hai duyen.
+    """
+    co_so = max(0.25, min(0.40, float(mac_dinh)))
+    if not isinstance(luot_sau, dict):
+        return round(co_so, 3)
+    kieu_bb = str(luot_sau.get("kieuBongBong") or "").strip().lower()
+    bieu_cam = str(luot_sau.get("bieuCam") or "").strip().lower()
+    if kieu_bb in ("ca_khia", "quat_thao") or bieu_cam in ("can_loi_mat_do", "ngac_nhien", "hoang_mang"):
+        return round(max(co_so, min(0.40, NGHI_LUOT_THOAI_HAI_HUOC_GIAY)), 3)
+    return round(co_so, 3)
+
+
 def tinh_moc_va_rms_luot_thoai(
     luot_thoai_goc: list[dict[str, Any]],
     thoi_luong_luot: list[float],
     rms_luot: list[list[float]],
     fps: int = MAC_DINH_FPS,
     nghi_giua_luot: float = NGHI_GIUA_LUOT_THOAI_GIAY,
+    dung_nhip_hai_dong: bool = False,
 ) -> tuple[list[dict[str, Any]], list[float], float]:
     """
     Tinh batDauFrame / ketThucFrame chinh xac va mang RMS 30fps rieng cho tung luot thoai
     trong luotThoai[], dong thoi ghep mang RMS tong hop cua ca canh (co 0.0 o khoang nghi giua luot).
+    Khi `dung_nhip_hai_dong=True`, chen khoang nghi nhip hai 0.25s-0.40s tuy bieu cam / kieu bong bong.
     """
     fps_an_toan = max(1, int(fps))
-    nghi_frames = max(0, int(round(max(0.0, float(nghi_giua_luot)) * fps_an_toan)))
     ket_qua_luot: list[dict[str, Any]] = []
     rms_tong: list[float] = []
     frame_hien_tai = 0
@@ -214,10 +244,17 @@ def tinh_moc_va_rms_luot_thoai(
         frame_hien_tai += so_frame_luot
         tong_giay += dur
 
-        if idx < so_luot - 1 and nghi_frames > 0:
-            rms_tong.extend([0.0] * nghi_frames)
-            frame_hien_tai += nghi_frames
-            tong_giay += nghi_giua_luot
+        if idx < so_luot - 1:
+            nghi_buoc = (
+                tinh_nghi_nhip_hai_luot_thoai(luot_thoai_goc[idx + 1], mac_dinh=nghi_giua_luot)
+                if dung_nhip_hai_dong
+                else max(0.0, float(nghi_giua_luot))
+            )
+            nghi_frames = max(0, int(round(nghi_buoc * fps_an_toan)))
+            if nghi_frames > 0:
+                rms_tong.extend([0.0] * nghi_frames)
+                frame_hien_tai += nghi_frames
+                tong_giay += nghi_buoc
 
     return ket_qua_luot, rms_tong, round(tong_giay, 4)
 
@@ -225,11 +262,11 @@ def tinh_moc_va_rms_luot_thoai(
 def ghep_audio_luot_thoai_ffmpeg(
     ds_file_mp3: list[Path],
     file_dich: Path,
-    nghi_giua_luot_giay: float = NGHI_GIUA_LUOT_THOAI_GIAY,
+    nghi_giua_luot_giay: float | list[float] = NGHI_GIUA_LUOT_THOAI_GIAY,
 ) -> Path:
     """
-    Ghep cac file MP3 cua tung luot thoai (co chen khoang lang ngan giua luot) thanh 1 file MP3
-    thong nhat cho canh bang ffmpeg.
+    Ghep cac file MP3 cua tung luot thoai (co chen khoang lang nhip hai 0.25s-0.40s giua luot)
+    thanh 1 file MP3 thong nhat cho canh bang ffmpeg.
     """
     if not ds_file_mp3:
         raise ValueError("Danh sach file MP3 luot thoai rong.")
@@ -249,17 +286,21 @@ def ghep_audio_luot_thoai_ffmpeg(
     for p in ds_file_mp3:
         cmd.extend(["-i", str(p)])
 
-    nghi_s = max(0.0, float(nghi_giua_luot_giay))
     filter_parts: list[str] = []
     concat_inputs: list[str] = []
     for idx in range(len(ds_file_mp3)):
         filter_parts.append(f"[{idx}:a]aformat=sample_fmts=fltp:sample_rates=24000:channel_layouts=mono[a{idx}]")
         concat_inputs.append(f"[a{idx}]")
-        if idx < len(ds_file_mp3) - 1 and nghi_s > 0:
-            filter_parts.append(
-                f"anullsrc=r=24000:cl=mono,atrim=0:{nghi_s:.3f},asetpts=PTS-STARTPTS[s{idx}]"
-            )
-            concat_inputs.append(f"[s{idx}]")
+        if idx < len(ds_file_mp3) - 1:
+            if isinstance(nghi_giua_luot_giay, (list, tuple)):
+                nghi_s = max(0.0, float(nghi_giua_luot_giay[idx])) if idx < len(nghi_giua_luot_giay) else NGHI_GIUA_LUOT_THOAI_GIAY
+            else:
+                nghi_s = max(0.0, float(nghi_giua_luot_giay))
+            if nghi_s > 0:
+                filter_parts.append(
+                    f"anullsrc=r=24000:cl=mono,atrim=0:{nghi_s:.3f},asetpts=PTS-STARTPTS[s{idx}]"
+                )
+                concat_inputs.append(f"[s{idx}]")
 
     n_seg = len(concat_inputs)
     filter_complex = ";".join(filter_parts) + f";{''.join(concat_inputs)}concat=n={n_seg}:v=0:a=1[aout]"
@@ -685,9 +726,10 @@ def can_chinh_mang_rms(bien_do: list[float], so_frame: int) -> list[float]:
     return sach
 
 
-def _dieu_chinh_moc_noi_bo_canh(canh: dict[str, Any], tong_frame_canh: int) -> None:
-    """Dam bao tuFrame/thoiLuong cua hieu ung & cong thuc nam gon trong thoi luong canh."""
+def _dieu_chinh_moc_noi_bo_canh(canh: dict[str, Any], tong_frame_canh: int, fps: int = MAC_DINH_FPS) -> None:
+    """Dam bao tuFrame/thoiLuong cua hieu ung, cong thuc & cauHoiTuongTac nam gon trong thoi luong canh."""
     gioi_han_bat_dau = max(0, tong_frame_canh - 20)
+    fps_an_toan = max(1, int(fps))
 
     if isinstance(canh.get("hieuUngHoatHinh"), list):
         for hu in canh["hieuUngHoatHinh"]:
@@ -711,6 +753,36 @@ def _dieu_chinh_moc_noi_bo_canh(canh: dict[str, Any], tong_frame_canh: int) -> N
             if tu > gioi_han_bat_dau:
                 tu = min(gioi_han_bat_dau, mac_dinh)
             ct["tuFrame"] = max(0, tu)
+
+    # Dam bao canh tuong_tac_khan_gia luon giu it nhat 2.5-3s cuoi canh de hien "DAP AN CHINH XAC"
+    chtt = canh.get("cauHoiTuongTac")
+    if isinstance(chtt, dict) and str(chtt.get("cauHoi") or "").strip():
+        dem_nguoc_giay = max(1, int(chtt.get("thoiGianDemNguocGiay") or 3))
+        so_frame_dem = dem_nguoc_giay * fps_an_toan
+        min_dap_an_frames = min(
+            int(round(tong_frame_canh * 0.55)),
+            int(round(THOI_GIAN_HIEN_DAP_AN_TOI_THIEU_GIAY * fps_an_toan)),
+        )
+        max_hien_dap_an = max(1, tong_frame_canh - min_dap_an_frames)
+        bd_raw = chtt.get("batDauDemNguocFrame")
+        bat_dau = (
+            max(0, int(bd_raw))
+            if isinstance(bd_raw, int) and not isinstance(bd_raw, bool)
+            else min(24, max(0, max_hien_dap_an - so_frame_dem))
+        )
+        hd_raw = chtt.get("hienDapAnTuFrame")
+        hien_dap_an = (
+            max(bat_dau + 1, int(hd_raw))
+            if isinstance(hd_raw, int) and not isinstance(hd_raw, bool)
+            else (bat_dau + so_frame_dem)
+        )
+        if hien_dap_an > max_hien_dap_an:
+            hien_dap_an = max_hien_dap_an
+            bat_dau = max(0, min(bat_dau, hien_dap_an - so_frame_dem))
+            if bat_dau >= hien_dap_an:
+                bat_dau = max(0, hien_dap_an - max(15, so_frame_dem // 2))
+        chtt["batDauDemNguocFrame"] = int(bat_dau)
+        chtt["hienDapAnTuFrame"] = int(hien_dap_an)
 
 
 def chuan_hoa_bo_cuc_ket_thuc(du_lieu: dict[str, Any]) -> int:
@@ -874,6 +946,36 @@ def tinh_toan_khung_hinh(
                 if max_kt > 0:
                     so_frame = max(so_frame, max_kt + int(math.ceil(khoang_nghi * fps)))
 
+            # Dam bao canh tuong_tac_khan_gia co du thoi luong cho dem nguoc + >= 2.8-3s hien "DAP AN CHINH XAC"
+            chtt = canh.get("cauHoiTuongTac")
+            if (
+                str(canh.get("loaiCanh") or "") == "tuong_tac_khan_gia"
+                or (isinstance(chtt, dict) and str(chtt.get("cauHoi") or "").strip())
+            ):
+                dem_nguoc_giay = max(1, int((chtt or {}).get("thoiGianDemNguocGiay") or 3))
+                bd_dem = (
+                    max(0, int(chtt["batDauDemNguocFrame"]))
+                    if isinstance(chtt, dict)
+                    and isinstance(chtt.get("batDauDemNguocFrame"), int)
+                    and not isinstance(chtt.get("batDauDemNguocFrame"), bool)
+                    else min(24, int(round(0.7 * fps)))
+                )
+                so_frame_toi_thieu_tt = bd_dem + int(
+                    math.ceil((dem_nguoc_giay + THOI_GIAN_HIEN_DAP_AN_TOI_THIEU_GIAY) * fps)
+                )
+                hd_raw_t = (
+                    int(chtt["hienDapAnTuFrame"])
+                    if isinstance(chtt, dict)
+                    and isinstance(chtt.get("hienDapAnTuFrame"), int)
+                    and not isinstance(chtt.get("hienDapAnTuFrame"), bool)
+                    else (bd_dem + dem_nguoc_giay * fps)
+                )
+                so_frame_toi_thieu_tt = max(
+                    so_frame_toi_thieu_tt,
+                    hd_raw_t + int(math.ceil(THOI_GIAN_HIEN_DAP_AN_TOI_THIEU_GIAY * fps)),
+                )
+                so_frame = max(so_frame, so_frame_toi_thieu_tt)
+
             canh["tuFrame"] = int(frame_hien_tai)
             canh["denFrame"] = int(frame_hien_tai + so_frame)
             canh["audioSrc"] = f"audio/{slug}/{canh_id}.mp3"
@@ -894,7 +996,7 @@ def tinh_toan_khung_hinh(
                 canh["phuDe"] = dong_tu_luot or chia_phu_de(canh.get("loiThoai", ""))
             else:
                 canh["phuDe"] = chia_phu_de(canh.get("loiThoai", ""))
-            _dieu_chinh_moc_noi_bo_canh(canh, so_frame)
+            _dieu_chinh_moc_noi_bo_canh(canh, so_frame, fps=fps)
 
             frame_hien_tai += so_frame
             tong_audio_giay += audio_giay
@@ -1101,14 +1203,21 @@ def chuan_bi_audio_va_du_lieu_render(
     duration_prober: Callable[[Path], float] | None = None,
     rms_extractor: Callable[[Path, int], list[float]] | None = None,
     audio_concatenator: Callable[[list[Path], Path, float], Path] | None = None,
+    tat_anh_ai: bool | None = None,
+    so_luong_boi_canh_toi_da: int = SO_LUONG_BOI_CANH_TOI_DA_MAC_DINH,
+    bg_generator: Callable[..., tuple[dict[str, Any], dict[str, Any]]] | None = None,
+    image_http_caller: Callable[[str, dict[str, Any], str, int], tuple[int, str]] | None = None,
+    gemini_client: Any = None,
+    tu_sua_dau_tieng_viet: bool | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     """
     Chay toan bo quy trinh:
+    - Guardrail kiem_tra_dau_tieng_viet() truoc khi goi Edge TTS (phat hien & tu sua cau >= 20 ky tu thieu dau).
     - Nap tu dong tu_dien_phat_am tu tu_lieu_nghien_cuu.json + tu dien mac dinh (chi ap dung cho Edge TTS,
       giu nguyen chu goc dep cho phu de & man hinh).
-    - TTS phan vai da giong (ho tro luotThoai[] nhieu nhan vat voi giong/rate/pitch rieng + RMS 30fps
-      rieng tung luot + batDauFrame/ketThucFrame chinh xac) co cache SHA-256.
-    - ffprobe -> trich xuat RMS 30fps -> tinh frame -> xuat du_lieu_render.json & phu_de.srt.
+    - TTS phan vai da giong (ho tro luotThoai[] nhieu nhan vat voi giong/rate/pitch rieng, nghi nhip hai 0.25s-0.40s
+      + RMS 30fps rieng tung luot + batDauFrame/ketThucFrame chinh xac) co cache SHA-256.
+    - ffprobe -> trich xuat RMS 30fps -> tinh frame -> sinh boi canh AI -> xuat du_lieu_render.json & phu_de.srt.
     """
     env_cfg = dict(tai_env())
     if env_override:
@@ -1121,6 +1230,37 @@ def chuan_bi_audio_va_du_lieu_render(
         raise FileNotFoundError(f"Khong tim thay kich ban nhap: {file_nhap}")
 
     du_lieu_nhap = json.loads(file_nhap.read_text(encoding="utf-8"))
+
+    # Guardrail tieng Viet co dau TRUOC KHI GOI EDGE TTS (v3.0)
+    vi_pham_dau = kiem_tra_dau_tieng_viet(du_lieu_nhap)
+    so_chuoi_thieu_dau = len(vi_pham_dau)
+    so_chuoi_da_sua_dau = 0
+    if vi_pham_dau:
+        print(
+            f"[Guardrail Tiếng Việt] Phát hiện {so_chuoi_thieu_dau} chuỗi thiếu dấu (>=20 ký tự) trước khi gọi Edge TTS."
+        )
+        client_sua = gemini_client
+        co_key_env = bool(
+            (env_cfg.get("GEMINI_API_KEYS") or env_cfg.get("GEMINI_API_KEY") or "").strip()
+        )
+        nen_tu_sua = (
+            bool(tu_sua_dau_tieng_viet)
+            if tu_sua_dau_tieng_viet is not None
+            else (client_sua is not None or (tts_generator is None and co_key_env))
+        )
+        if nen_tu_sua and client_sua is None:
+            try:
+                client_sua = GeminiClient()
+            except Exception as err:
+                print(f"[Guardrail Tiếng Việt] Không thể khởi tạo GeminiClient để tự sửa dấu: {err}")
+                client_sua = None
+        if nen_tu_sua and client_sua is not None:
+            du_lieu_nhap, ds_sua_dau = tu_dong_sua_dau_tieng_viet(du_lieu_nhap, gemini=client_sua)
+            so_chuoi_da_sua_dau = len(ds_sua_dau)
+            print(
+                f"[Guardrail Tiếng Việt] Đã tự khôi phục dấu cho {so_chuoi_da_sua_dau}/{so_chuoi_thieu_dau} chuỗi trước khi đọc TTS."
+            )
+
     danh_sach_nv = du_lieu_nhap.get("danhSachNhanVat") if isinstance(du_lieu_nhap.get("danhSachNhanVat"), list) else []
 
     # Tu dong nap tu_dien_phat_am tu du_lieu/<slug>/tu_lieu_nghien_cuu.json (+ tu dien mac dinh)
@@ -1390,15 +1530,21 @@ def chuan_bi_audio_va_du_lieu_render(
             ds_file_luot.append(meta_lt["path"])
             ds_hash_luot.append(meta_lt["hash"])
 
+        ds_nghi_luot = [
+            tinh_nghi_nhip_hai_luot_thoai(ds_luot_goc[i + 1], mac_dinh=NGHI_GIUA_LUOT_THOAI_GIAY)
+            for i in range(max(0, len(ds_luot_goc) - 1))
+        ]
         luot_can_chinh, rms_tong_canh, tong_giay_luot = tinh_moc_va_rms_luot_thoai(
             luot_thoai_goc=ds_luot_goc,
             thoi_luong_luot=thoi_luong_luot,
             rms_luot=rms_luot,
             fps=fps,
             nghi_giua_luot=NGHI_GIUA_LUOT_THOAI_GIAY,
+            dung_nhip_hai_dong=True,
         )
+        gaps_sig = ",".join(f"{g:.2f}" for g in ds_nghi_luot)
         hash_ghep = hashlib.sha256(
-            f"luot_thoai|gap={NGHI_GIUA_LUOT_THOAI_GIAY:.2f}|{'|'.join(ds_hash_luot)}".encode("utf-8")
+            f"luot_thoai|gaps={gaps_sig}|{'|'.join(ds_hash_luot)}".encode("utf-8")
         ).hexdigest()
         file_mp3_canh = audio_dir / f"{canh_id}.mp3"
         ban_ghi_cu_canh = cache_cu.get(canh_id)
@@ -1409,7 +1555,11 @@ def chuan_bi_audio_va_du_lieu_render(
             and file_mp3_canh.exists()
             and file_mp3_canh.stat().st_size > 0
         ):
-            concatenator(ds_file_luot, file_mp3_canh, NGHI_GIUA_LUOT_THOAI_GIAY)
+            if audio_concatenator is None:
+                ghep_audio_luot_thoai_ffmpeg(ds_file_luot, file_mp3_canh, ds_nghi_luot or NGHI_GIUA_LUOT_THOAI_GIAY)
+            else:
+                nghi_tb = round(sum(ds_nghi_luot) / len(ds_nghi_luot), 3) if ds_nghi_luot else NGHI_GIUA_LUOT_THOAI_GIAY
+                concatenator(ds_file_luot, file_mp3_canh, nghi_tb)
 
         thoi_luong_map[canh_id] = tong_giay_luot
         if any(v > 0 for v in rms_tong_canh):
@@ -1441,6 +1591,46 @@ def chuan_bi_audio_va_du_lieu_render(
         luot_thoai_theo_canh=luot_thoai_map,
     )
 
+    # Buoc v3.0: Sinh 14-20 boi canh minh hoa 2D doc ban + phan tich anh sang Pillow
+    # Neu dang chay test offline mock TTS ma khong truyen bg_generator/image_http_caller va khong chi dinh tat_anh_ai
+    # thi tu dong tat goi mang tao anh AI de bao toan 100% unit test offline.
+    tat_anh_ai_thuc = (
+        bool(tat_anh_ai)
+        if tat_anh_ai is not None
+        else (tts_generator is not None and bg_generator is None and image_http_caller is None)
+    )
+    if not tat_anh_ai_thuc:
+        if bg_generator is not None:
+            du_lieu_render, thong_ke_bg = bg_generator(
+                slug=slug,
+                du_lieu=du_lieu_render,
+                thu_muc_du_lieu=thu_muc_du_lieu,
+                thu_muc_public=thu_muc_public,
+                bo_cache=bo_cache,
+            )
+        else:
+            du_lieu_render, thong_ke_bg = sinh_boi_canh_cho_tap(
+                slug=slug,
+                du_lieu=du_lieu_render,
+                thu_muc_du_lieu=thu_muc_du_lieu,
+                thu_muc_public=thu_muc_public,
+                env_override=env_override,
+                bo_cache=bo_cache,
+                so_luong_toi_da=so_luong_boi_canh_toi_da,
+                http_caller=image_http_caller,
+            )
+        thong_ke["boiCanhAi"] = thong_ke_bg
+    else:
+        thong_ke["boiCanhAi"] = {
+            "trangThai": "da_tat",
+            "tongBoiCanhDocBan": 0,
+            "soSinhMoi": 0,
+            "soDungCache": 0,
+            "soFallbackSvg": 0,
+            "soCanhCoAnhAi": 0,
+            "tongCanh": thong_ke["tongCanh"],
+        }
+
     file_render = base_du_lieu / "du_lieu_render.json"
     file_render.write_text(
         json.dumps(du_lieu_render, ensure_ascii=False, indent=2) + "\n",
@@ -1458,6 +1648,8 @@ def chuan_bi_audio_va_du_lieu_render(
     thong_ke["thongKeVaiNoi"] = thong_ke_vai
     thong_ke["soCanhDaLuotThoai"] = so_canh_da_luot
     thong_ke["soTuTrongTuDienPhatAm"] = len(tu_dien_dung)
+    thong_ke["soChuoiThieuDauPhatHien"] = so_chuoi_thieu_dau
+    thong_ke["soChuoiDaSuaDau"] = so_chuoi_da_sua_dau
 
     print(f"[OK] Da xuat du lieu render: {file_render}")
     print(f"[OK] Da xuat phu de chuan SRT: {file_srt}")
@@ -1486,6 +1678,17 @@ def tao_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cao-do", default=MAC_DINH_PITCH, help="Cao do giong TTS (mac dinh +0Hz).")
     parser.add_argument("--fps", type=int, default=MAC_DINH_FPS, help="So khung hinh/giay (mac dinh 30).")
     parser.add_argument("--bo-cache", action="store_true", help="Bo qua cache va sinh lai toan bo MP3.")
+    parser.add_argument(
+        "--tat-anh-ai",
+        action="store_true",
+        help="Tat sinh anh boi canh minh hoa AI (dung cho test offline/nhanh, Remotion se tu dung nen SVG).",
+    )
+    parser.add_argument(
+        "--so-boi-canh-toi-da",
+        type=int,
+        default=SO_LUONG_BOI_CANH_TOI_DA_MAC_DINH,
+        help="So boi canh doc ban AI toi da moi tap (mac dinh 20).",
+    )
     return parser
 
 
@@ -1499,6 +1702,8 @@ def main(argv: list[str] | None = None) -> int:
         pitch=args.cao_do,
         fps=args.fps,
         bo_cache=args.bo_cache,
+        tat_anh_ai=args.tat_anh_ai,
+        so_luong_boi_canh_toi_da=args.so_boi_canh_toi_da,
     )
     return 0
 

@@ -62,6 +62,7 @@ def tao_parser() -> argparse.ArgumentParser:
     parser.add_argument("--tat-nhac-nen", action="store_true", help="Tat nhac nen khi xuat video.")
     parser.add_argument("--chuong", default="", help="Chi ep render lai cac hoi cu the (vd: 2,4).")
     parser.add_argument("--bo-cache", action="store_true", help="Bo qua cache o cac buoc duoc chay.")
+    parser.add_argument("--tat-anh-ai", action="store_true", help="Tat sinh anh boi canh minh hoa AI (dung nen SVG).")
     parser.add_argument("--bo-qua-thumbnail", action="store_true", help="Bo qua buoc render 3 mau Thumbnail A/B.")
     parser.add_argument("--bo-qua-visual-qa", action="store_true", help="Bo qua buoc Visual QA Gemini Vision.")
     parser.add_argument("--concurrency", type=int, default=0, help="So luong song song cho Remotion.")
@@ -106,13 +107,14 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print(f"[Buoc 1] Bo qua bien kich, dung san du_lieu/{slug}/nhap_kich_ban.json")
 
-    # BUOC 2: TAO GIONG DOC TTS CO CACHE & TINH FRAME 30FPS
+    # BUOC 2: TAO GIONG DOC TTS CO CACHE, TINH FRAME 30FPS & SINH BOI CANH MINH HOA AI
     file_render, _ = chuan_bi_audio_va_du_lieu_render(
         slug=slug,
         voice=args.giong.strip() or None,
         rate=args.toc_do,
         fps=args.fps,
         bo_cache=args.bo_cache,
+        tat_anh_ai=args.tat_anh_ai,
     )
     if args.chi_tao_audio:
         print(f"\n[TAM DUNG] Da san sang {file_render}. Co the xem truoc trong Remotion Studio hoac chay render_dai.py.")

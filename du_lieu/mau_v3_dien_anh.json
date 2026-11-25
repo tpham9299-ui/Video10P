@@ -1,0 +1,605 @@
+{
+  "tieuDe": "Leonhard Euler & Bí Ẩn 7 Cây Cầu Königsberg",
+  "chuDe": "Từ trò cá cược đi dạo cuối tuần năm 1736 đến sự ra đời của Lý thuyết Đồ thị và bản đồ số ngày nay",
+  "batSfx": true,
+  "batPhuDe": true,
+  "bangMau": {
+    "nenChinh": "#0EA5E9",
+    "nenPhu": "#FEF3C7",
+    "luoi": "#CBD5E1",
+    "chuChinh": "#FFFFFF",
+    "chuPhu": "#FEF08A",
+    "nhanManh": "#FACC15",
+    "canhBao": "#FB923C"
+  },
+  "danhSachNhanVat": [
+    {
+      "id": "euler",
+      "ten": "Leonhard Euler",
+      "mauThan": "#1E293B",
+      "mauChuDao": "#1D4ED8",
+      "mauDa": "#FFFDF7",
+      "phuKien": "ao_choang",
+      "trangPhuc": "ao_choang_hoc_gia",
+      "kieuToc": "mu_noi",
+      "coRau": "khong",
+      "mauAo": "#1D4ED8",
+      "doTuoi": "truong_thanh"
+    },
+    {
+      "id": "thi_truong",
+      "ten": "Thị Trưởng Carl Ehler",
+      "mauThan": "#1E293B",
+      "mauChuDao": "#B45309",
+      "mauDa": "#FFFDF7",
+      "phuKien": "kinh_tron",
+      "trangPhuc": "ao_vest_co_dien",
+      "kieuToc": "xoan_co_dien",
+      "coRau": "ria_mep",
+      "mauAo": "#B45309",
+      "doTuoi": "truong_thanh"
+    },
+    {
+      "id": "giao_su",
+      "ten": "Giáo Sư Berlin",
+      "mauThan": "#1E293B",
+      "mauChuDao": "#0F766E",
+      "mauDa": "#FFFDF7",
+      "phuKien": "kinh_tron",
+      "trangPhuc": "ao_len_mua_dong",
+      "kieuToc": "toc_bac_dai",
+      "coRau": "rau_bac_dai",
+      "mauAo": "#0F766E",
+      "doTuoi": "gia"
+    }
+  ],
+  "danhSachBoiCanhAI": [
+    {
+      "maBoiCanhAI": "bc_01_pho_co_konigsberg",
+      "loaiKhungHinh": "boi_canh",
+      "boiCanh": "pho_co_chau_au",
+      "thoiTiet": "nang_dep",
+      "moTaTiengAnh": "18th-century Konigsberg European cobblestone riverside plaza with half-timbered houses and stone bridge arches in warm morning light, empty flat foreground, no people"
+    },
+    {
+      "maBoiCanhAI": "bc_02_ben_song_bay_cau",
+      "loaiKhungHinh": "boi_canh",
+      "boiCanh": "cang_bien_tau_thuy",
+      "thoiTiet": "nang_dep",
+      "moTaTiengAnh": "1736 Pregel river harbour in Konigsberg with wooden cargo boats, stone embankments and seven distant bridges under crisp clear sky, empty flat quay in lower third, no people"
+    },
+    {
+      "maBoiCanhAI": "bc_03_thu_vien_nen_am",
+      "loaiKhungHinh": "boi_canh",
+      "boiCanh": "thu_vien_co_dien",
+      "thoiTiet": "ban_dem",
+      "moTaTiengAnh": "Cozy 18th-century scholar library in Saint Petersburg at night with tall oak bookshelves, flickering brass candles and open floor space, warm candlelight palette, no people"
+    },
+    {
+      "maBoiCanhAI": "bc_04_san_truong_hoang_hon",
+      "loaiKhungHinh": "boi_canh",
+      "boiCanh": "san_truong_co_dien",
+      "thoiTiet": "hoang_hon",
+      "moTaTiengAnh": "Historic European academy stone courtyard bathed in golden sunset light with arched colonnades and flat paved ground, no people"
+    },
+    {
+      "maBoiCanhAI": "bc_05_giang_duong_euler",
+      "loaiKhungHinh": "boi_canh",
+      "boiCanh": "giang_duong_dai_hoc",
+      "thoiTiet": "khong",
+      "moTaTiengAnh": "Classical European university lecture hall with tall arched windows, wooden desk and clean floor in lower third, soft neutral daylight, no people"
+    },
+    {
+      "maBoiCanhAI": "cc_01_ban_do_bay_cau",
+      "loaiKhungHinh": "can_canh_vat_the",
+      "boiCanh": "dai_thien_van_phuc_hung",
+      "thoiTiet": "ban_dem",
+      "daoCuChinh": "cuon_giay",
+      "moTaTiengAnh": "Close-up tabletop illustration of an antique 1736 parchment map showing two river islands connected by seven stone bridges beside a brass compass and warm candle, no text, no people"
+    }
+  ],
+  "chuong": [
+    {
+      "id": "chuong_1",
+      "tenChuong": "1. Trò Cá Cược Làm Mòn Giày Cả Thành Phố",
+      "phuDeHoi": "Bảy cây cầu gỗ ở Königsberg và màn tranh luận nảy lửa đẩy bài toán đến bàn làm việc của Euler",
+      "canh": [
+        {
+          "id": "canh_001",
+          "boCuc": "mo_dau",
+          "loaiCanh": "chuyen_canh_lich_su",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "pho_co_chau_au",
+          "maBoiCanhAI": "bc_01_pho_co_konigsberg",
+          "thoiTiet": "nang_dep",
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tuFrame": 0,
+          "denFrame": 90,
+          "namMoc": "KÖNIGSBERG • 1736",
+          "tieuDeNho": "Trò đố đi dạo qua bảy cây cầu",
+          "phuDeHoi": "Bảy cây cầu gỗ ở Königsberg và màn tranh luận nảy lửa đẩy bài toán đến bàn làm việc của Euler",
+          "loiThoai": "Năm 1736, cả thành phố Königsberg bỗng mê mẩn một trò đố tưởng dễ như ăn kẹo: đi qua đúng bảy cây cầu mà không lặp lại lần nào!",
+          "anhSangMoiTruong": {
+            "mauAm": "#FDE68A",
+            "doToi": 0.16,
+            "loaiAnhSang": "nang_am"
+          },
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "mayQuay": {
+            "gocQuay": "toan_canh",
+            "doPhong": 1.06
+          },
+          "vatTheXungQuanh": [
+            {
+              "loai": "chim_san_truong",
+              "soLuong": 3
+            }
+          ],
+          "nhanVat": [
+            {
+              "id": "euler",
+              "x": 660,
+              "y": 810,
+              "huong": "phai",
+              "doTuoi": "truong_thanh",
+              "tuThe": "dung",
+              "hanhDong": "chi_tro_giai_thich",
+              "vatCamTay": "cuon_giay",
+              "bieuCam": "vui_tuoi",
+              "dangNoi": true
+            },
+            {
+              "id": "thi_truong",
+              "x": 1260,
+              "y": 810,
+              "huong": "trai",
+              "doTuoi": "truong_thanh",
+              "tuThe": "dung",
+              "hanhDong": "gai_dau_kho_hieu",
+              "bieuCam": "hoang_mang",
+              "dangNoi": false
+            }
+          ]
+        },
+        {
+          "id": "canh_002",
+          "boCuc": "doi_thoai",
+          "loaiCanh": "doi_thoai",
+          "vaiNoi": "nhan_vat",
+          "boiCanh": "cang_bien_tau_thuy",
+          "maBoiCanhAI": "bc_02_ben_song_bay_cau",
+          "thoiTiet": "nang_dep",
+          "chuyenCanh": "quet_ngang",
+          "tuFrame": 90,
+          "denFrame": 270,
+          "tieuDeNho": "Thị trưởng thách đố nhà Toán học",
+          "loiThoai": "Ngài Euler ơi, tôi đi mòn ba đôi giày rồi mà vẫn kẹt ở cây cầu cuối cùng! Chắc chắn phải có lối đi bí mật nào đó chứ? Bình tĩnh nào, thử đếm số cây cầu chạm vào mỗi bờ đất xem sao. Khoan đã, hóa ra chỉ cần đếm số chẵn lẻ thôi ư?",
+          "anhSangMoiTruong": {
+            "mauAm": "#FEF08A",
+            "doToi": 0.14,
+            "loaiAnhSang": "nang_am"
+          },
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "mayQuay": {
+            "gocQuay": "dao_goc_can_mat",
+            "tuDongFocusNguoiNoi": true
+          },
+          "vatTheXungQuanh": [
+            {
+              "loai": "chim_hai_au",
+              "soLuong": 3
+            },
+            {
+              "loai": "ca_gon_song",
+              "soLuong": 2
+            }
+          ],
+          "luotThoai": [
+            {
+              "nhanVatId": "thi_truong",
+              "noiDung": "Ngài Euler ơi, tôi đi mòn ba đôi giày rồi mà vẫn kẹt ở cây cầu cuối!",
+              "bieuCam": "hoang_mang",
+              "dongTac": "gai_dau_kho_hieu",
+              "kieuBongBong": "quat_thao",
+              "batDauFrame": 0,
+              "ketThucFrame": 40
+            },
+            {
+              "nhanVatId": "euler",
+              "noiDung": "Khoan đã, đừng vội đổi đôi giày thứ tư, để tôi nhẩm lại bản đồ một chút...",
+              "bieuCam": "tram_tu",
+              "dongTac": "quay_nhin_doi_thoai",
+              "kieuBongBong": "suy_nghi",
+              "batDauFrame": 49,
+              "ketThucFrame": 88
+            },
+            {
+              "nhanVatId": "euler",
+              "noiDung": "Bốn vùng đất mà cả bốn đều nối với số lẻ cây cầu thì trời cứu!",
+              "bieuCam": "tinh_quai",
+              "dongTac": "chi_tro_giai_thich",
+              "kieuBongBong": "ca_khia",
+              "batDauFrame": 99,
+              "ketThucFrame": 136
+            },
+            {
+              "nhanVatId": "thi_truong",
+              "noiDung": "Hóa ra cả thành phố cá cược suốt mùa hè cho một đường đi không tồn tại sao?",
+              "bieuCam": "can_loi_mat_do",
+              "dongTac": "bo_tay_can_loi",
+              "kieuBongBong": "thuong",
+              "batDauFrame": 146,
+              "ketThucFrame": 180
+            }
+          ],
+          "nhanVat": [
+            {
+              "id": "thi_truong",
+              "x": 620,
+              "y": 810,
+              "huong": "phai",
+              "hanhDong": "gai_dau_kho_hieu",
+              "bieuCam": "hoang_mang",
+              "tuongTacVoi": "euler",
+              "dangNoi": true
+            },
+            {
+              "id": "euler",
+              "x": 1300,
+              "y": 810,
+              "huong": "trai",
+              "hanhDong": "chi_tro_giai_thich",
+              "vatCamTay": "cuon_giay",
+              "bieuCam": "tinh_quai",
+              "tuongTacVoi": "thi_truong",
+              "dangNoi": false
+            }
+          ],
+          "hieuUngHoatHinh": [
+            {
+              "loai": "mo_hoi_lon",
+              "x": 620,
+              "y": 598,
+              "tuFrame": 10,
+              "thoiLuong": 50
+            },
+            {
+              "loai": "cham_hoi_nay",
+              "x": 620,
+              "y": 525,
+              "tuFrame": 142,
+              "thoiLuong": 36
+            }
+          ]
+        },
+        {
+          "id": "canh_003",
+          "boCuc": "ke_chuyen",
+          "loaiCanh": "ke_chuyen",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "thu_vien_co_dien",
+          "maBoiCanhAI": "bc_03_thu_vien_nen_am",
+          "thoiTiet": "ban_dem",
+          "chuyenCanh": "mo_dan",
+          "tuFrame": 270,
+          "denFrame": 360,
+          "tieuDeNho": "Cơn đau đầu của các học giả đương thời",
+          "loiThoai": "Trước Euler, nhiều học giả thử vẽ hàng trăm đường ngoằn ngoèo dưới ánh nến đến mức hoa cả mắt mà vẫn không tìm ra quy luật chung.",
+          "anhSangMoiTruong": {
+            "mauAm": "#F59E0B",
+            "doToi": 0.64,
+            "loaiAnhSang": "anh_nen"
+          },
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "mayQuay": {
+            "gocQuay": "can_mat_trai",
+            "doPhong": 1.95
+          },
+          "vatTheXungQuanh": [
+            {
+              "loai": "ngon_nen_den_dau",
+              "soLuong": 2
+            }
+          ],
+          "nhanVat": [
+            {
+              "id": "giao_su",
+              "x": 640,
+              "y": 810,
+              "huong": "phai",
+              "tuThe": "ngoi_ban",
+              "hanhDong": "gai_dau_kho_hieu",
+              "bieuCam": "hoang_mang",
+              "dangNoi": false
+            }
+          ],
+          "hieuUngHoatHinh": [
+            {
+              "loai": "khoi_boc_tai",
+              "x": 640,
+              "y": 640,
+              "tuFrame": 12,
+              "thoiLuong": 40
+            },
+            {
+              "loai": "mat_xoan_oc",
+              "x": 640,
+              "y": 640,
+              "tuFrame": 42,
+              "thoiLuong": 40
+            }
+          ]
+        },
+        {
+          "id": "canh_004",
+          "boCuc": "hai_huoc",
+          "loaiCanh": "ke_chuyen",
+          "vaiNoi": "binh_luan_hai",
+          "boiCanh": "san_truong_co_dien",
+          "maBoiCanhAI": "bc_04_san_truong_hoang_hon",
+          "thoiTiet": "hoang_hon",
+          "chuyenCanh": "zoom_manh",
+          "tuFrame": 360,
+          "denFrame": 450,
+          "tieuDeNho": "Ý tưởng thiên tài nảy ra trong chớp mắt!",
+          "loiThoai": "Nhưng Euler chỉ mỉm cười, gạt phăng chiều dài cây cầu lẫn hình dáng bờ sông và thu gọn cả thành phố thành bốn chấm tròn!",
+          "anhSangMoiTruong": {
+            "mauAm": "#FB923C",
+            "doToi": 0.38,
+            "loaiAnhSang": "hoang_hon"
+          },
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "mayQuay": {
+            "gocQuay": "can_mat_kich_tinh",
+            "doPhong": 2.2
+          },
+          "nhanVat": [
+            {
+              "id": "euler",
+              "x": 960,
+              "y": 810,
+              "huong": "phai",
+              "hanhDong": "ho_het_sung_suong",
+              "bieuCam": "tu_man",
+              "bongBongThoai": "Bốn chấm tròn và bảy nét nối là đủ!",
+              "kieuBongBong": "quat_thao",
+              "dangNoi": true
+            }
+          ],
+          "hieuUngHoatHinh": [
+            {
+              "loai": "tia_toc_do",
+              "x": 960,
+              "y": 540,
+              "tuFrame": 6,
+              "thoiLuong": 55
+            },
+            {
+              "loai": "bong_den_y_tuong",
+              "x": 960,
+              "y": 523,
+              "tuFrame": 14,
+              "thoiLuong": 60
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chuong_2",
+      "tenChuong": "2. Sơ Đồ Bốn Chấm Tròn & Bản Đồ Số Hiện Đại",
+      "phuDeHoi": "Từ công thức bậc đỉnh đơn giản của Euler đến thuật toán dẫn đường GPS trên điện thoại hôm nay",
+      "canh": [
+        {
+          "id": "canh_005",
+          "boCuc": "giai_thich_toan",
+          "loaiCanh": "giang_toan",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "giang_duong_dai_hoc",
+          "maBoiCanhAI": "bc_05_giang_duong_euler",
+          "thoiTiet": "khong",
+          "chuyenCanh": "quet_ngang",
+          "tuFrame": 450,
+          "denFrame": 560,
+          "tieuDeNho": "Quy luật bậc đỉnh của đồ thị Euler",
+          "loiThoai": "Mỗi lần ghé thăm một vùng đất rồi rời đi cần đúng hai cây cầu, nên tối đa chỉ được phép có hai đỉnh mang bậc lẻ mà thôi.",
+          "anhSangMoiTruong": {
+            "mauAm": "#E2E8F0",
+            "doToi": 0.22,
+            "loaiAnhSang": "trung_tinh"
+          },
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "mayQuay": {
+            "gocQuay": "can_mat_phai",
+            "doPhong": 1.15
+          },
+          "nhanVat": [
+            {
+              "id": "euler",
+              "x": 255,
+              "y": 808,
+              "huong": "phai",
+              "hanhDong": "chi_bang_giang_bai",
+              "vatCamTay": "que_chi_bang",
+              "bieuCam": "vui_tuoi",
+              "dangNoi": true
+            }
+          ],
+          "congThucLatex": [
+            {
+              "latex": "\\sum_{v \\in V} \\deg(v) = 2|E|",
+              "nhan": "Tổng bậc các đỉnh bằng hai lần số cầu",
+              "tuFrame": 8,
+              "noiBat": true
+            },
+            {
+              "latex": "\\deg(A)=3,\\; \\deg(B)=5,\\; \\deg(C)=3,\\; \\deg(D)=3",
+              "nhan": "Cả bốn vùng đất đều mang bậc lẻ!",
+              "tuFrame": 42
+            }
+          ],
+          "minhHoaToan": {
+            "loai": "so_do_anh_xa",
+            "tieuDe": "Đếm bậc từng vùng đất ở Königsberg",
+            "thamSo": {
+              "tenTrai": "Vùng đất",
+              "tenPhai": "Số cây cầu (bậc)",
+              "cotTrai": ["Bờ Bắc A", "Đảo Giữa B", "Bờ Nam C", "Đảo Đông D"],
+              "cotPhai": ["3 (Lẻ)", "5 (Lẻ)", "3 (Lẻ)", "3 (Lẻ)"]
+            }
+          }
+        },
+        {
+          "id": "canh_006",
+          "boCuc": "dong_thoi_gian",
+          "loaiCanh": "chuyen_canh_lich_su",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "dai_thien_van_phuc_hung",
+          "maBoiCanhAI": "cc_01_ban_do_bay_cau",
+          "thoiTiet": "ban_dem",
+          "chuyenCanh": "mo_dan",
+          "tuFrame": 560,
+          "denFrame": 650,
+          "tieuDeNho": "Hành trình từ trò đố cổ đến kỷ nguyên số",
+          "loiThoai": "Một bài báo ngắn năm 1736 đã vô tình khai sinh toàn bộ ngành Lý thuyết Đồ thị và Tô-pô học hiện đại.",
+          "anhSangMoiTruong": {
+            "mauAm": "#93C5FD",
+            "doToi": 0.62,
+            "loaiAnhSang": "dem_lanh"
+          },
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "mayQuay": {
+            "gocQuay": "pan_ngang"
+          },
+          "nhanVat": [
+            {
+              "id": "euler",
+              "x": 260,
+              "y": 810,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tram_tu",
+              "dangNoi": false
+            }
+          ],
+          "mocThoiGian": [
+            {
+              "nam": "1736",
+              "moTa": "Euler trình bày lời giải bài toán bảy cây cầu tại Viện Hàn lâm Saint Petersburg.",
+              "noiBat": true
+            },
+            {
+              "nam": "1847",
+              "moTa": "Kirchhoff ứng dụng đồ thị để giải mạch điện phức tạp.",
+              "noiBat": false
+            },
+            {
+              "nam": "1959",
+              "moTa": "Dijkstra phát minh thuật toán tìm đường đi ngắn nhất trên đồ thị.",
+              "noiBat": true
+            },
+            {
+              "nam": "Hôm nay",
+              "moTa": "GPS, bản đồ số và mạng internet toàn cầu vận hành dựa trên đồ thị.",
+              "noiBat": false
+            }
+          ]
+        },
+        {
+          "id": "canh_007",
+          "boCuc": "ke_chuyen",
+          "loaiCanh": "tuong_tac_khan_gia",
+          "vaiNoi": "nhan_vat",
+          "boiCanh": "phong_thi_nghiem_co",
+          "maBoiCanhAI": "bc_05_giang_duong_euler",
+          "thoiTiet": "khong",
+          "chuyenCanh": "quet_ngang",
+          "tuFrame": 650,
+          "denFrame": 845,
+          "tieuDeNho": "Thử tài xây thêm cầu cùng Euler",
+          "loiThoai": "Đố bạn nhé: muốn người dân Königsberg đi hết mọi cây cầu mỗi cây đúng một lần, cần xây thêm ít nhất bao nhiêu cây cầu mới?",
+          "anhSangMoiTruong": {
+            "mauAm": "#FDE68A",
+            "doToi": 0.25,
+            "loaiAnhSang": "nang_am"
+          },
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "mayQuay": {
+            "gocQuay": "can_mat"
+          },
+          "cauHoiTuongTac": {
+            "cauHoi": "Cần xây thêm ít nhất bao nhiêu cây cầu để có đường đi Euler?",
+            "luaChon": ["A. 1 cây cầu", "B. 2 cây cầu", "C. 3 cây cầu"],
+            "thoiGianDemNguocGiay": 3,
+            "batDauDemNguocFrame": 15,
+            "hienDapAnTuFrame": 105,
+            "dapAn": "A. Chỉ cần xây thêm đúng 1 cây cầu!",
+            "giaiThichNgan": "Nối hai vùng đất bậc lẻ với nhau để chỉ còn lại đúng hai đỉnh bậc lẻ."
+          },
+          "nhanVat": [
+            {
+              "id": "euler",
+              "x": 960,
+              "y": 810,
+              "huong": "phai",
+              "hanhDong": "quay_nhin_khan_gia",
+              "bieuCam": "tinh_quai",
+              "tuongTacVoi": "khan_gia",
+              "dangNoi": true
+            }
+          ]
+        },
+        {
+          "id": "canh_008",
+          "boCuc": "ket_thuc",
+          "loaiCanh": "ke_chuyen",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "maBoiCanhAI": "cc_01_ban_do_bay_cau",
+          "thoiTiet": "ban_dem",
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tuFrame": 845,
+          "denFrame": 935,
+          "tieuDeNho": "Cảm ơn bạn đã đồng hành cùng Toán học!",
+          "loiThoai": "Lần tới khi mở bản đồ dẫn đường trên điện thoại, hãy nhớ tới bốn chấm tròn diệu kỳ mà Euler vẽ từ năm 1736 nhé!",
+          "anhSangMoiTruong": {
+            "mauAm": "#93C5FD",
+            "doToi": 0.72,
+            "loaiAnhSang": "dem_lanh"
+          },
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "mayQuay": {
+            "gocQuay": "toan_canh"
+          },
+          "nhanVat": [
+            {
+              "id": "euler",
+              "x": 960,
+              "y": 810,
+              "huong": "phai",
+              "hanhDong": "ho_het_sung_suong",
+              "bieuCam": "vui_tuoi",
+              "dangNoi": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

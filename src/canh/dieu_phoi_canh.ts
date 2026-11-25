@@ -3,6 +3,7 @@ import type { Canh, Chuong, LoaiChuyenCanh } from '../kieu_dai';
 export type CanhDaCanKhung = {
   canh: Canh;
   tenChuong: string;
+  phuDeHoi?: string;
   chuongId: string;
   chiSoChuong: number;
   tuFrameThuc: number;
@@ -38,6 +39,7 @@ export function chuanHoaKhungHinhLienMach(
   const tam: Array<{
     canh: Canh;
     tenChuong: string;
+    phuDeHoi?: string;
     chuongId: string;
     chiSoChuong: number;
   }> = [];
@@ -48,6 +50,7 @@ export function chuanHoaKhungHinhLienMach(
       tam.push({
         canh: c,
         tenChuong: ch.tenChuong,
+        phuDeHoi: c.phuDeHoi ?? ch.phuDeHoi,
         chuongId: ch.id,
         chiSoChuong: ci,
       });

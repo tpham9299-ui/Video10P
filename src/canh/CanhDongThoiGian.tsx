@@ -8,9 +8,8 @@ import { giaiTrangThaiNhanVatTrongCanh } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
 import { MayQuayDong } from '../vfx/MayQuayDong';
 import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
-import { KhungLoiBinhHaiHuoc } from './KhungLoiBinhHaiHuoc';
 import { LopCauHoiTuongTac } from './LopCauHoiTuongTac';
-import { locMocThoiGianHopLe } from '../daocu/minh_hoa_hop_le';
+import { chiaDongMoTaTimeline, locMocThoiGianHopLe } from '../daocu/minh_hoa_hop_le';
 
 type Props = {
   canh: Canh;
@@ -33,26 +32,57 @@ export const CanhDongThoiGian: React.FC<Props> = ({
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
+  const moCuonGiay = interpolate(frame, [0, 14], [0.82, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
-  // Tach bang dong thoi gian ra NGOAI transform zoom/pan cua MayQuayDong (>= 76px tu mep tren)
+  // Cuon giay da co mo ra chua duong thoi gian lich su (Clean Cinema v3.0, khong tran khung, khong cat tu)
   const lopHud = (
     <>
       <div
         style={{
           position: 'absolute',
-          top: 76,
-          left: 96,
-          right: 96,
-          borderRadius: 24,
-          backgroundColor: 'rgba(255, 253, 247, 0.95)',
-          border: '4px solid #1E293B',
-          boxShadow: '8px 8px 0px rgba(15, 23, 42, 0.35)',
-          padding: '20px 36px 26px',
+          top: 68,
+          left: 88,
+          right: 88,
+          borderRadius: 14,
+          backgroundColor: '#FAF2DC',
+          border: '4px solid #1A1A1A',
+          boxShadow: '8px 8px 0px rgba(26, 26, 26, 0.38)',
+          padding: '22px 46px 26px',
           boxSizing: 'border-box',
           pointerEvents: 'none',
           fontFamily: 'Segoe UI, Arial, sans-serif',
+          transform: `scaleX(${moCuonGiay.toFixed(3)})`,
+          transformOrigin: 'center center',
         }}
       >
+        {/* Hai truc cuon go co dien hai ben cuon giay da */}
+        <div
+          style={{
+            position: 'absolute',
+            top: -10,
+            bottom: -10,
+            left: -14,
+            width: 22,
+            borderRadius: 10,
+            backgroundColor: '#92400E',
+            border: '3px solid #1A1A1A',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            top: -10,
+            bottom: -10,
+            right: -14,
+            width: 22,
+            borderRadius: 10,
+            backgroundColor: '#92400E',
+            border: '3px solid #1A1A1A',
+          }}
+        />
         {/* Tieu de & khoang thoi gian */}
         <div
           style={{
@@ -162,18 +192,26 @@ export const CanhDongThoiGian: React.FC<Props> = ({
                         boxSizing: 'border-box',
                       }}
                     />
-                    <div
-                      style={{
-                        color: '#334155',
-                        fontSize: 19,
-                        fontWeight: 700,
-                        lineHeight: 1.3,
-                        maxWidth: 340,
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {moc.moTa}
-                    </div>
+                    {(() => {
+                      const boCucChu = chiaDongMoTaTimeline(moc.moTa, danhSachMoc.length);
+                      return (
+                        <div
+                          style={{
+                            color: '#334155',
+                            fontSize: boCucChu.fontSize,
+                            fontWeight: 700,
+                            lineHeight: boCucChu.lineHeight,
+                            maxWidth: 340,
+                            wordBreak: 'normal',
+                            overflowWrap: 'break-word',
+                          }}
+                        >
+                          {boCucChu.dong.map((dong, di) => (
+                            <div key={`m-d-${idx}-${di}`}>{dong}</div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
@@ -189,8 +227,6 @@ export const CanhDongThoiGian: React.FC<Props> = ({
           thoiLuongCanh={thoiLuong}
         />
       )}
-
-      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
     </>
   );
 
@@ -204,6 +240,7 @@ export const CanhDongThoiGian: React.FC<Props> = ({
         chuyenCanh={canh.chuyenCanh}
         nhanVat={canh.nhanVat}
         thoiLuongCanh={thoiLuong}
+        anhSangMoiTruong={canh.anhSangMoiTruong}
         hud={lopHud}
       >
         <BoiCanhHoatHinh
@@ -213,6 +250,9 @@ export const CanhDongThoiGian: React.FC<Props> = ({
           bienSoXe={canh.bienSoXe}
           nhanVat={canh.nhanVat}
           daoCu={daoCuHienThi}
+          anhBoiCanh={canh.anhBoiCanh}
+          anhSangMoiTruong={canh.anhSangMoiTruong}
+          thoiLuongCanh={thoiLuong}
         />
 
         <svg
@@ -238,7 +278,11 @@ export const CanhDongThoiGian: React.FC<Props> = ({
               />
             );
           })}
-          <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
+          <HieuUngHoatHinh
+            danhSach={canh.hieuUngHoatHinh}
+            nhanVat={danhSachNhanVat}
+            tiLeNhanVat={1.2}
+          />
         </svg>
       </MayQuayDong>
     </div>

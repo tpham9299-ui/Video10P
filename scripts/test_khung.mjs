@@ -31,6 +31,7 @@ export {
   tinhKhungXuongCoBan,
 } from './src/xuong/he_xuong.ts';
 export {
+  chiaDongMoTaTimeline,
   coDuLieuMinhHoaHopLe,
   layDanhSachBuocSuyLuan,
   locMocThoiGianHopLe,
@@ -59,22 +60,67 @@ export {
   tinhLipSyncDuPhong,
 } from './src/nhanvat/lip_sync.ts';
 export {
+  DANH_SACH_CO_RAU,
   DANH_SACH_DO_TUOI,
   DANH_SACH_GOC_QUAY,
+  DANH_SACH_KIEU_BONG_BONG,
+  DANH_SACH_KIEU_PHAN_UNG_CAM,
+  DANH_SACH_KIEU_TOC,
+  DANH_SACH_LOAI_ANH_SANG,
   DANH_SACH_LOAI_BOI_CANH,
+  DANH_SACH_LOAI_BO_CUC,
   DANH_SACH_LOAI_CANH,
   DANH_SACH_LOAI_DAO_CU,
   DANH_SACH_LOAI_HANH_DONG,
+  DANH_SACH_LOAI_HIEU_UNG_HOAT_HINH,
   DANH_SACH_LOAI_MINH_HOA_TOAN,
   DANH_SACH_LOAI_VAT_THE_XUNG_QUANH,
+  DANH_SACH_PHUONG_TIEN_HANH_TRINH,
+  DANH_SACH_TAM_KHUNG,
+  DANH_SACH_TAM_TRANG_NHAC,
+  DANH_SACH_TRANG_PHUC,
   DANH_SACH_TU_THE,
 } from './src/kieu_dai.ts';
 export {
+  TOA_DO_BAN_DO_MAC_DINH,
+  VUNG_END_SCREEN_YOUTUBE,
+  tinhBienDoiBaoChiCo,
+  tinhTrangThaiHanhTrinh,
+  tinhTrangThaiPhanUngCam,
+} from './src/canh/ke_chuyen_v35_logic.ts';
+export {
+  ID_MASCOT_KENH,
+  MASCOT_KENH_MAC_DINH,
+  layHoSoMascotKenh,
+} from './src/nhanvat/mascot_kenh.ts';
+export { tinhBoCucBongBongChat } from './src/canh/bong_bong_logic.ts';
+export {
+  THOI_LUONG_THE_TEN_HOI_GIAY,
+  coAnPhuDeTrungBongBong,
+  tinhTrangThaiTheTenHoi,
+} from './src/canh/phu_de_logic.ts';
+export {
+  MAU_MUC_TRUYEN_TRANH,
+  giaiTrangPhucHieuLuc,
+  lamSangMauHex,
+  lamToiMauHex,
+  tinhBongTiepDat,
+  tinhThamSoAnhSangNhanVat,
+  tinhTiLeTamKhung,
+} from './src/nhanvat/hoa_trang_va_anh_sang.ts';
+export {
+  tinhKenBurnsNenAI,
+  tinhLopKhongKhiNenAI,
+} from './src/boicanh/nen_ai_logic.ts';
+export {
   coAnGiuongBenhNen,
   coAnNoiNenPhongSinh,
+  coHienNoiTrongPhongSinh,
   giaiDanhSachVatTheXungQuanh,
+  layKhungCuaSoChoBoiCanh,
   layVatTheMacDinhChoBoiCanh,
   locDaoCuKhongTrungLap,
+  locVatTheHopLeTheoBoiCanh,
   tinhBuomBay,
   tinhGocQuaLac,
   tinhViTriTaxiCo,
@@ -86,12 +132,18 @@ export {
 export {
   giaiBieuCamTheoMoc,
   giaiTrangThaiNhanVatTrongCanh,
+  khuTrungLapNhanVatTrongCanh,
   tinhHuongNhinTuongTac,
 } from './src/nhanvat/dien_xuat.ts';
 export {
   chiaNhomNhanVatChiaDoi,
   tinhTrangThaiCauHoiTuongTac,
 } from './src/canh/tuong_tac.ts';
+export {
+  tinhDauNhanVatY,
+  tinhToaDoHieuUngAnToan,
+} from './src/vfx/vi_tri_vfx.ts';
+export { coHienKhungLoiBinh } from './src/canh/loi_binh_logic.ts';
 `;
 
   await esbuildBuild({
@@ -116,6 +168,7 @@ const {
   GIOI_HAN_GOC_DAU_MAX,
   GIOI_HAN_GOC_DAU_MIN,
   tinhKhungXuongCoBan,
+  chiaDongMoTaTimeline,
   coDuLieuMinhHoaHopLe,
   layDanhSachBuocSuyLuan,
   locMocThoiGianHopLe,
@@ -136,20 +189,55 @@ const {
   chonKhauHinhTuBienDo,
   tinhLipSyncChoFrame,
   tinhLipSyncDuPhong,
+  DANH_SACH_CO_RAU,
   DANH_SACH_DO_TUOI,
   DANH_SACH_GOC_QUAY,
+  DANH_SACH_KIEU_BONG_BONG,
+  DANH_SACH_KIEU_PHAN_UNG_CAM,
+  DANH_SACH_KIEU_TOC,
+  DANH_SACH_LOAI_ANH_SANG,
   DANH_SACH_LOAI_BOI_CANH,
+  DANH_SACH_LOAI_BO_CUC,
   DANH_SACH_LOAI_CANH,
   DANH_SACH_LOAI_DAO_CU,
   DANH_SACH_LOAI_HANH_DONG,
+  DANH_SACH_LOAI_HIEU_UNG_HOAT_HINH,
   DANH_SACH_LOAI_MINH_HOA_TOAN,
   DANH_SACH_LOAI_VAT_THE_XUNG_QUANH,
+  DANH_SACH_PHUONG_TIEN_HANH_TRINH,
+  DANH_SACH_TAM_KHUNG,
+  DANH_SACH_TAM_TRANG_NHAC,
+  DANH_SACH_TRANG_PHUC,
   DANH_SACH_TU_THE,
+  TOA_DO_BAN_DO_MAC_DINH,
+  VUNG_END_SCREEN_YOUTUBE,
+  tinhBienDoiBaoChiCo,
+  tinhTrangThaiHanhTrinh,
+  tinhTrangThaiPhanUngCam,
+  ID_MASCOT_KENH,
+  MASCOT_KENH_MAC_DINH,
+  layHoSoMascotKenh,
+  tinhBoCucBongBongChat,
+  THOI_LUONG_THE_TEN_HOI_GIAY,
+  coAnPhuDeTrungBongBong,
+  tinhTrangThaiTheTenHoi,
+  MAU_MUC_TRUYEN_TRANH,
+  giaiTrangPhucHieuLuc,
+  lamSangMauHex,
+  lamToiMauHex,
+  tinhBongTiepDat,
+  tinhThamSoAnhSangNhanVat,
+  tinhTiLeTamKhung,
+  tinhKenBurnsNenAI,
+  tinhLopKhongKhiNenAI,
   coAnGiuongBenhNen,
   coAnNoiNenPhongSinh,
+  coHienNoiTrongPhongSinh,
   giaiDanhSachVatTheXungQuanh,
+  layKhungCuaSoChoBoiCanh,
   layVatTheMacDinhChoBoiCanh,
   locDaoCuKhongTrungLap,
+  locVatTheHopLeTheoBoiCanh,
   tinhBuomBay,
   tinhGocQuaLac,
   tinhViTriTaxiCo,
@@ -157,9 +245,13 @@ const {
   xacDinhNguoiDangNoiTaiFrame,
   giaiBieuCamTheoMoc,
   giaiTrangThaiNhanVatTrongCanh,
+  khuTrungLapNhanVatTrongCanh,
   tinhHuongNhinTuongTac,
   chiaNhomNhanVatChiaDoi,
   tinhTrangThaiCauHoiTuongTac,
+  tinhDauNhanVatY,
+  tinhToaDoHieuUngAnToan,
+  coHienKhungLoiBinh,
 } = await napCacModuleTs();
 
 const LOAI_BO_CUC_BAT_BUOC = [
@@ -1313,6 +1405,547 @@ if (!srcGiangToan.includes('doPhong: 1')) {
 }
 console.log(
   '[OK] Kiem dinh 6 sua loi hien thi: HUD ngoai zoom (>=76px/150px), khu trung lap noi/giuong, bong bong thoai tron ven khong "...", tuong tac 2 cot, giang Toan zoom 1.0x & chuyen canh phu kin.',
+);
+
+// 5h. Kiem dinh nang cap v2.5 Buoc 1 (6 nhom sua loi sau dot chay that tap Georg Cantor)
+// 1. xe_taxi_co KHONG hardcode bien so "1729" khi JSON khong truyen bienSoXe
+const vtPhoKhongBienSo = giaiDanhSachVatTheXungQuanh('duong_pho_xe_co', 'nang_dep', undefined, undefined);
+const taxiMacDinh = vtPhoKhongBienSo.find((v) => v.loai === 'xe_taxi_co');
+if (!taxiMacDinh || taxiMacDinh.bienSoXe !== undefined) {
+  baoLoi(`xe_taxi_co KHONG duoc hardcode bienSoXe khi khong truyen (nhan: ${JSON.stringify(taxiMacDinh)})`);
+}
+const srcSinhVatV25 = fs.readFileSync(path.join(gocDuAn, 'src', 'boicanh', 'SinhVatVaMoiTruong.tsx'), 'utf8');
+if (srcSinhVatV25.includes("'1729'") || srcSinhVatV25.includes('"1729"')) {
+  baoLoi('SinhVatVaMoiTruong.tsx KHONG duoc hardcode bien so "1729"');
+}
+if (!srcSinhVatV25.includes('clipPath')) {
+  baoLoi('SinhVatVaMoiTruong.tsx phai dung SVG clipPath de chan tuyet_cua_so roi trong phong');
+}
+
+// 2. Rang buoc moi truong theo phong kin / vu tru & khung cua so tuyet
+const locGiangDuong = locVatTheHopLeTheoBoiCanh('giang_duong_dai_hoc', [
+  { loai: 'la_vang_gio', soLuong: 6 },
+  { loai: 'dong_ho_qua_lac', x: 1680, y: 220 },
+]);
+if (locGiangDuong.some((v) => v.loai === 'la_vang_gio') || locGiangDuong.length !== 1) {
+  baoLoi('locVatTheHopLeTheoBoiCanh phai cam la_vang_gio trong giang_duong_dai_hoc');
+}
+const locVuTru = locVatTheHopLeTheoBoiCanh('khong_gian_vu_tru_toan', [
+  { loai: 'ngon_nen_den_dau', x: 400, y: 500 },
+  { loai: 'la_vang_gio', soLuong: 4 },
+]);
+if (locVuTru.length !== 0) {
+  baoLoi('locVatTheHopLeTheoBoiCanh phai cam ngon_nen_den_dau va la_vang_gio trong khong_gian_vu_tru_toan');
+}
+const cuaSoBepLua = layKhungCuaSoChoBoiCanh('phong_tro_bep_lua');
+const cuaSoBenhVien = layKhungCuaSoChoBoiCanh('phong_benh_vien');
+if (!cuaSoBepLua || !cuaSoBenhVien) {
+  baoLoi('layKhungCuaSoChoBoiCanh phai tra ve khung cua so cho phong_tro_bep_lua va phong_benh_vien');
+}
+if (
+  coHienNoiTrongPhongSinh([{ id: 'c', x: 760, y: 810, huong: 'phai', doTuoi: 'gia', hanhDong: 'dung_tho', bieuCam: 'vui_tuoi' }], []) !== false ||
+  coHienNoiTrongPhongSinh([{ id: 'c', x: 760, y: 810, huong: 'phai', doTuoi: 'so_sinh', hanhDong: 'dung_tho', bieuCam: 'vui_tuoi' }], []) !== true
+) {
+  baoLoi('coHienNoiTrongPhongSinh chi duoc tra ve true khi co so_sinh hoac dao cu noi_em_be');
+}
+
+// 3. Cam "GOC BINH LUAN" tren giang_toan / dong_thoi_gian + timeline khong cat giua tu + 3 loai MinhHoaToan moi
+const loiBinhMau = { noiDung: 'Bình luận vui', viTri: 'goc_phai' };
+if (
+  coHienKhungLoiBinh('giai_thich_toan', 'giang_toan', loiBinhMau) !== false ||
+  coHienKhungLoiBinh('dong_thoi_gian', 'chuyen_canh_lich_su', loiBinhMau) !== false ||
+  coHienKhungLoiBinh('ke_chuyen', 'giang_toan', loiBinhMau) !== false ||
+  coHienKhungLoiBinh('ke_chuyen', 'ke_chuyen', loiBinhMau) !== true
+) {
+  baoLoi('coHienKhungLoiBinh phai chan tren giai_thich_toan, dong_thoi_gian va loaiCanh=giang_toan');
+}
+const srcTimelineV25 = fs.readFileSync(path.join(gocDuAn, 'src', 'canh', 'CanhDongThoiGian.tsx'), 'utf8');
+if (srcTimelineV25.includes('KhungLoiBinhHaiHuoc') || srcGiangToan.includes('KhungLoiBinhHaiHuoc')) {
+  baoLoi('CanhDongThoiGian.tsx va CanhGiaiThichToan.tsx KHONG duoc render KhungLoiBinhHaiHuoc');
+}
+const moTaTimelineDai = 'Cuộc tranh luận nảy lửa với Leopold Kronecker về nền tảng tập hợp vô hạn kéo dài nhiều năm';
+const wrapTimeline = chiaDongMoTaTimeline(moTaTimelineDai, 4);
+if (
+  wrapTimeline.dong.length > 4 ||
+  wrapTimeline.dong.join(' ') !== moTaTimelineDai
+) {
+  baoLoi(`chiaDongMoTaTimeline phai gon <= 4 dong va giu nguyen tung tu (nhan: ${JSON.stringify(wrapTimeline)})`);
+}
+for (const loaiMhMoi of ['so_do_anh_xa', 'luoi_duong_cheo', 'bieu_do_cot']) {
+  if (!DANH_SACH_LOAI_MINH_HOA_TOAN.includes(loaiMhMoi)) {
+    baoLoi(`DANH_SACH_LOAI_MINH_HOA_TOAN thieu loai truc quan moi: ${loaiMhMoi}`);
+  }
+}
+if (
+  !coDuLieuMinhHoaHopLe({
+    loai: 'so_do_anh_xa',
+    thamSo: { cotTrai: ['1', '2', '3'], cotPhai: ['2', '4', '6'] },
+    mauNhanManh: '#FACC15',
+  }) ||
+  !coDuLieuMinhHoaHopLe({
+    loai: 'luoi_duong_cheo',
+    thamSo: { hang: ['0.141...', '0.333...', '0.718...'] },
+    mauNhanManh: '#FACC15',
+  }) ||
+  !coDuLieuMinhHoaHopLe({
+    loai: 'bieu_do_cot',
+    thamSo: { nhan: ['N', 'R'], giaTri: [20, 95] },
+    mauNhanManh: '#FACC15',
+  })
+) {
+  baoLoi('coDuLieuMinhHoaHopLe phai chap nhan so_do_anh_xa, luoi_duong_cheo va bieu_do_cot');
+}
+const srcMinhHoaV25 = fs.readFileSync(path.join(gocDuAn, 'src', 'daocu', 'MinhHoaToan.tsx'), 'utf8');
+for (const tenComp of ['SoDoAnhXaSvg', 'LuoiDuongCheoSvg', 'BieuDoCotSvg']) {
+  if (!srcMinhHoaV25.includes(tenComp)) {
+    baoLoi(`MinhHoaToan.tsx thieu component truc quan ${tenComp}`);
+  }
+}
+
+// 4. VFX bong_den tren dau (headY - 75), "Ua khoan da?!" khong de nguoi ngoi ban, khu trung nhanVatId, tuong tac >= 2.5s dap an
+const nvNgoiBan = {
+  id: 'cantor',
+  x: 780,
+  y: 805,
+  huong: 'phai',
+  tuThe: 'ngoi_ban',
+  hanhDong: 'ngoi_doc_sach',
+  bieuCam: 'tram_tu',
+  dangNoi: true,
+};
+const headYCantor = tinhDauNhanVatY(nvNgoiBan, 1.25);
+const posBongDen = tinhToaDoHieuUngAnToan(
+  { loai: 'bong_den_nay_so', x: 780, y: 740, tuFrame: 10 },
+  [nvNgoiBan],
+  1.25,
+);
+if (Math.abs(posBongDen.y - Math.round(headYCantor - 75)) > 2 || posBongDen.y >= headYCantor) {
+  baoLoi(`bong_den_nay_so phai o phia tren dau (headY - 75 = ${Math.round(headYCantor - 75)}), nhan y=${posBongDen.y}`);
+}
+const posUaKhoanDa = tinhToaDoHieuUngAnToan(
+  { loai: 'nhan_chu_hai_huoc', x: 780, y: 720, tuFrame: 10, chuHienThi: 'Ủa khoan đã?!' },
+  [nvNgoiBan],
+  1.25,
+);
+if (posUaKhoanDa.y > headYCantor - 40 && Math.abs(posUaKhoanDa.x - nvNgoiBan.x) < 160) {
+  baoLoi(`nhan_chu_hai_huoc ("Ua khoan da?!") khong duoc de len than/mat nhan vat ngoi ban (nhan: ${JSON.stringify(posUaKhoanDa)})`);
+}
+const dsKhongTrung = khuTrungLapNhanVatTrongCanh([
+  nvNgoiBan,
+  { ...nvNgoiBan, x: 1200 },
+  { ...nvNgoiBan, id: 'kronecker', x: 1280 },
+]);
+if (dsKhongTrung.length !== 2 || dsKhongTrung[0].id !== 'cantor' || dsKhongTrung[1].id !== 'kronecker') {
+  baoLoi('khuTrungLapNhanVatTrongCanh phai loai bo cung 1 nhanVatId xuat hien 2 lan trong 1 canh');
+}
+const ttChat = tinhTrangThaiCauHoiTuongTac(
+  {
+    cauHoi: 'Tập nào lớn hơn?',
+    thoiGianDemNguocGiay: 3,
+    batDauDemNguocFrame: 30,
+    hienDapAnTuFrame: 145, // co tinh dat qua sat cuoi canh 160 frame
+    dapAn: 'Tập số thực R lớn hơn!',
+  },
+  150,
+  160,
+  30,
+);
+if (160 - ttChat.hienDapAnTuFrame < 75 || !ttChat.daHienDapAn) {
+  baoLoi(`tuong_tac_khan_gia phai giu du it nhat 2.5s (75 frame) hien "DAP AN CHINH XAC" cuoi canh (hienDapAnTuFrame=${ttChat.hienDapAnTuFrame}/160)`);
+}
+console.log(
+  '[OK] v2.5 Buoc 1: taxi khong hardcode 1729, clipPath cua so tuyet, cam la/nen lech boi canh, cam Goc Binh Luan tren Toan/Timeline, Timeline tu co khong cat tu, 3 so do Toan moi, VFX bong den headY-75, chong nhan doi nhan vat & dap an >=2.5s pass 100%.',
+);
+
+// 5i. Kiem dinh nang cap v3.0 Buoc 2: Kien truc Lai 2.5D (Trang phuc 2 sac do, 7 kieuToc, 4 coRau, bong tiep dat, dong bo anhSangMoiTruong, NenMinhHoaAI + Ken Burns)
+const TRANG_PHUC_BAT_BUOC = [
+  'ao_vest_co_dien',
+  'ao_choang_hoc_gia',
+  'ao_co_an_do',
+  'ao_len_mua_dong',
+  'ao_choang_hy_lap',
+  'quan_phuc_co',
+  'thuong_dan',
+];
+const KIEU_TOC_BAT_BUOC = [
+  'gon_gang',
+  'xoan_co_dien',
+  'toc_bac_dai',
+  'khan_quan',
+  'mu_rong_vanh',
+  'mu_noi',
+  'hoi_hoi',
+];
+const CO_RAU_BAT_BUOC = ['khong', 'ria_mep', 'rau_quai_non', 'rau_bac_dai'];
+const TAM_KHUNG_BAT_BUOC = ['toan_canh', 'ban_than', 'can_mat'];
+const ANH_SANG_BAT_BUOC = ['nang_am', 'anh_nen', 'dem_lanh', 'trung_tinh', 'hoang_hon'];
+
+for (const tp of TRANG_PHUC_BAT_BUOC) {
+  if (!DANH_SACH_TRANG_PHUC.includes(tp)) {
+    baoLoi(`DANH_SACH_TRANG_PHUC thieu "${tp}"`);
+  }
+}
+for (const kt of KIEU_TOC_BAT_BUOC) {
+  if (!DANH_SACH_KIEU_TOC.includes(kt)) {
+    baoLoi(`DANH_SACH_KIEU_TOC thieu "${kt}"`);
+  }
+}
+for (const cr of CO_RAU_BAT_BUOC) {
+  if (!DANH_SACH_CO_RAU.includes(cr)) {
+    baoLoi(`DANH_SACH_CO_RAU thieu "${cr}"`);
+  }
+}
+for (const tk of TAM_KHUNG_BAT_BUOC) {
+  if (!DANH_SACH_TAM_KHUNG.includes(tk)) {
+    baoLoi(`DANH_SACH_TAM_KHUNG thieu "${tk}"`);
+  }
+}
+for (const asLoai of ANH_SANG_BAT_BUOC) {
+  if (!DANH_SACH_LOAI_ANH_SANG.includes(asLoai)) {
+    baoLoi(`DANH_SACH_LOAI_ANH_SANG thieu "${asLoai}"`);
+  }
+}
+if (MAU_MUC_TRUYEN_TRANH !== '#1A1A1A') {
+  baoLoi(`MAU_MUC_TRUYEN_TRANH phai la #1A1A1A (nhan: ${MAU_MUC_TRUYEN_TRANH})`);
+}
+
+// Kiem tra giaiTrangPhucHieuLuc (tuong thich nguoc + 2 sac do cel-shading)
+const htHyLap = giaiTrangPhucHieuLuc(
+  { id: 'pyth', ten: 'Pythagoras', mauThan: '#1E293B', mauChuDao: '#2563EB', phuKien: 'vong_nguyet_que' },
+  { id: 'pyth', x: 700, y: 810, huong: 'phai', hanhDong: 'dung_tho', bieuCam: 'binh_thuong' },
+);
+const htAnDo = giaiTrangPhucHieuLuc(
+  { id: 'ram', ten: 'Ramanujan', mauThan: '#1E293B', mauChuDao: '#2563EB', phuKien: 'khong', trangPhuc: 'ao_co_an_do', kieuToc: 'gon_gang', coRau: 'ria_mep', mauAo: '#D97706' },
+  { id: 'ram', x: 700, y: 810, huong: 'phai', hanhDong: 'dung_tho', bieuCam: 'vui_tuoi', tamKhung: 'ban_than' },
+);
+if (
+  htHyLap.trangPhuc !== 'ao_choang_hy_lap' ||
+  htAnDo.trangPhuc !== 'ao_co_an_do' ||
+  htAnDo.kieuToc !== 'gon_gang' ||
+  htAnDo.coRau !== 'ria_mep' ||
+  htAnDo.mauAoChinh !== '#D97706' ||
+  htAnDo.mauAoBong === htAnDo.mauAoChinh ||
+  lamToiMauHex('#2563EB') === '#2563EB' ||
+  lamSangMauHex('#2563EB') === '#2563EB'
+) {
+  baoLoi('giaiTrangPhucHieuLuc hoac ham cel-shading 2 sac do hoat dong chua dung');
+}
+
+// Kiem tra dong bo anhSangMoiTruong (do mo 0.08..0.22, khong filter nang)
+const asTrong = tinhThamSoAnhSangNhanVat(undefined);
+if (asTrong.coPhuMau !== false || asTrong.doMoPhu !== 0) {
+  baoLoi('tinhThamSoAnhSangNhanVat(undefined) phai tra ve coPhuMau=false, doMoPhu=0');
+}
+for (const loaiAs of ANH_SANG_BAT_BUOC) {
+  const ts = tinhThamSoAnhSangNhanVat({ mauAm: '#E8A24A', doToi: 0.6, loaiAnhSang: loaiAs });
+  if (!ts.coPhuMau || ts.doMoPhu < 0.08 || ts.doMoPhu > 0.22 || !Number.isFinite(ts.doMoToi)) {
+    baoLoi(`tinhThamSoAnhSangNhanVat("${loaiAs}") doMoPhu=${ts.doMoPhu} nam ngoai [0.08..0.22]`);
+  }
+}
+
+// Kiem tra bong tiep dat (co gian theo nhay & buoc di) va tamKhung
+const bongDung = tinhBongTiepDat(0, 'truong_thanh', 'dung', 10);
+const bongBuoc = tinhBongTiepDat(0, 'truong_thanh', 'dung', 60);
+const bongNhay = tinhBongTiepDat(85, 'truong_thanh', 'dung', 10);
+if (!(bongBuoc.rx > bongDung.rx && bongNhay.rx < bongDung.rx && bongNhay.opacity < bongDung.opacity)) {
+  baoLoi('tinhBongTiepDat khong co gian dung khi buoc di / bat nhay');
+}
+const tkToan = tinhTiLeTamKhung('toan_canh');
+const tkBan = tinhTiLeTamKhung('ban_than');
+const tkCan = tinhTiLeTamKhung('can_mat');
+if (!(tkToan.heSoTiLe === 1 && tkBan.heSoTiLe > tkToan.heSoTiLe && tkCan.heSoTiLe > tkBan.heSoTiLe)) {
+  baoLoi('tinhTiLeTamKhung khong tang dan theo toan_canh < ban_than < can_mat');
+}
+
+// Kiem tra NenMinhHoaAI: Ken Burns tat dinh, khong lo vien den & lop khong khi dung theo loaiAnhSang
+for (const dacTa of [false, true]) {
+  for (const fr of [0, 30, 90, 180]) {
+    const kb1 = tinhKenBurnsNenAI(fr, 180, 'boi_canh/demo/bc_01.jpg', { panX: 45, panY: -20, zoom: 1.2 }, dacTa);
+    const kb2 = tinhKenBurnsNenAI(fr, 180, 'boi_canh/demo/bc_01.jpg', { panX: 45, panY: -20, zoom: 1.2 }, dacTa);
+    if (JSON.stringify(kb1) !== JSON.stringify(kb2)) {
+      baoLoi(`tinhKenBurnsNenAI(frame=${fr}, dacTa=${dacTa}) khong tat dinh`);
+      break;
+    }
+    const maxTx = 960 * (kb1.scale - 1) + 0.1;
+    const maxTy = 540 * (kb1.scale - 1) + 0.1;
+    if (!Number.isFinite(kb1.scale) || Math.abs(kb1.tx) > maxTx || Math.abs(kb1.ty) > maxTy) {
+      baoLoi(`tinhKenBurnsNenAI(frame=${fr}, dacTa=${dacTa}) vuot bien khung (lo vien den): ${JSON.stringify(kb1)}`);
+      break;
+    }
+  }
+}
+const kkNang = tinhLopKhongKhiNenAI({ mauAm: '#F4D99B', doToi: 0.2, loaiAnhSang: 'nang_am' }, 'nang_dep', 'bo_bien_hy_lap', false);
+const kkNen = tinhLopKhongKhiNenAI({ mauAm: '#E8A24A', doToi: 0.72, loaiAnhSang: 'anh_nen' }, 'khong', 'thu_vien_co_dien', false);
+const kkDem = tinhLopKhongKhiNenAI({ mauAm: '#3B5284', doToi: 0.8, loaiAnhSang: 'dem_lanh' }, 'ban_dem', 'bau_troi_dem_vu_tru', false);
+const kkDacTa = tinhLopKhongKhiNenAI({ mauAm: '#F4D99B', doToi: 0.3, loaiAnhSang: 'nang_am' }, 'nang_dep', 'bo_bien_hy_lap', true);
+if (
+  !kkNang.coLuongNangXien ||
+  !kkNang.coMayChimNgoaiTroi ||
+  !kkNen.coAnhNenNhapNhay ||
+  kkNen.coMayChimNgoaiTroi ||
+  !kkDem.coSuongDem ||
+  kkDacTa.coMayChimNgoaiTroi ||
+  !kkDacTa.coBuiSang
+) {
+  baoLoi('tinhLopKhongKhiNenAI bat/tat lop khong khi chua khop loaiAnhSang/boiCanh/laKhungTranhDacTa');
+}
+
+// Kiem tra file NenMinhHoaAI.tsx, TrangPhucVaToc.tsx & tich hop trong BoiCanhHoatHinh.tsx
+const pathNenAI = path.join(gocDuAn, 'src', 'boicanh', 'NenMinhHoaAI.tsx');
+const pathTrangPhuc = path.join(gocDuAn, 'src', 'nhanvat', 'TrangPhucVaToc.tsx');
+if (!fs.existsSync(pathNenAI) || !fs.existsSync(pathTrangPhuc)) {
+  baoLoi('Thieu tep v3.0: src/boicanh/NenMinhHoaAI.tsx hoac src/nhanvat/TrangPhucVaToc.tsx');
+} else {
+  const srcNenAI = fs.readFileSync(pathNenAI, 'utf8');
+  const srcTrangPhuc = fs.readFileSync(pathTrangPhuc, 'utf8');
+  if (!srcNenAI.includes('<Img') || !srcNenAI.includes('staticFile(') || !srcNenAI.includes('radialGradient')) {
+    baoLoi('NenMinhHoaAI.tsx phai dung <Img src={staticFile(...)} /> va radialGradient phang');
+  }
+  if (!srcBoiCanh.includes('NenMinhHoaAI') || !srcBoiCanh.includes('anhBoiCanh')) {
+    baoLoi('BoiCanhHoatHinh.tsx chua tich hop NenMinhHoaAI khi canh co anhBoiCanh');
+  }
+  for (const tp of TRANG_PHUC_BAT_BUOC) {
+    if (!srcTrangPhuc.includes(`case '${tp}'`)) {
+      baoLoi(`TrangPhucVaToc.tsx thieu nhanh ve trang phuc "${tp}"`);
+    }
+  }
+  for (const kt of KIEU_TOC_BAT_BUOC) {
+    if (!srcTrangPhuc.includes(`case '${kt}'`)) {
+      baoLoi(`TrangPhucVaToc.tsx thieu nhanh ve kieu toc "${kt}"`);
+    }
+  }
+  for (const cr of CO_RAU_BAT_BUOC.filter((x) => x !== 'khong')) {
+    if (!srcTrangPhuc.includes(`case '${cr}'`)) {
+      baoLoi(`TrangPhucVaToc.tsx thieu nhanh ve rau "${cr}"`);
+    }
+  }
+}
+console.log(
+  `[OK] v3.0 Buoc 2 (Lai 2.5D): ${TRANG_PHUC_BAT_BUOC.length} trangPhuc 2 sac do, ${KIEU_TOC_BAT_BUOC.length} kieuToc, ${CO_RAU_BAT_BUOC.length} coRau, bong tiep dat, dong bo anhSangMoiTruong (0.08-0.22), NenMinhHoaAI Ken Burns + khong khi tat dinh pass 100%.`,
+);
+
+// 5j. Kiem dinh nang cap v3.0 Buoc 3: Clean Cinema UI, 4 goc can mat & Shot-Reverse-Shot, BongBongChat 4 kieu & 6 VFX hai neo quanh dau
+// 1. Clean Cinema UI: bo thanh tien do co dinh, bo hop GOC BINH LUAN co dinh, TheTenHoi 2.8s & phu de tu an khi trung bong bong
+const srcVideoDaiV3 = fs.readFileSync(path.join(gocDuAn, 'src', 'VideoDai.tsx'), 'utf8');
+const srcLoiBinhV3 = fs.readFileSync(path.join(gocDuAn, 'src', 'canh', 'KhungLoiBinhHaiHuoc.tsx'), 'utf8');
+if (srcVideoDaiV3.includes('Thanh tien do chuong') || !srcVideoDaiV3.includes('<TheTenHoi') || !srcVideoDaiV3.includes('coAnPhuDeTrungBongBong')) {
+  baoLoi('VideoDai.tsx phai go thanh tien do co dinh, gan TheTenHoi 2.8s va tu an phu de trung bong bong');
+}
+if (srcLoiBinhV3.includes('Góc bình luận')) {
+  baoLoi('KhungLoiBinhHaiHuoc.tsx phai go bo hop "Góc bình luận" co dinh o goc phai');
+}
+const thHoi0 = tinhTrangThaiTheTenHoi(0, 30);
+const thHoiGiua = tinhTrangThaiTheTenHoi(40, 30);
+const thHoiHet = tinhTrangThaiTheTenHoi(Math.round(THOI_LUONG_THE_TEN_HOI_GIAY * 30), 30);
+if (!thHoi0.dangHien || thHoiGiua.opacity !== 1 || thHoiHet.dangHien !== false || thHoiHet.opacity !== 0) {
+  baoLoi(`tinhTrangThaiTheTenHoi sai moc 2.8s (f40=${JSON.stringify(thHoiGiua)}, f84=${JSON.stringify(thHoiHet)})`);
+}
+const anTrungLuot = coAnPhuDeTrungBongBong(
+  { nhanVat: nvMauDoiThoai, luotThoai: luotThoaiMau },
+  20,
+  'Hardy: Thư này chứa công thức rất kỳ lạ!',
+);
+const hienDanChuyen = coAnPhuDeTrungBongBong(
+  { nhanVat: nvMauDoiThoai },
+  20,
+  'Năm 1913, một bức thư chín trang vượt đại dương đến Cambridge.',
+);
+if (anTrungLuot !== true || hienDanChuyen !== false) {
+  baoLoi('coAnPhuDeTrungBongBong phai an phu de trung bong bong va giu nguyen loi dan chuyen');
+}
+
+// 2. 4 goc quay can mat & Shot-Reverse-Shot (dao_goc_can_mat)
+const GOC_CAN_MAT_V30 = ['can_mat_trai', 'can_mat_phai', 'can_mat_kich_tinh', 'dao_goc_can_mat'];
+for (const gq of GOC_CAN_MAT_V30) {
+  if (!DANH_SACH_GOC_QUAY.includes(gq)) {
+    baoLoi(`DANH_SACH_GOC_QUAY thieu goc quay v3.0 "${gq}"`);
+  }
+  for (const f of [0, 20, 45, 90]) {
+    const cam = tinhBienDoiCamera(f, 120, undefined, nvMauDoiThoai, { gocQuay: gq }, luotThoaiMau);
+    const maxPanX = 960 * Math.max(0, cam.zoom - 1) + 0.5;
+    const maxPanY = 540 * Math.max(0, cam.zoom - 1) + 0.5;
+    if (!Number.isFinite(cam.zoom) || Math.abs(cam.panX) > maxPanX || Math.abs(cam.panY) > maxPanY) {
+      baoLoi(`Goc quay v3.0 "${gq}" frame=${f} vuot bien khung (lo vien den): ${JSON.stringify(cam)}`);
+      break;
+    }
+  }
+}
+const camCmTrai = tinhBienDoiCamera(40, 120, undefined, nvMauDoiThoai, { gocQuay: 'can_mat_trai' });
+const camCmPhai = tinhBienDoiCamera(40, 120, undefined, nvMauDoiThoai, { gocQuay: 'can_mat_phai' });
+const camKichTinh = tinhBienDoiCamera(14, 120, undefined, nvMauDoiThoai, { gocQuay: 'can_mat_kich_tinh' });
+const camDaoA = tinhBienDoiCamera(30, 120, undefined, nvMauDoiThoai, { gocQuay: 'dao_goc_can_mat' }, luotThoaiMau);
+const camDaoB = tinhBienDoiCamera(90, 120, undefined, nvMauDoiThoai, { gocQuay: 'dao_goc_can_mat' }, luotThoaiMau);
+if (
+  camCmTrai.zoom < 1.85 ||
+  camCmTrai.zoom > 2.15 ||
+  camCmTrai.panX <= 0 ||
+  camCmPhai.zoom < 1.85 ||
+  camCmPhai.zoom > 2.15 ||
+  camCmPhai.panX >= 0
+) {
+  baoLoi(`can_mat_trai/phai khong dat zoom 1.85x-2.1x & khoa 1/3 (trai=${JSON.stringify(camCmTrai)}, phai=${JSON.stringify(camCmPhai)})`);
+}
+if (camKichTinh.zoom < 2.05 || !camKichTinh.hienTiaTocDo) {
+  baoLoi(`can_mat_kich_tinh phai zoom ~2.2x va bat hienTiaTocDo=true (nhan: ${JSON.stringify(camKichTinh)})`);
+}
+if (!(camDaoA.zoom >= 1.85 && camDaoB.zoom >= 1.85 && camDaoA.panX > 0 && camDaoB.panX < 0)) {
+  baoLoi(`dao_goc_can_mat phai tu dong dao can mat A (panX>0) <-> B (panX<0) theo luotThoai[] (A=${JSON.stringify(camDaoA)}, B=${JSON.stringify(camDaoB)})`);
+}
+
+// 3. BongBongChat 4 kieu + tranh tran mep 1920x1080 & tranh che mat
+const KIEU_BB_BAT_BUOC = ['thuong', 'quat_thao', 'suy_nghi', 'ca_khia'];
+for (const kb of KIEU_BB_BAT_BUOC) {
+  if (!DANH_SACH_KIEU_BONG_BONG.includes(kb)) {
+    baoLoi(`DANH_SACH_KIEU_BONG_BONG thieu "${kb}"`);
+  }
+}
+const pathBongBong = path.join(gocDuAn, 'src', 'canh', 'BongBongChat.tsx');
+if (!fs.existsSync(pathBongBong)) {
+  baoLoi('Thieu tep src/canh/BongBongChat.tsx');
+} else {
+  const srcBb = fs.readFileSync(pathBongBong, 'utf8');
+  for (const kb of KIEU_BB_BAT_BUOC) {
+    if (!srcBb.includes(kb)) {
+      baoLoi(`BongBongChat.tsx thieu kieu "${kb}"`);
+    }
+  }
+}
+for (const wx of [120, 960, 1820]) {
+  const bc = tinhBoCucBongBongChat({
+    noiDung: 'Khoan đã, tại sao tập số thực lại lớn hơn tập số tự nhiên?!',
+    kieu: 'quat_thao',
+    nhanVatWorldX: wx,
+    nhanVatWorldY: 800,
+    tiLeNhanVat: 1.25,
+    dauLocalX: 0,
+    dauLocalY: -170,
+    dir: wx > 1000 ? 1 : -1,
+  });
+  const nuaR = (bc.width / 2) * 1.25;
+  if (bc.worldX - nuaR < 25 || bc.worldX + nuaR > 1895) {
+    baoLoi(`tinhBoCucBongBongChat bi tran mep man hinh tai wx=${wx}: ${JSON.stringify(bc)}`);
+  }
+}
+
+// 4. 6 hieu ung hai thi giac moi & neo chuan quanh dau (KHONG moc o bung)
+const VFX_HAI_V30 = [
+  'mo_hoi_lon',
+  'khoi_boc_tai',
+  'mat_xoan_oc',
+  'cham_hoi_nay',
+  'tia_toc_do',
+  'bong_den_y_tuong',
+];
+const srcHieuUngV3 = fs.readFileSync(path.join(gocDuAn, 'src', 'vfx', 'HieuUngHoatHinh.tsx'), 'utf8');
+const headYTest = tinhDauNhanVatY(nvMauDoiThoai[0], 1.25);
+for (const loaiVfx of VFX_HAI_V30) {
+  if (!DANH_SACH_LOAI_HIEU_UNG_HOAT_HINH.includes(loaiVfx)) {
+    baoLoi(`DANH_SACH_LOAI_HIEU_UNG_HOAT_HINH thieu "${loaiVfx}"`);
+  }
+  if (!srcHieuUngV3.includes(`case '${loaiVfx}'`)) {
+    baoLoi(`HieuUngHoatHinh.tsx thieu nhanh ve "${loaiVfx}"`);
+  }
+  if (!layDuongDanSfxNeuCoSan(loaiVfx)) {
+    baoLoi(`BAN_DO_SFX_HIEU_UNG thieu anh xa cho "${loaiVfx}"`);
+  }
+  // Co tinh truyen y=760 (vung bung/chan) -> tinhToaDoHieuUngAnToan phai keo len quanh dau!
+  const posVfx = tinhToaDoHieuUngAnToan(
+    { loai: loaiVfx, x: nvMauDoiThoai[0].x, y: 760, tuFrame: 5, thoiLuong: 40 },
+    nvMauDoiThoai,
+    1.25,
+  );
+  if (posVfx.y > headYTest + 10) {
+    baoLoi(`VFX hai "${loaiVfx}" bi moc thap o bung (y=${posVfx.y} > headY=${Math.round(headYTest)})`);
+  }
+}
+console.log(
+  '[OK] v3.0 Buoc 3 (Clean Cinema UI): bo thanh tien do & GOC BINH LUAN, TheTenHoi 2.8s, phu de vien manh tu an trung bong bong, 4 goc can mat & dao_goc_can_mat, BongBongChat 4 kieu & 6 VFX hai neo quanh dau pass 100%.',
+);
+
+// 5c. Kiem dinh v3.5: 4 nhac nen da cam xuc, 3 khung hinh ke chuyen moi, Mascot kenh, End-Screen 15s & Thumbnail anh AI
+for (const bgmMood of ['vui_tuoi', 'bi_an', 'kich_tinh', 'tram_lang']) {
+  if (!DANH_SACH_TAM_TRANG_NHAC.includes(bgmMood)) {
+    baoLoi(`DANH_SACH_TAM_TRANG_NHAC thieu "${bgmMood}"`);
+  }
+  const bgmFile = path.join(gocDuAn, 'public', 'bgm', `${bgmMood}.mp3`);
+  if (!fs.existsSync(bgmFile) || fs.statSync(bgmFile).size < 1024) {
+    baoLoi(`Thieu file nhac nen v3.5 public/bgm/${bgmMood}.mp3`);
+  }
+}
+
+for (const bcMoi of ['ban_do_hanh_trinh', 'bao_chi_co', 'phan_ung_cam']) {
+  if (!DANH_SACH_LOAI_BO_CUC.includes(bcMoi)) {
+    baoLoi(`DANH_SACH_LOAI_BO_CUC thieu boCuc v3.5 "${bcMoi}"`);
+  }
+}
+for (const fileCanhMoi of ['CanhBanDoHanhTrinh.tsx', 'CanhBaoChiCo.tsx', 'CanhPhanUngCam.tsx']) {
+  if (!fs.existsSync(path.join(gocDuAn, 'src', 'canh', fileCanhMoi))) {
+    baoLoi(`Thieu component v3.5 src/canh/${fileCanhMoi}`);
+  }
+}
+if (DANH_SACH_PHUONG_TIEN_HANH_TRINH.length !== 4 || DANH_SACH_KIEU_PHAN_UNG_CAM.length !== 4) {
+  baoLoi('Enum PHUONG_TIEN_HANH_TRINH va KIEU_PHAN_UNG_CAM phai co du 4 gia tri');
+}
+
+// Kiem tra toan hoc tat dinh cua 3 canh moi
+const ht0 = tinhTrangThaiHanhTrinh(0, 120);
+const htMid = tinhTrangThaiHanhTrinh(60, 120);
+const htEnd = tinhTrangThaiHanhTrinh(115, 120);
+if (
+  ht0.tienDo !== 0 ||
+  !(htMid.tienDo > 0.3 && htMid.tienDo < 0.7) ||
+  htEnd.tienDo !== 1 ||
+  !htEnd.daDenNoi ||
+  Math.abs(ht0.viTri.x - TOA_DO_BAN_DO_MAC_DINH.p0.x) > 1 ||
+  Math.abs(htEnd.viTri.x - TOA_DO_BAN_DO_MAC_DINH.p2.x) > 1
+) {
+  baoLoi(`tinhTrangThaiHanhTrinh sai quy dao Bezier: f0=${JSON.stringify(ht0)}, f115=${JSON.stringify(htEnd)}`);
+}
+
+const bao0 = tinhBienDoiBaoChiCo(0, 90);
+const bao30 = tinhBienDoiBaoChiCo(30, 90);
+if (bao0.scale >= 0.5 || bao0.xoayDeg >= -180 || bao30.scale < 1.0 || !bao30.hienTieuDePhu) {
+  baoLoi(`tinhBienDoiBaoChiCo sai hieu ung xoay phong: f0=${JSON.stringify(bao0)}, f30=${JSON.stringify(bao30)}`);
+}
+
+const pu10 = tinhTrangThaiPhanUngCam(10, 60);
+const pu30 = tinhTrangThaiPhanUngCam(30, 60);
+if (pu10.zoom < 1.9 || !pu10.hienTemChu || pu30.nhapTraTienDo <= 0.8) {
+  baoLoi(`tinhTrangThaiPhanUngCam sai trang thai can mat: f10=${JSON.stringify(pu10)}, f30=${JSON.stringify(pu30)}`);
+}
+
+// Kiem tra Mascot kenh, End-Screen 2 khung & Thumbnail uu tien anhBoiCanh AI
+const mascotDefault = layHoSoMascotKenh();
+const mascotCustom = layHoSoMascotKenh({ ten: 'Thầy Beta', mauAo: '#16A34A' });
+const mascotTat = layHoSoMascotKenh({ batMascot: false });
+if (
+  !mascotDefault ||
+  mascotDefault.id !== ID_MASCOT_KENH ||
+  mascotDefault.ten !== MASCOT_KENH_MAC_DINH.ten ||
+  mascotCustom?.ten !== 'Thầy Beta' ||
+  mascotCustom?.mauAo !== '#16A34A' ||
+  mascotTat !== null
+) {
+  baoLoi('layHoSoMascotKenh khong dung hop dong tuy chinh/tat Mascot');
+}
+const { khungTrai, khungPhai, vungMascotGiua } = VUNG_END_SCREEN_YOUTUBE;
+if (
+  khungTrai.x + khungTrai.width >= vungMascotGiua.x - 200 ||
+  khungPhai.x <= vungMascotGiua.x + 200 ||
+  khungTrai.y + khungTrai.height > 850
+) {
+  baoLoi('VUNG_END_SCREEN_YOUTUBE bi de len vung Mascot giua hoac vung phu de day');
+}
+const srcCanhKetV35 = fs.readFileSync(path.join(gocDuAn, 'src', 'canh', 'CanhKet.tsx'), 'utf8');
+const srcThumbV35 = fs.readFileSync(path.join(gocDuAn, 'src', 'Thumbnail.tsx'), 'utf8');
+if (!srcCanhKetV35.includes('VUNG_END_SCREEN_YOUTUBE') || !srcCanhKetV35.includes('khungTrai')) {
+  baoLoi('CanhKet.tsx phai hien thi 2 khung YouTube End-Screen 15s cuoi');
+}
+if (!srcThumbV35.includes('anhBoiCanh') || !srcThumbV35.includes('staticFile(')) {
+  baoLoi('Thumbnail.tsx phai uu tien anhBoiCanh AI lam phong nen khi co');
+}
+console.log(
+  '[OK] v3.5 Ke Chuyen Dien Anh: 4 nhac nen da cam xuc, 3 canh moi (BanDo/BaoChi/PhanUngCam), Mascot kenh, End-Screen 2 khung & Thumbnail anh AI pass 100%.',
 );
 
 // 6. Quet quy tac cam blur va Math.random() trong src/

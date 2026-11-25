@@ -703,6 +703,10 @@ def ghi_nhan_tap_hoan_thanh(
     da_cap_nhat = False
     for idx, cu in enumerate(du_lieu["chu_de_da_lam"]):
         if isinstance(cu, dict) and _tao_slug_sach(str(cu.get("slug") or "")) == slug_sach:
+            # Giu lai thong tin dang YouTube da luu truoc do (neu co)
+            for k_yt, v_yt in cu.items():
+                if str(k_yt).startswith("youtube") and k_yt not in ban_ghi:
+                    ban_ghi[k_yt] = v_yt
             du_lieu["chu_de_da_lam"][idx] = ban_ghi
             da_cap_nhat = True
             break

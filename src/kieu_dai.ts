@@ -5,7 +5,57 @@ export type LoaiBoCuc =
   | 'hai_huoc'
   | 'giai_thich_toan'
   | 'dong_thoi_gian'
+  | 'ban_do_hanh_trinh'
+  | 'bao_chi_co'
+  | 'phan_ung_cam'
   | 'ket_thuc';
+
+/** 4 sac thai nhac nen theo tung Hoi (v3.5) */
+export type TamTrangNhac = 'vui_tuoi' | 'bi_an' | 'kich_tinh' | 'tram_lang';
+
+/** 4 bieu tuong di chuyen tren CanhBanDoHanhTrinh (v3.5) */
+export type PhuongTienHanhTrinh = 'tau_thuy' | 'thu_tay' | 'nguoi_di_bo' | 'xe_ngua';
+
+export type BanDoHanhTrinhData = {
+  diemDi: string;
+  diemDen: string;
+  phuongTien?: PhuongTienHanhTrinh;
+  khoangCachNhan?: string;
+  moTaHanhTrinh?: string;
+  diemDungGiua?: string;
+};
+
+/** Du lieu cho CanhBaoChiCo (v3.5): to bao giay co xoay/phong ra man hinh */
+export type BaoChiCoData = {
+  tenToBao?: string;
+  ngayPhatHanh?: string;
+  tieuDeBao: string;
+  tieuDePhu?: string;
+  nhanAnhMinhHoa?: string;
+  daoCuMinhHoa?: LoaiDaoCu;
+  congThucMinhHoa?: string;
+};
+
+/** 4 kieu phan ung cam nhanh 1.5-2.5s cho CanhPhanUngCam (v3.5) */
+export type KieuPhanUngCam = 'nhap_tra' | 'nhuong_may' | 'tron_mat' | 'can_loi';
+
+export type PhanUngCamData = {
+  nhanVatId?: string;
+  kieuPhanUng?: KieuPhanUngCam;
+  chuHieuUng?: string;
+};
+
+/** Cau hinh vung YouTube End-Screen 15 giay cuoi cua CanhKet (v3.5) */
+export type CauHinhEndScreen = {
+  khungTraiNhan?: string;
+  khungPhaiNhan?: string;
+  loiDanXemTiep?: string;
+};
+
+/** Cau hinh tuy chinh Mascot dan chuyen cua kenh (v3.5) */
+export type CauHinhMascotKenh = Partial<ThongTinNhanVat> & {
+  batMascot?: boolean;
+};
 
 export type LoaiBoiCanh =
   | 'bo_bien_hy_lap'
@@ -87,7 +137,7 @@ export type LoaiHanhDong =
   | 'giat_minh_bat_day'
   | 'quay_nhin_khan_gia';
 
-/** 8 goc quay dao dien chuyen nghiep (v2.0) */
+/** 12 goc quay dao dien chuyen nghiep (v2.0 + 4 goc can mat & dao goc v3.0) */
 export type GocQuayCamera =
   | 'toan_canh'
   | 'trung_canh'
@@ -96,7 +146,14 @@ export type GocQuayCamera =
   | 'focus_phai'
   | 'zoom_dao_cu'
   | 'pan_ngang'
-  | 'chia_doi_man_hinh';
+  | 'chia_doi_man_hinh'
+  | 'can_mat_trai'
+  | 'can_mat_phai'
+  | 'can_mat_kich_tinh'
+  | 'dao_goc_can_mat';
+
+/** 4 kieu bong bong chat hoat hinh truyen tranh (v3.0) */
+export type KieuBongBongChat = 'thuong' | 'quat_thao' | 'suy_nghi' | 'ca_khia';
 
 /** Phan loai nhip/loai canh de dao dien & dien xuat tuong tac (v2.0) */
 export type LoaiCanh =
@@ -160,7 +217,13 @@ export type LoaiHieuUngHoatHinh =
   | 'sao_lap_lanh'
   | 'khoi_chay_tron'
   | 'co_lan_im_lang'
-  | 'nhan_chu_hai_huoc';
+  | 'nhan_chu_hai_huoc'
+  | 'mo_hoi_lon'
+  | 'khoi_boc_tai'
+  | 'mat_xoan_oc'
+  | 'cham_hoi_nay'
+  | 'tia_toc_do'
+  | 'bong_den_y_tuong';
 
 export type LoaiMinhHoaToan =
   | 'tam_giac_vuong'
@@ -168,7 +231,10 @@ export type LoaiMinhHoaToan =
   | 'do_thi_ham_so'
   | 'hinh_hoc_chung_minh'
   | 'chuoi_suy_luan'
-  | 'tung_buoc';
+  | 'tung_buoc'
+  | 'so_do_anh_xa'
+  | 'luoi_duong_cheo'
+  | 'bieu_do_cot';
 
 export type LoaiChuyenCanh = 'mo_dan' | 'quet_ngang' | 'vong_tron_hoat_hinh';
 
@@ -211,6 +277,50 @@ export type BangMau = {
   canhBao: string;
 };
 
+/** 5 nhom anh sang moi truong phan tich tu nen AI (v3.0) */
+export type LoaiAnhSangMoiTruong =
+  | 'nang_am'
+  | 'anh_nen'
+  | 'dem_lanh'
+  | 'trung_tinh'
+  | 'hoang_hon';
+
+/** Thong so anh sang moi truong de dong bo mau sac & do toi giua nen AI va nhan vat (v3.0) */
+export type AnhSangMoiTruong = {
+  /** Ma hex tong sang chu dao (vi du: "#F4D99B") */
+  mauAm: string;
+  /** Muc do toi cua moi truong trong [0..1] (0 = sang nhat, 1 = toi nhat) */
+  doToi: number;
+  /** Phan loai anh sang moi truong (nang_am | anh_nen | dem_lanh | trung_tinh | hoang_hon) */
+  loaiAnhSang: LoaiAnhSangMoiTruong | string;
+};
+
+/** 7 bo trang phuc lich su / truyen tranh chi tiet 2 sac do cho nhan vat (v3.0) */
+export type LoaiTrangPhuc =
+  | 'ao_vest_co_dien'
+  | 'ao_choang_hoc_gia'
+  | 'ao_co_an_do'
+  | 'ao_len_mua_dong'
+  | 'ao_choang_hy_lap'
+  | 'quan_phuc_co'
+  | 'thuong_dan';
+
+/** 7 kieu toc & mu dac trung nhan vat lich su (v3.0) */
+export type LoaiKieuToc =
+  | 'gon_gang'
+  | 'xoan_co_dien'
+  | 'toc_bac_dai'
+  | 'khan_quan'
+  | 'mu_rong_vanh'
+  | 'mu_noi'
+  | 'hoi_hoi';
+
+/** 4 kieu rau dac trung nhan vat lich su (v3.0) */
+export type LoaiCoRau = 'khong' | 'ria_mep' | 'rau_quai_non' | 'rau_bac_dai';
+
+/** 3 tam khung hinh nhan vat (v3.0) */
+export type TamKhungNhanVat = 'toan_canh' | 'ban_than' | 'can_mat';
+
 export type ThongTinNhanVat = {
   id: string;
   ten: string;
@@ -220,6 +330,14 @@ export type ThongTinNhanVat = {
   phuKien: LoaiPhuKien;
   /** Do tuoi mac dinh cua nhan vat (tuy chon, co the ghi de tung canh) */
   doTuoi?: DoTuoiNhanVat;
+  /** Trang phuc mac dinh cua nhan vat (v3.0, tuy chon) */
+  trangPhuc?: LoaiTrangPhuc;
+  /** Kieu toc/mu mac dinh cua nhan vat (v3.0, tuy chon) */
+  kieuToc?: LoaiKieuToc;
+  /** Kieu rau mac dinh cua nhan vat (v3.0, tuy chon) */
+  coRau?: LoaiCoRau;
+  /** Mau ao chinh tuy chinh (v3.0, tuy chon - fallback mauChuDao) */
+  mauAo?: string;
 };
 
 export type CauHinhCamera = {
@@ -260,12 +378,14 @@ export type BieuCamTheoMoc = {
   bieuCam: LoaiBieuCam;
 };
 
-/** Mot luot thoai trong canh doi thoai nhieu luot (v2.0) */
+/** Mot luot thoai trong canh doi thoai nhieu luot (v2.0 + kieuBongBong v3.0) */
 export type LuotThoai = {
   nhanVatId: string;
   noiDung: string;
   bieuCam?: LoaiBieuCam;
   dongTac?: LoaiHanhDong;
+  /** Kieu bong bong chat truyen tranh cho luot thoai (thuong | quat_thao | suy_nghi | ca_khia) */
+  kieuBongBong?: KieuBongBongChat;
   batDauFrame: number;
   ketThucFrame: number;
   /** Mang bien do RMS tuy chon rieng cho luot thoai nay */
@@ -299,6 +419,8 @@ export type NhanVatTrongCanh = {
   bieuCam: LoaiBieuCam;
   dangNoi?: boolean;
   bongBongThoai?: string;
+  /** Kieu bong bong chat truyen tranh (thuong | quat_thao | suy_nghi | ca_khia) (v3.0) */
+  kieuBongBong?: KieuBongBongChat;
   diChuyenDenX?: number;
   tiLe?: number;
   /** Mang bien do RMS tuy chon rieng cho nhan vat (uu tien hon canh.bienDoAmThanh neu co) */
@@ -311,6 +433,16 @@ export type NhanVatTrongCanh = {
   bieuCamTheoMoc?: BieuCamTheoMoc[];
   /** ID nhan vat khac (hoac 'khan_gia') de quay mat/anh mat nhin ve phia doi tuong tuong tac */
   tuongTacVoi?: string;
+  /** Trang phuc truyen tranh 2 sac do cua nhan vat trong canh nay (v3.0, ghi de ThongTinNhanVat) */
+  trangPhuc?: LoaiTrangPhuc;
+  /** Kieu toc/mu cua nhan vat trong canh nay (v3.0, ghi de ThongTinNhanVat) */
+  kieuToc?: LoaiKieuToc;
+  /** Kieu rau cua nhan vat trong canh nay (v3.0, ghi de ThongTinNhanVat) */
+  coRau?: LoaiCoRau;
+  /** Mau ao tuy chinh trong canh nay (v3.0, ghi de ThongTinNhanVat) */
+  mauAo?: string;
+  /** Tam khung hinh nhan vat trong canh (toan_canh | ban_than | can_mat) (v3.0) */
+  tamKhung?: TamKhungNhanVat;
 };
 
 export type HieuUngHoatHinhItem = {
@@ -481,6 +613,10 @@ export type PhuongAnThumbnail = {
   vatCamTay?: LoaiVatCamTay;
   mauNhan?: string;
   mauNen?: string;
+  /** Anh boi canh AI dep nhat cua tap de uu tien lam phong nen Thumbnail v3.5 */
+  anhBoiCanh?: string | null;
+  /** Thong so anh sang moi truong dong bo voi anhBoiCanh */
+  anhSangMoiTruong?: AnhSangMoiTruong;
 };
 
 export type DuLieuThumbnail = PhuongAnThumbnail & {
@@ -509,6 +645,8 @@ export type Canh = {
   tuFrame: number;
   denFrame: number;
   tieuDeNho?: string;
+  /** Dong mo ta rieng cho canh mo hoi (khong dung chung 1 cau cho nhieu hoi) */
+  phuDeHoi?: string;
   namMoc?: string;
   loiThoai: string;
   /** Nhan vai noi tuy chon cho TTS da giong (nguoi_dan | nhan_vat | binh_luan_hai) */
@@ -532,6 +670,22 @@ export type Canh = {
   vatTheXungQuanh?: VatTheXungQuanh[];
   /** Bien so xe tuy chinh cho xe taxi co trong canh (vi du: "1729") */
   bienSoXe?: string;
+  /** Duong dan tuong doi trong public/ toi anh boi canh minh hoa AI (v3.0, null/undefined -> dung SVG) */
+  anhBoiCanh?: string | null;
+  /** Thong so anh sang moi truong phan tich tu anh nen AI de dong bo len nhan vat (v3.0) */
+  anhSangMoiTruong?: AnhSangMoiTruong;
+  /** Bat che do khung tranh dac ta can canh vat the/phong canh (khong ve nhan vat, chi Ken Burns + hat anh sang) (v3.0) */
+  laKhungTranhDacTa?: boolean;
+  /** Du lieu ban do hanh trinh co (v3.5) cho boCuc='ban_do_hanh_trinh' */
+  banDoHanhTrinh?: BanDoHanhTrinhData;
+  /** Du lieu to bao giay co giat gan (v3.5) cho boCuc='bao_chi_co' */
+  baoChiCo?: BaoChiCoData;
+  /** Du lieu canh cat nhanh phan ung cam 1.5-2.5s (v3.5) cho boCuc='phan_ung_cam' */
+  phanUngCam?: PhanUngCamData;
+  /** Danh dau ngat nhac nen 0.8s dot ngot truoc cau punchline hai (v3.5) */
+  ngatNhacPunchline?: boolean;
+  /** Cau hinh 2 o End-Screen YouTube cho canh ket_thuc (v3.5) */
+  endScreen?: CauHinhEndScreen;
   nhanVat: NhanVatTrongCanh[];
   hieuUngHoatHinh?: HieuUngHoatHinhItem[];
   loiBinhHaiHuoc?: LoiBinhHaiHuoc;
@@ -544,6 +698,12 @@ export type Canh = {
 export type Chuong = {
   id: string;
   tenChuong: string;
+  /** Dong mo ta rieng biet cua hoi (hien thi khi mo hoi, cam dung chung 1 cau cho nhieu hoi) */
+  phuDeHoi?: string;
+  /** Sac thai nhac nen chu dao cua hoi (v3.5: vui_tuoi | bi_an | kich_tinh | tram_lang) */
+  tamTrangNhac?: TamTrangNhac;
+  /** Cau moc noi Open Loop cuoi hoi keo nguoi xem sang hoi tiep theo (v3.5) */
+  openLoopCuoiHoi?: string;
   canh: Canh[];
 };
 
@@ -554,6 +714,8 @@ export type DuLieuVideoDai = {
   batSfx?: boolean;
   batPhuDe?: boolean;
   danhSachNhanVat: ThongTinNhanVat[];
+  /** Ho so tuy chinh Mascot dan chuyen co dinh cua kenh (v3.5, tuy chon) */
+  mascotKenh?: CauHinhMascotKenh;
   chuong: Chuong[];
   /** 3 phuong an goi y Thumbnail A/B (tuy chon, tuong thich nguoc 100%) */
   goiYThumbnail?: PhuongAnThumbnail[];
@@ -566,7 +728,31 @@ export const DANH_SACH_LOAI_BO_CUC: readonly LoaiBoCuc[] = [
   'hai_huoc',
   'giai_thich_toan',
   'dong_thoi_gian',
+  'ban_do_hanh_trinh',
+  'bao_chi_co',
+  'phan_ung_cam',
   'ket_thuc',
+] as const;
+
+export const DANH_SACH_TAM_TRANG_NHAC: readonly TamTrangNhac[] = [
+  'vui_tuoi',
+  'bi_an',
+  'kich_tinh',
+  'tram_lang',
+] as const;
+
+export const DANH_SACH_PHUONG_TIEN_HANH_TRINH: readonly PhuongTienHanhTrinh[] = [
+  'tau_thuy',
+  'thu_tay',
+  'nguoi_di_bo',
+  'xe_ngua',
+] as const;
+
+export const DANH_SACH_KIEU_PHAN_UNG_CAM: readonly KieuPhanUngCam[] = [
+  'nhap_tra',
+  'nhuong_may',
+  'tron_mat',
+  'can_loi',
 ] as const;
 
 export const DANH_SACH_LOAI_BOI_CANH: readonly LoaiBoiCanh[] = [
@@ -649,6 +835,17 @@ export const DANH_SACH_GOC_QUAY: readonly GocQuayCamera[] = [
   'zoom_dao_cu',
   'pan_ngang',
   'chia_doi_man_hinh',
+  'can_mat_trai',
+  'can_mat_phai',
+  'can_mat_kich_tinh',
+  'dao_goc_can_mat',
+] as const;
+
+export const DANH_SACH_KIEU_BONG_BONG: readonly KieuBongBongChat[] = [
+  'thuong',
+  'quat_thao',
+  'suy_nghi',
+  'ca_khia',
 ] as const;
 
 export const DANH_SACH_LOAI_CANH: readonly LoaiCanh[] = [
@@ -717,6 +914,12 @@ export const DANH_SACH_LOAI_HIEU_UNG_HOAT_HINH: readonly LoaiHieuUngHoatHinh[] =
   'khoi_chay_tron',
   'co_lan_im_lang',
   'nhan_chu_hai_huoc',
+  'mo_hoi_lon',
+  'khoi_boc_tai',
+  'mat_xoan_oc',
+  'cham_hoi_nay',
+  'tia_toc_do',
+  'bong_den_y_tuong',
 ] as const;
 
 export const DANH_SACH_LOAI_MINH_HOA_TOAN: readonly LoaiMinhHoaToan[] = [
@@ -726,6 +929,9 @@ export const DANH_SACH_LOAI_MINH_HOA_TOAN: readonly LoaiMinhHoaToan[] = [
   'hinh_hoc_chung_minh',
   'chuoi_suy_luan',
   'tung_buoc',
+  'so_do_anh_xa',
+  'luoi_duong_cheo',
+  'bieu_do_cot',
 ] as const;
 
 export const DANH_SACH_LOAI_DAO_CU: readonly LoaiDaoCu[] = [
@@ -755,4 +961,45 @@ export const DANH_SACH_VAI_NOI: readonly VaiNoi[] = [
   'nguoi_dan',
   'nhan_vat',
   'binh_luan_hai',
+] as const;
+
+export const DANH_SACH_TRANG_PHUC: readonly LoaiTrangPhuc[] = [
+  'ao_vest_co_dien',
+  'ao_choang_hoc_gia',
+  'ao_co_an_do',
+  'ao_len_mua_dong',
+  'ao_choang_hy_lap',
+  'quan_phuc_co',
+  'thuong_dan',
+] as const;
+
+export const DANH_SACH_KIEU_TOC: readonly LoaiKieuToc[] = [
+  'gon_gang',
+  'xoan_co_dien',
+  'toc_bac_dai',
+  'khan_quan',
+  'mu_rong_vanh',
+  'mu_noi',
+  'hoi_hoi',
+] as const;
+
+export const DANH_SACH_CO_RAU: readonly LoaiCoRau[] = [
+  'khong',
+  'ria_mep',
+  'rau_quai_non',
+  'rau_bac_dai',
+] as const;
+
+export const DANH_SACH_TAM_KHUNG: readonly TamKhungNhanVat[] = [
+  'toan_canh',
+  'ban_than',
+  'can_mat',
+] as const;
+
+export const DANH_SACH_LOAI_ANH_SANG: readonly LoaiAnhSangMoiTruong[] = [
+  'nang_am',
+  'anh_nen',
+  'dem_lanh',
+  'trung_tinh',
+  'hoang_hon',
 ] as const;

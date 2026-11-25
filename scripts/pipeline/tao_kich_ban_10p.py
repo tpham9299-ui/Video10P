@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import re
 import sys
 import unicodedata
@@ -24,7 +25,7 @@ from scripts.pipeline.bo_nho_hoc_hoi import (
     tao_ngu_canh_hoc_hoi,
     them_bai_hoc,
 )
-from scripts.pipeline.gemini_client import GeminiClient
+from scripts.pipeline.gemini_client import GeminiClient, tai_env
 
 # ==============================================================================
 # 1. HOP DONG ENUM DONG BO 100% VOI src/kieu_dai.ts
@@ -37,8 +38,47 @@ LOAI_BO_CUC: tuple[str, ...] = (
     "hai_huoc",
     "giai_thich_toan",
     "dong_thoi_gian",
+    "ban_do_hanh_trinh",
+    "bao_chi_co",
+    "phan_ung_cam",
     "ket_thuc",
 )
+
+TAM_TRANG_NHAC: tuple[str, ...] = (
+    "vui_tuoi",
+    "bi_an",
+    "kich_tinh",
+    "tram_lang",
+)
+
+PHUONG_TIEN_HANH_TRINH: tuple[str, ...] = (
+    "tau_thuy",
+    "thu_tay",
+    "nguoi_di_bo",
+    "xe_ngua",
+)
+
+KIEU_PHAN_UNG_CAM: tuple[str, ...] = (
+    "nhap_tra",
+    "nhuong_may",
+    "tron_mat",
+    "can_loi",
+)
+
+ID_MASCOT_KENH = "mascot_pi"
+MASCOT_KENH_MAC_DINH: dict[str, Any] = {
+    "id": ID_MASCOT_KENH,
+    "ten": "Giáo Sư Pi",
+    "mauThan": "#1A1A1A",
+    "mauChuDao": "#0284C7",
+    "mauDa": "#FFFDF7",
+    "phuKien": "kinh_tron",
+    "doTuoi": "truong_thanh",
+    "trangPhuc": "ao_choang_hoc_gia",
+    "kieuToc": "mu_noi",
+    "coRau": "khong",
+    "mauAo": "#0284C7",
+}
 
 LOAI_BOI_CANH: tuple[str, ...] = (
     "bo_bien_hy_lap",
@@ -115,11 +155,68 @@ GOC_QUAY_CAMERA: tuple[str, ...] = (
     "toan_canh",
     "trung_canh",
     "can_mat",
+    "can_mat_trai",
+    "can_mat_phai",
+    "can_mat_kich_tinh",
+    "dao_goc_can_mat",
     "focus_trai",
     "focus_phai",
     "zoom_dao_cu",
     "pan_ngang",
     "chia_doi_man_hinh",
+)
+
+LOAI_TRANG_PHUC: tuple[str, ...] = (
+    "ao_vest_co_dien",
+    "ao_choang_hoc_gia",
+    "ao_co_an_do",
+    "ao_len_mua_dong",
+    "ao_choang_hy_lap",
+    "quan_phuc_co",
+    "thuong_dan",
+)
+
+LOAI_KIEU_TOC: tuple[str, ...] = (
+    "gon_gang",
+    "xoan_co_dien",
+    "toc_bac_dai",
+    "khan_quan",
+    "mu_rong_vanh",
+    "mu_noi",
+    "hoi_hoi",
+)
+
+LOAI_CO_RAU: tuple[str, ...] = (
+    "khong",
+    "ria_mep",
+    "rau_quai_non",
+    "rau_bac_dai",
+)
+
+TAM_KHUNG_NHAN_VAT: tuple[str, ...] = (
+    "toan_canh",
+    "ban_than",
+    "can_mat",
+)
+
+KIEU_BONG_BONG_CHAT: tuple[str, ...] = (
+    "thuong",
+    "quat_thao",
+    "suy_nghi",
+    "ca_khia",
+)
+
+LOAI_KHUNG_HINH_AI: tuple[str, ...] = (
+    "boi_canh",
+    "can_canh_vat_the",
+)
+
+LOAI_ANH_SANG_MOI_TRUONG: tuple[str, ...] = (
+    "nang_am",
+    "anh_nen",
+    "dem_lanh",
+    "trung_tinh",
+    "hoang_hon",
 )
 
 LOAI_CANH: tuple[str, ...] = (
@@ -188,6 +285,12 @@ LOAI_HIEU_UNG_HOAT_HINH: tuple[str, ...] = (
     "khoi_chay_tron",
     "co_lan_im_lang",
     "nhan_chu_hai_huoc",
+    "mo_hoi_lon",
+    "khoi_boc_tai",
+    "mat_xoan_oc",
+    "cham_hoi_nay",
+    "tia_toc_do",
+    "bong_den_y_tuong",
 )
 
 LOAI_MINH_HOA_TOAN: tuple[str, ...] = (
@@ -197,6 +300,87 @@ LOAI_MINH_HOA_TOAN: tuple[str, ...] = (
     "hinh_hoc_chung_minh",
     "chuoi_suy_luan",
     "tung_buoc",
+    "so_do_anh_xa",
+    "luoi_duong_cheo",
+    "bieu_do_cot",
+)
+
+BOI_CANH_TRONG_NHA: frozenset[str] = frozenset(
+    {
+        "thu_vien_co_dien",
+        "lop_hoc_bang_xanh",
+        "thu_vien_trung_co",
+        "dai_thien_van_phuc_hung",
+        "giang_duong_hien_dai",
+        "nha_co_phong_sinh",
+        "phong_tro_bep_lua",
+        "phong_benh_vien",
+        "giang_duong_dai_hoc",
+        "phong_thi_nghiem_co",
+        "phong_nen_hai_huoc",
+    }
+)
+
+BOI_CANH_VU_TRU: frozenset[str] = frozenset(
+    {
+        "khong_gian_vu_tru_toan",
+        "bau_troi_dem_vu_tru",
+    }
+)
+
+VAT_THE_NGOAI_TROI_CAM_TRONG_NHA: frozenset[str] = frozenset(
+    {
+        "la_vang_gio",
+        "chim_hai_au",
+        "chim_san_truong",
+        "ca_gon_song",
+        "buom_vuon",
+        "xe_taxi_co",
+    }
+)
+
+VAT_THE_CAM_TRONG_VU_TRU: frozenset[str] = frozenset(
+    {
+        "ngon_nen_den_dau",
+        "la_vang_gio",
+        "chim_hai_au",
+        "chim_san_truong",
+        "ca_gon_song",
+        "buom_vuon",
+        "xe_taxi_co",
+        "tuyet_cua_so",
+        "hoi_khoi",
+    }
+)
+
+BOI_CANH_CO_CUA_SO_TUYET: frozenset[str] = frozenset(
+    {
+        "phong_benh_vien",
+        "phong_tro_bep_lua",
+        "nha_co_phong_sinh",
+        "thu_vien_co_dien",
+        "giang_duong_dai_hoc",
+        "phong_thi_nghiem_co",
+    }
+)
+
+_TU_KHOA_NGUOI_GIA_GIAI_THUONG: tuple[str, ...] = (
+    "giải thưởng",
+    "huy chương",
+    "vinh danh",
+    "trao giải",
+    "cuối đời",
+    "qua đời",
+    "tuổi già",
+    "lúc về già",
+    "viện hàn lâm",
+    "giáo sư già",
+    "bệnh viện tâm thần",
+    "người già",
+    "giai thuong",
+    "huy chuong",
+    "cuoi doi",
+    "tuoi gia",
 )
 
 LOAI_BUOC_VE_TOAN: tuple[str, ...] = (
@@ -279,88 +463,98 @@ KHUNG_6_HOI: list[dict[str, Any]] = [
     {
         "soHoi": 1,
         "id": "chuong_1",
-        "vaiTro": "Hook 20-30 giay dau gay soc to mo & Nhap cuoc cau chuyen",
+        "tamTrangNhacMacDinh": "bi_an",
+        "vaiTro": "Cold Open 15 giây đầu gây sốc tò mò (Mascot kênh) & Nhập cuộc câu chuyện",
         "phutMucTieu": 1.6,
         "tuToiThieu": 250,
         "tuMucTieu": "280-330",
         "soCanh": "16-19",
         "yeuCauDacBiet": (
-            "BAT BUOC mo man bang DOAN HOOK 20-30 GIAY DAU (3-5 canh dau tien, tong khoang 55-85 tu) "
-            "di thang vao mot nghich ly Toan hoc gay soc, cau do meo kho tin hoac tinh huong do khoc do cuoi "
-            "cua nhan vat truoc khi quay lai ke dien bien lich su. "
-            "CAM TUYET DOI mo bai kieu tieu su sach giao khoa ('X sinh nam ... tai ...') hay chao hoi "
-            "'Xin chao cac ban', xin like/subscribe. "
-            "Trong 30 giay dau, doi goc may/bo cuc lien tuc moi 4-6 giay de giu chan nguoi xem. "
-            "Phong cach thien nhien + hai huoc di dom, TUYET DOI KHONG danh dam. "
-            "Canh dau tien bat buoc dung boCuc='mo_dau' va chuyenCanh='vong_tron_hoat_hinh'."
+            "BẮT BUỘC mở màn bằng COLD OPEN 15 GIÂY ĐẦU (2-3 cảnh đầu tiên, tổng 40-58 từ) có Mascot kênh (`mascot_pi`) "
+            "đi thẳng vào nghịch lý Toán học gây sốc, ẩn dụ hiện đại hài hước hoặc tình huống dở khóc dở cười "
+            "trước khi quay lại kể diễn biến lịch sử. "
+            "CẤM TUYỆT ĐỐI mở bài kiểu tiểu sử sách giáo khoa ('X sinh năm ... tại ...') hay chào hỏi "
+            "'Xin chào các bạn', xin like/subscribe. "
+            "Cuối hồi BẮT BUỘC có câu móc nối Open Loop (`openLoopCuoiHoi`) khiến người xem muốn xem tiếp Hồi 2. "
+            "Cảnh đầu tiên bắt buộc dùng boCuc='mo_dau' và chuyenCanh='vong_tron_hoat_hinh'."
         ),
     },
     {
         "soHoi": 2,
         "id": "chuong_2",
-        "vaiTro": "Nhan vat & Rac roi thoi dai",
+        "tamTrangNhacMacDinh": "vui_tuoi",
+        "vaiTro": "Nhân vật, Rắc rối thời đại & Hành trình đầu tiên",
         "phutMucTieu": 2.0,
         "tuToiThieu": 280,
         "tuMucTieu": "300-360",
         "soCanh": "16-22",
         "yeuCauDacBiet": (
-            "Gioi thieu nhan vat chinh voi tinh cach doi thuong di dom, kem bai toan hoc bua "
-            "lam ca gioi hoc gia dau dau. Xen ke canh doi_thoai va dong_thoi_gian."
+            "Giới thiệu nhân vật chính với tính cách đời thường dí dỏm (dùng ẩn dụ hiện đại hài hước), kèm bài toán hóc búa. "
+            "Xen kẽ cảnh doi_thoai, dong_thoi_gian, ít nhất 1 cảnh `ban_do_hanh_trinh` (hoặc `bao_chi_co`) và 1 cảnh `phan_ung_cam` 1.5-2.5s. "
+            "Chèn 1 câu đố `tuong_tac_khan_gia` do Mascot kênh (`mascot_pi`) dẫn dắt và khép hồi bằng câu móc nối Open Loop sang Hồi 3."
         ),
     },
     {
         "soHoi": 3,
         "id": "chuong_3",
-        "vaiTro": "Khoanh khac 'O-re-ca!' & Giai ma Toan hoc phan 1",
+        "tamTrangNhacMacDinh": "bi_an",
+        "vaiTro": "Khoảnh khắc 'Ơ-rê-ca!' & Giải mã Toán học phần 1",
         "phutMucTieu": 2.0,
         "tuToiThieu": 280,
         "tuMucTieu": "310-360",
         "soCanh": "16-22",
         "yeuCauDacBiet": (
-            "Khai thac y tuong dot pha. BAT BUOC co toi thieu 2 canh boCuc='giai_thich_toan' "
-            "dung boiCanh='lop_hoc_bang_xanh', co congThucLatex ro rang va minhHoaToan, "
-            "giai thich cuc de hieu bang vi du doi song."
+            "Khai thác ý tưởng đột phá bằng ẩn dụ hiện đại cực dễ hiểu. BẮT BUỘC có tối thiểu 2 cảnh boCuc='giai_thich_toan' "
+            "dùng boiCanh='lop_hoc_bang_xanh', có congThucLatex rõ ràng và minhHoaToan trực quan "
+            "(ưu tiên so_do_anh_xa, luoi_duong_cheo, bieu_do_cot, do_thi_ham_so, tam_giac_vuong, truc_so_vo_ti). "
+            "Khép hồi bằng câu móc nối Open Loop sang Hồi 4."
         ),
     },
     {
         "soHoi": 4,
         "id": "chuong_4",
-        "vaiTro": "Buoc ngoat bat ngo & Tinh huong do khoc do cuoi",
+        "tamTrangNhacMacDinh": "kich_tinh",
+        "vaiTro": "Bước ngoặt chấn động, Drama học thuật & Tình huống dở khóc dở cười",
         "phutMucTieu": 2.0,
         "tuToiThieu": 280,
         "tuMucTieu": "300-360",
         "soCanh": "16-22",
         "yeuCauDacBiet": (
-            "Giai thoai that thu vi, phan ung 'can loi' cua nguoi duong thoi. "
-            "BAT BUOC co it nhat 2 canh boCuc='hai_huoc' (dung zoom_hai_huoc, giot_mo_hoi, "
-            "co_lan_im_lang, nhan_chu_hai_huoc va loiBinhHaiHuoc pha vo buc tuong thu 4)."
+            "Giai thoại thật thú vị, phản ứng 'cạn lời' của người đương thời. "
+            "BẮT BUỘC có ít nhất 1 cảnh `bao_chi_co` (tờ báo giật gân xoay vào màn hình), 1 cảnh `phan_ung_cam` (1.5-2.5s nhấp trà/nhướng mày/trợn mắt), "
+            "1 cảnh đánh dấu `ngatNhacPunchline: true` trước câu punchline hài đắt giá, và 1 cảnh `tuong_tac_khan_gia` do Mascot kênh dẫn. "
+            "Khép hồi bằng câu móc nối Open Loop sang Hồi 5."
         ),
     },
     {
         "soHoi": 5,
         "id": "chuong_5",
-        "vaiTro": "Chieu sau Toan hoc & The gioi hien dai",
+        "tamTrangNhacMacDinh": "vui_tuoi",
+        "vaiTro": "Chiều sâu Toán học & Thế giới hiện đại",
         "phutMucTieu": 2.0,
         "tuToiThieu": 280,
         "tuMucTieu": "300-360",
         "soCanh": "16-22",
         "yeuCauDacBiet": (
-            "Mo rong ban chat dinh ly (them it nhat 1 canh boCuc='giai_thich_toan' co congThucLatex & minhHoaToan) "
-            "va chung minh no dang am tham van hanh thu gi quanh ta hom nay (GPS, dien thoai, tro choi, thien van...)."
+            "Mở rộng bản chất định lý (thêm ít nhất 1 cảnh boCuc='giai_thich_toan' có congThucLatex & minhHoaToan trực quan), "
+            "dùng ẩn dụ hiện đại hài hước kết nối với GPS, Wi-Fi, điện thoại, trò chơi hay thiên văn ngày nay. "
+            "Có thể xen 1 cảnh `ban_do_hanh_trinh` hoặc `phan_ung_cam` và khép hồi bằng Open Loop sang Hồi 6."
         ),
     },
     {
         "soHoi": 6,
         "id": "chuong_6",
-        "vaiTro": "Du am cau chuyen & Cai ket di dom",
+        "tamTrangNhacMacDinh": "tram_lang",
+        "vaiTro": "Dư âm câu chuyện, Cái kết dí dỏm & End-Screen 15 giây (Mascot)",
         "phutMucTieu": 1.6,
         "tuToiThieu": 250,
         "tuMucTieu": "280-330",
         "soCanh": "16-19",
         "yeuCauDacBiet": (
-            "Khep lai vong cung cau chuyen tren boi canh hoang_hon hoac bau_troi_dem_vu_tru + ban_dem, "
-            "dong lai 3 y chinh + 1 cau ket co duyen, goi mo tap tiep theo. "
-            "Canh cuoi cung bat buoc dung boCuc='ket_thuc'."
+            "Khép lại vòng cung câu chuyện trên bối cảnh hoang_hon hoặc bau_troi_dem_vu_tru + ban_dem, "
+            "đọng lại 3 ý chính + 1 câu kết có duyên. "
+            "Cảnh cuối cùng BẮT BUỘC dùng boCuc='ket_thuc' (~15 giây cuối) có Mascot kênh (`mascot_pi`) và trường `endScreen` "
+            "mời khán giả bấm chọn 1 trong 2 video gợi ý ở khung trái/phải."
         ),
     },
 ]
@@ -369,14 +563,16 @@ TONG_TU_TOI_THIEU = 1750
 TONG_TU_TOI_DA = 2150
 
 SYSTEM_BIEN_KICH = (
-    "Ban dam nhiem 2 vai chuyen mon song song cho phim hoat hinh 2D ke chuyen lich su Toan hoc "
-    "phong cach Kurzgesagt ket hop Oversimplified ban tieng Viet: "
-    "(1) BIEN KICH KE CHUYEN: ke chuyen cuon hut, doi thoai nhan vat song dong co ca tinh, "
-    "tuong tac khan gia tu nhien, hai huoc di dom vua du duyen (khong lo, khong bao luc), "
-    "chong lap y giua cac hoi, kien thuc Toan hoc chinh xac 100%; "
-    "(2) DAO DIEN STORYBOARD: khop boiCanh/doTuoi/tuThe/daoCu/vatTheXungQuanh 1-1 theo tung tinh tiet "
-    "cau chuyen, dan dung da dang gocQuay may quay dien anh va bieuCamTheoMoc theo dien bien cam xuc. "
-    "Tra ve DUY NHAT JSON hop le, khong giai thich thua."
+    "Bạn đảm nhiệm 2 vai chuyên môn song song cho phim hoạt hình 2D kể chuyện lịch sử Toán học "
+    "phong cách Kurzgesagt kết hợp Oversimplified bản tiếng Việt: "
+    "(1) BIÊN KỊCH KỂ CHUYỆN: kể chuyện cuốn hút, đối thoại nhân vật sống động có cá tính, "
+    "tương tác khán giả tự nhiên, hài hước dí dỏm vừa đủ duyên (không lố, không bạo lực), "
+    "chống lặp ý giữa các hồi, kiến thức Toán học chính xác 100%, "
+    "BẮT BUỘC 100% văn bản tiếng Việt hiển thị (tiêu đề, phụ đề hồi, lời thoại, lượt thoại, minh họa Toán, gợi ý) "
+    "phải CÓ DẤU ĐẦY ĐỦ và đúng chính tả, TUYỆT ĐỐI CẤM viết tiếng Việt không dấu; "
+    "(2) ĐẠO DIỄN STORYBOARD: khớp boiCanh/doTuoi/tuThe/daoCu/vatTheXungQuanh 1-1 theo từng tình tiết "
+    "câu chuyện, dàn dựng đa dạng gocQuay máy quay điện ảnh và bieuCamTheoMoc theo diễn biến cảm xúc. "
+    "Trả về DUY NHẤT JSON hợp lệ, không giải thích thừa."
 )
 
 
@@ -396,6 +592,347 @@ def tao_slug(van_ban: str) -> str:
 def dem_tu(van_ban: str) -> int:
     """Dem so tu tieng Viet thuc te trong loi thoai."""
     return len(re.findall(r"[^\W_]+", van_ban or "", flags=re.UNICODE))
+
+
+def cat_gon_theo_tu(van_ban: str, gioi_han: int) -> str:
+    """
+    Cat gon chuoi trong gioi han ky tu theo dung ranh gioi tu / dau cau,
+    TUYET DOI KHONG cat cut giua tu (nhu '...Leopol', '...một sự công').
+    """
+    sach = re.sub(r"\s+", " ", str(van_ban or "").strip())
+    if not sach or gioi_han <= 0 or len(sach) <= gioi_han:
+        return sach
+    cat = sach[:gioi_han]
+    # Tim khoang trang cuoi cung de khong bao gio cat giua tu
+    vi_tri_cach = cat.rfind(" ")
+    if vi_tri_cach >= max(8, int(gioi_han * 0.45)):
+        cat = cat[:vi_tri_cach]
+    return cat.rstrip(" ,;:-—–(")
+
+
+_PAT_KY_TU_DAU_VIET = re.compile(
+    r"[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ"
+    r"ÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ]"
+)
+
+# Tap tu vung tieng Viet khong dau dac trung (hau nhu chac chan phai co dau trong tieng Viet chuan)
+_TU_VIET_BAT_BUOC_CO_DAU: frozenset[str] = frozenset(
+    {
+        "khong", "duoc", "nguoi", "chuyen", "nhung", "truong", "phuong", "luong",
+        "nhieu", "thuong", "cuoc", "buoc", "nuoc", "tuyet", "nghich", "dinh",
+        "chinh", "gioi", "thoi", "giai", "thoai", "biet", "thua", "luy", "cuc",
+        "toan", "hoc", "lich", "su", "phat", "minh", "cong", "thuc", "chung",
+        "tap", "hop", "nhien", "thuc", "cau", "hoi", "dap", "ngoai", "phong",
+        "canh", "gian", "giay", "phut", "chuong", "trinh", "tuong", "tac",
+        "khan", "gia", "phan", "tich", "suy", "luan", "duong", "cheo", "bang",
+        "ket", "thuc", "dau", "hai", "huoc", "dom", "tinh", "huong", "nhan",
+        "vat", "doi", "tuoi", "benh", "vien", "thu", "tru", "gay", "gat",
+        "that", "tiet", "khac", "nhau", "nhat", "dang", "tranh", "anh", "mot",
+        "cac", "ban", "bat", "ngo", "cua", "trong", "voi", "nhu", "the", "hien",
+        "dai", "nay", "khi", "sao", "neu", "thi", "vao", "len", "xuong", "den",
+        "cung", "hoac", "theo", "giua", "tren", "duoi", "truoc", "trai", "phai",
+        "ngay", "dem", "sang", "toi", "dien", "thoai", "chieu", "sau", "ngo",
+        "ngac", "nhien", "tuong", "trung", "vuong", "goc", "canh", "song",
+        "dong", "bien", "thuyen", "nha", "sinh", "gia", "giai", "thuong",
+        "chua", "phai", "nhin", "nghe", "noi", "viet", "doc", "tinh", "so",
+        "lon", "nho", "hon", "kem", "rat", "qua", "lam", "viec", "cuoi",
+    }
+)
+
+# Tap tu bat buoc phai co dau ngay ca khi chuoi co 1-2 dau lac (tranh false positive voi tu tieng Anh/ten rieng)
+_TU_VIET_CHAC_CHAN_THIEU_DAU: frozenset[str] = frozenset(
+    {
+        "khong", "duoc", "nguoi", "chuyen", "nhung", "truong", "phuong", "luong",
+        "nhieu", "thuong", "cuoc", "buoc", "nuoc", "tuyet", "nghich", "dinh",
+        "chinh", "gioi", "thoi", "giai", "thoai", "biet", "thua", "luy", "cuc",
+        "toan", "chung", "nhien", "ngoai", "phong", "canh", "giay", "phut",
+        "chuong", "trinh", "tuong", "khan", "phan", "tich", "luan", "duong",
+        "cheo", "huoc", "huong", "nhan", "tuoi", "benh", "vien", "tranh",
+        "khac", "nhau", "nhat", "cua", "trong", "hien", "xuong", "hoac",
+        "giua", "tren", "duoi", "truoc", "trai", "phai", "ngay", "chieu",
+        "ngac", "vuong", "thuyen", "thuong", "chua", "viec", "cuoi", "cac",
+    }
+)
+
+
+def _la_chuoi_tieng_viet_thieu_dau(van_ban: str, do_dai_toi_thieu: int = 20) -> bool:
+    """
+    Phat hien chuoi tieng Viet dai >= 20 ky tu bi viet KHONG DAU (hoac thieu dau nghiem trong).
+    Bo qua URL, ma LaTeX thuan, hoac chuoi tieng Anh thuan.
+    """
+    sach = re.sub(r"\s+", " ", str(van_ban or "").strip())
+    if len(sach) < do_dai_toi_thieu:
+        return False
+    if sach.startswith(("http://", "https://")):
+        return False
+
+    # Bo cac lenh LaTeX (\frac, \sqrt, ...) va ky hieu toan de chi xet phan chu tu nhien
+    phan_chu = re.sub(r"\\[a-zA-Z]+", " ", sach)
+    phan_chu = re.sub(r"https?://\S+", " ", phan_chu)
+    tu_list = re.findall(r"[A-Za-zÀ-ỹđĐ]+", phan_chu, flags=re.UNICODE)
+    if len(tu_list) < 3:
+        return False
+
+    so_ky_tu_dau = len(_PAT_KY_TU_DAU_VIET.findall(phan_chu))
+    tu_thuong = [t.lower() for t in tu_list]
+    so_tu_khong_dau_viet = sum(1 for t in tu_thuong if t in _TU_VIET_BAT_BUOC_CO_DAU)
+    so_tu_chac_chan_thieu = sum(1 for t in tu_thuong if t in _TU_VIET_CHAC_CHAN_THIEU_DAU)
+
+    # Truong hop 1: Hoan toan khong co ky tu dau tieng Viet nao va co >= 2 tu tieng Viet khong dau
+    if so_ky_tu_dau == 0:
+        if so_tu_chac_chan_thieu >= 1 and so_tu_khong_dau_viet >= 2:
+            return True
+        if so_tu_khong_dau_viet >= 3:
+            return True
+        return False
+
+    # Truong hop 2: Co rat it dau (<= 1 dau) nhung nhieu tu chac chan thieu dau (>= 3 tu)
+    if so_ky_tu_dau <= 1 and so_tu_chac_chan_thieu >= 3:
+        return True
+
+    # Truong hop 3: Chuoi dai co mat do tu chac chan thieu dau cao (>= 4 tu va >= 30% tong so tu)
+    if so_tu_chac_chan_thieu >= 4 and (so_tu_chac_chan_thieu / max(1, len(tu_thuong))) >= 0.30:
+        return True
+
+    return False
+
+
+def _duyet_chuoi_hien_thi_kich_ban(kich_ban: dict[str, Any]) -> list[tuple[str, str, str, str]]:
+    """
+    Thu thap tat ca (duong_dan, canh_id, ten_truong, gia_tri) cho cac truong van ban hien thi:
+    tieuDe, chuDe, goiY, goiYThumbnail, tenChuong, phuDeHoi, tieuDeNho, loiThoai,
+    luotThoai[].noiDung, bongBongThoai, loiBinhHaiHuoc.noiDung, mocThoiGian[].moTa,
+    minhHoaToan, congThucLatex[].nhan, cauHoiTuongTac.
+    """
+    ket_qua: list[tuple[str, str, str, str]] = []
+
+    def _them(duong_dan: str, canh_id: str, truong: str, val: Any) -> None:
+        if isinstance(val, str) and val.strip():
+            ket_qua.append((duong_dan, canh_id, truong, val.strip()))
+
+    _them("tieuDe", "", "tieuDe", kich_ban.get("tieuDe"))
+    _them("chuDe", "", "chuDe", kich_ban.get("chuDe"))
+    if isinstance(kich_ban.get("goiY"), str):
+        _them("goiY", "", "goiY", kich_ban.get("goiY"))
+    elif isinstance(kich_ban.get("goiY"), list):
+        for gi, g in enumerate(kich_ban["goiY"]):
+            _them(f"goiY[{gi}]", "", "goiY", g)
+
+    for ti, th in enumerate(kich_ban.get("goiYThumbnail") or []):
+        if isinstance(th, dict):
+            _them(f"goiYThumbnail[{ti}].tieuDeLon", "", "goiYThumbnail.tieuDeLon", th.get("tieuDeLon"))
+            _them(f"goiYThumbnail[{ti}].nhanPhu", "", "goiYThumbnail.nhanPhu", th.get("nhanPhu"))
+
+    for ci, ch in enumerate(kich_ban.get("chuong") or []):
+        if not isinstance(ch, dict):
+            continue
+        _them(f"chuong[{ci}].tenChuong", "", "tenChuong", ch.get("tenChuong"))
+        _them(f"chuong[{ci}].phuDeHoi", "", "phuDeHoi", ch.get("phuDeHoi"))
+        _them(f"chuong[{ci}].openLoopCuoiHoi", "", "openLoopCuoiHoi", ch.get("openLoopCuoiHoi"))
+        for ki, canh in enumerate(ch.get("canh") or []):
+            if not isinstance(canh, dict):
+                continue
+            cid = str(canh.get("id") or f"canh_{ki + 1:03d}")
+            base = f"chuong[{ci}].canh[{ki}]"
+            _them(f"{base}.tieuDeNho", cid, "tieuDeNho", canh.get("tieuDeNho"))
+            _them(f"{base}.phuDeHoi", cid, "phuDeHoi", canh.get("phuDeHoi"))
+            _them(f"{base}.loiThoai", cid, "loiThoai", canh.get("loiThoai"))
+            if isinstance(canh.get("goiY"), str):
+                _them(f"{base}.goiY", cid, "goiY", canh.get("goiY"))
+            elif isinstance(canh.get("goiY"), list):
+                for gi, g in enumerate(canh["goiY"]):
+                    _them(f"{base}.goiY[{gi}]", cid, "goiY", g)
+
+            for li, lt in enumerate(canh.get("luotThoai") or []):
+                if isinstance(lt, dict):
+                    _them(f"{base}.luotThoai[{li}].noiDung", cid, "luotThoai", lt.get("noiDung"))
+
+            for ni, nv in enumerate(canh.get("nhanVat") or []):
+                if isinstance(nv, dict):
+                    _them(f"{base}.nhanVat[{ni}].bongBongThoai", cid, "bongBongThoai", nv.get("bongBongThoai"))
+
+            if isinstance(canh.get("loiBinhHaiHuoc"), dict):
+                _them(f"{base}.loiBinhHaiHuoc.noiDung", cid, "loiBinhHaiHuoc", canh["loiBinhHaiHuoc"].get("noiDung"))
+
+            for mi, moc in enumerate(canh.get("mocThoiGian") or []):
+                if isinstance(moc, dict):
+                    _them(f"{base}.mocThoiGian[{mi}].moTa", cid, "mocThoiGian", moc.get("moTa"))
+
+            for cti, ct in enumerate(canh.get("congThucLatex") or []):
+                if isinstance(ct, dict):
+                    _them(f"{base}.congThucLatex[{cti}].nhan", cid, "congThucLatex.nhan", ct.get("nhan"))
+
+            mh = canh.get("minhHoaToan")
+            if isinstance(mh, dict):
+                _them(f"{base}.minhHoaToan.tieuDe", cid, "minhHoaToan.tieuDe", mh.get("tieuDe"))
+                _them(f"{base}.minhHoaToan.chuThichCuoi", cid, "minhHoaToan.chuThichCuoi", mh.get("chuThichCuoi"))
+                ts = mh.get("thamSo")
+                if isinstance(ts, dict):
+                    for tk, tv in ts.items():
+                        if tk in ("ham", "mauDuong", "mauNhanManh", "heToaDo"):
+                            continue
+                        if isinstance(tv, str):
+                            _them(f"{base}.minhHoaToan.thamSo.{tk}", cid, "minhHoaToan", tv)
+                        elif isinstance(tv, list):
+                            for tvi, tval in enumerate(tv):
+                                if isinstance(tval, str):
+                                    _them(f"{base}.minhHoaToan.thamSo.{tk}[{tvi}]", cid, "minhHoaToan", tval)
+                for bvi, bv in enumerate(mh.get("buocVe") or []):
+                    if isinstance(bv, dict):
+                        _them(f"{base}.minhHoaToan.buocVe[{bvi}].nhan", cid, "minhHoaToan", bv.get("nhan"))
+                        _them(f"{base}.minhHoaToan.buocVe[{bvi}].noiDung", cid, "minhHoaToan", bv.get("noiDung"))
+
+            chtt = canh.get("cauHoiTuongTac")
+            if isinstance(chtt, dict):
+                _them(f"{base}.cauHoiTuongTac.cauHoi", cid, "cauHoiTuongTac", chtt.get("cauHoi"))
+                _them(f"{base}.cauHoiTuongTac.dapAn", cid, "cauHoiTuongTac", chtt.get("dapAn"))
+                _them(f"{base}.cauHoiTuongTac.giaiThichNgan", cid, "cauHoiTuongTac", chtt.get("giaiThichNgan"))
+                for lci, lc in enumerate(chtt.get("luaChon") or []):
+                    _them(f"{base}.cauHoiTuongTac.luaChon[{lci}]", cid, "cauHoiTuongTac", lc)
+
+            for hui, hu in enumerate(canh.get("hieuUngHoatHinh") or []):
+                if isinstance(hu, dict):
+                    _them(f"{base}.hieuUngHoatHinh[{hui}].chuHienThi", cid, "hieuUngHoatHinh", hu.get("chuHienThi"))
+
+            # Truong v3.5: banDoHanhTrinh, baoChiCo, phanUngCam, endScreen
+            bd = canh.get("banDoHanhTrinh")
+            if isinstance(bd, dict):
+                _them(f"{base}.banDoHanhTrinh.diemDi", cid, "banDoHanhTrinh", bd.get("diemDi"))
+                _them(f"{base}.banDoHanhTrinh.diemDen", cid, "banDoHanhTrinh", bd.get("diemDen"))
+                _them(f"{base}.banDoHanhTrinh.moTaHanhTrinh", cid, "banDoHanhTrinh", bd.get("moTaHanhTrinh"))
+                _them(f"{base}.banDoHanhTrinh.diemDungGiua", cid, "banDoHanhTrinh", bd.get("diemDungGiua"))
+
+            bc = canh.get("baoChiCo")
+            if isinstance(bc, dict):
+                _them(f"{base}.baoChiCo.tenToBao", cid, "baoChiCo", bc.get("tenToBao"))
+                _them(f"{base}.baoChiCo.tieuDeBao", cid, "baoChiCo", bc.get("tieuDeBao"))
+                _them(f"{base}.baoChiCo.tieuDePhu", cid, "baoChiCo", bc.get("tieuDePhu"))
+                _them(f"{base}.baoChiCo.nhanAnhMinhHoa", cid, "baoChiCo", bc.get("nhanAnhMinhHoa"))
+
+            pu = canh.get("phanUngCam")
+            if isinstance(pu, dict):
+                _them(f"{base}.phanUngCam.chuHieuUng", cid, "phanUngCam", pu.get("chuHieuUng"))
+
+            es = canh.get("endScreen")
+            if isinstance(es, dict):
+                _them(f"{base}.endScreen.khungTraiNhan", cid, "endScreen", es.get("khungTraiNhan"))
+                _them(f"{base}.endScreen.khungPhaiNhan", cid, "endScreen", es.get("khungPhaiNhan"))
+                _them(f"{base}.endScreen.loiDanXemTiep", cid, "endScreen", es.get("loiDanXemTiep"))
+
+    return ket_qua
+
+
+def kiem_tra_dau_tieng_viet(
+    kich_ban: dict[str, Any],
+    do_dai_toi_thieu: int = 20,
+) -> list[dict[str, Any]]:
+    """
+    Guardrail phat hien bat ky chuoi tieng Viet nao dai >= 20 ky tu bi thieu dau
+    (o tieu de, loi thoai, luotThoai, minhHoaToan, goiY, mocThoiGian, cauHoiTuongTac...).
+    """
+    vi_pham: list[dict[str, Any]] = []
+    for duong_dan, canh_id, truong, gia_tri in _duyet_chuoi_hien_thi_kich_ban(kich_ban):
+        if _la_chuoi_tieng_viet_thieu_dau(gia_tri, do_dai_toi_thieu=do_dai_toi_thieu):
+            vi_pham.append(
+                {
+                    "loai": "tieng_viet_khong_dau",
+                    "duongDan": duong_dan,
+                    "canhId": canh_id,
+                    "truong": truong,
+                    "giaTri": gia_tri,
+                    "moTa": f"[{canh_id or duong_dan}] Phát hiện chuỗi tiếng Việt thiếu dấu ở '{truong}': \"{cat_gon_theo_tu(gia_tri, 70)}\"",
+                }
+            )
+    return vi_pham
+
+
+def _gan_gia_tri_theo_duong_dan(goc: Any, duong_dan: str, gia_tri_moi: str) -> bool:
+    """Cap nhat gia tri chuoi trong dict/list theo duong dan kieu 'chuong[0].canh[2].loiThoai'."""
+    tokens = re.findall(r"([A-Za-z0-9_]+)|\[(\d+)\]", duong_dan)
+    if not tokens:
+        return False
+    cur = goc
+    for idx, (khoa, chi_so_str) in enumerate(tokens):
+        la_cuoi = idx == len(tokens) - 1
+        if khoa:
+            if not isinstance(cur, dict) or khoa not in cur:
+                return False
+            if la_cuoi:
+                cur[khoa] = gia_tri_moi
+                return True
+            cur = cur[khoa]
+        else:
+            ci = int(chi_so_str)
+            if not isinstance(cur, list) or ci < 0 or ci >= len(cur):
+                return False
+            if la_cuoi:
+                cur[ci] = gia_tri_moi
+                return True
+            cur = cur[ci]
+    return False
+
+
+def tu_dong_sua_dau_tieng_viet(
+    kich_ban: dict[str, Any],
+    gemini: GeminiClient | None = None,
+    do_dai_toi_thieu: int = 20,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """
+    Quet toan bo kich ban bang kiem_tra_dau_tieng_viet(); neu phat hien chuoi thieu dau
+    va co `gemini`, tu dong goi Gemini khoi phuc 100% dau tieng Viet chuan chinh ta
+    truoc khi xuat nhap_kich_ban.json.
+    """
+    import copy
+
+    ket_qua = copy.deepcopy(kich_ban)
+    vi_pham = kiem_tra_dau_tieng_viet(ket_qua, do_dai_toi_thieu=do_dai_toi_thieu)
+    if not vi_pham or gemini is None:
+        return ket_qua, []
+
+    da_sua: list[dict[str, Any]] = []
+    # Xu ly theo lo toi da 30 chuoi/luot de bao dam JSON gon, nhanh, chinh xac
+    for bat_dau in range(0, len(vi_pham), 30):
+        lo = vi_pham[bat_dau : bat_dau + 30]
+        danh_sach_nhap = [
+            {"duongDan": vp["duongDan"], "vanBanGoc": vp["giaTri"]}
+            for vp in lo
+        ]
+        prompt = (
+            "Hãy khôi phục ĐẦY ĐỦ DẤU TIẾNG VIỆT tự nhiên, chuẩn chính tả cho các chuỗi dưới đây.\n"
+            "QUY TẮC BẮT BUỘC:\n"
+            "1. Giữ nguyên hoàn toàn tên riêng nước ngoài (Georg Cantor, Leopold Kronecker, Ramanujan, Hardy, Cambridge...), "
+            "ký hiệu Toán học, con số và ý nghĩa gốc.\n"
+            "2. Không thêm giải thích thừa; trả về DUY NHẤT JSON hợp lệ theo mẫu:\n"
+            '{"daSua": [{"duongDan": "...", "vanBanCoDau": "..."}]}\n\n'
+            f"DANH SÁCH CẦN SỬA:\n{json.dumps(danh_sach_nhap, ensure_ascii=False, indent=2)}"
+        )
+        try:
+            raw = gemini.tao_json(
+                prompt=prompt,
+                system_instruction=(
+                    "Bạn là biên tập viên chính tả tiếng Việt chuyên sâu cho kịch bản lịch sử Toán học. "
+                    "Trả về DUY NHẤT JSON hợp lệ với 100% tiếng Việt có dấu chuẩn xác."
+                ),
+                nhiet_do=0.15,
+                max_output_tokens=8192,
+            )
+        except Exception:
+            continue
+
+        ds_kq = raw.get("daSua") if isinstance(raw, dict) else []
+        if not isinstance(ds_kq, list):
+            continue
+        ban_do_goc = {vp["duongDan"]: vp["giaTri"] for vp in lo}
+        for item in ds_kq:
+            if not isinstance(item, dict):
+                continue
+            dd = str(item.get("duongDan") or "").strip()
+            moi = re.sub(r"\s+", " ", str(item.get("vanBanCoDau") or "").strip())
+            if dd in ban_do_goc and moi and not _la_chuoi_tieng_viet_thieu_dau(moi, do_dai_toi_thieu=do_dai_toi_thieu):
+                if _gan_gia_tri_theo_duong_dan(ket_qua, dd, moi):
+                    da_sua.append({"duongDan": dd, "cu": ban_do_goc[dd], "moi": moi})
+
+    return ket_qua, da_sua
 
 
 def chuan_hoa_enum(gia_tri: Any, hop_le: tuple[str, ...], mac_dinh: str) -> str:
@@ -703,8 +1240,10 @@ def chuan_hoa_goi_y_thumbnail(
 
 
 def chuan_hoa_danh_sach_nhan_vat(raw_list: Any) -> list[dict[str, Any]]:
-    """Chuan hoa danhSachNhanVat theo ThongTinNhanVat trong src/kieu_dai.ts."""
+    """Chuan hoa danhSachNhanVat theo ThongTinNhanVat trong src/kieu_dai.ts (ho tro ho so tao hinh v3.0)."""
     mau_chu_dao_mac_dinh = ["#2563EB", "#EA580C", "#059669", "#7C3AED", "#DB2777"]
+    trang_phuc_mac_dinh = ("ao_vest_co_dien", "ao_choang_hoc_gia", "ao_len_mua_dong", "thuong_dan")
+    kieu_toc_mac_dinh = ("gon_gang", "xoan_co_dien", "toc_bac_dai", "mu_noi")
     ket_qua: list[dict[str, Any]] = []
     da_dung_id: set[str] = set()
 
@@ -712,21 +1251,34 @@ def chuan_hoa_danh_sach_nhan_vat(raw_list: Any) -> list[dict[str, Any]]:
         for idx, item in enumerate(raw_list):
             if not isinstance(item, dict):
                 continue
-            ten = str(item.get("ten") or f"Nhan vat {idx + 1}").strip()
+            ten = str(item.get("ten") or f"Nhân vật {idx + 1}").strip()
             nv_id = tao_slug(str(item.get("id") or ten))
             if not nv_id or nv_id in da_dung_id:
                 nv_id = f"nhan_vat_{idx + 1}"
             da_dung_id.add(nv_id)
+            mau_chu_dao = _ep_mau_hex(
+                item.get("mauChuDao"),
+                mau_chu_dao_mac_dinh[idx % len(mau_chu_dao_mac_dinh)],
+            )
             muc_nv_info: dict[str, Any] = {
                 "id": nv_id,
                 "ten": ten,
                 "mauThan": _ep_mau_hex(item.get("mauThan"), "#1E293B"),
-                "mauChuDao": _ep_mau_hex(
-                    item.get("mauChuDao"),
-                    mau_chu_dao_mac_dinh[idx % len(mau_chu_dao_mac_dinh)],
-                ),
+                "mauChuDao": mau_chu_dao,
                 "mauDa": _ep_mau_hex(item.get("mauDa"), "#FFFDF7"),
                 "phuKien": chuan_hoa_enum(item.get("phuKien"), LOAI_PHU_KIEN, "khong"),
+                "trangPhuc": chuan_hoa_enum(
+                    item.get("trangPhuc"),
+                    LOAI_TRANG_PHUC,
+                    trang_phuc_mac_dinh[idx % len(trang_phuc_mac_dinh)],
+                ),
+                "kieuToc": chuan_hoa_enum(
+                    item.get("kieuToc"),
+                    LOAI_KIEU_TOC,
+                    kieu_toc_mac_dinh[idx % len(kieu_toc_mac_dinh)],
+                ),
+                "coRau": chuan_hoa_enum(item.get("coRau"), LOAI_CO_RAU, "khong"),
+                "mauAo": _ep_mau_hex(item.get("mauAo"), mau_chu_dao),
             }
             if item.get("doTuoi") is not None:
                 muc_nv_info["doTuoi"] = chuan_hoa_enum(item.get("doTuoi"), DO_TUOI_NHAN_VAT, "truong_thanh")
@@ -736,22 +1288,182 @@ def chuan_hoa_danh_sach_nhan_vat(raw_list: Any) -> list[dict[str, Any]]:
         ket_qua = [
             {
                 "id": "nguoi_ke_chuyen",
-                "ten": "Nguoi Ke Chuyen",
+                "ten": "Người Kể Chuyện",
                 "mauThan": "#1E293B",
                 "mauChuDao": "#2563EB",
                 "mauDa": "#FFFDF7",
                 "phuKien": "kinh_tron",
+                "trangPhuc": "ao_vest_co_dien",
+                "kieuToc": "gon_gang",
+                "coRau": "khong",
+                "mauAo": "#2563EB",
             },
             {
                 "id": "nha_toan_hoc",
-                "ten": "Nha Toan Hoc",
+                "ten": "Nhà Toán Học",
                 "mauThan": "#1E293B",
                 "mauChuDao": "#EA580C",
                 "mauDa": "#FFFDF7",
                 "phuKien": "ao_choang",
+                "trangPhuc": "ao_choang_hoc_gia",
+                "kieuToc": "xoan_co_dien",
+                "coRau": "ria_mep",
+                "mauAo": "#EA580C",
             },
         ]
     return ket_qua
+
+
+def chuan_hoa_danh_sach_boi_canh_ai(raw_list: Any) -> list[dict[str, Any]]:
+    """
+    Chuan hoa danhSachBoiCanhAI[] (v3.0): 14-20 dia diem & 4-6 khung tranh dac ta can canh
+    bang tieng Anh suc tich de truyen thang cho scripts/pipeline/tao_boi_canh_ai.py.
+    """
+    if not isinstance(raw_list, list):
+        return []
+    ket_qua: list[dict[str, Any]] = []
+    da_dung_ma: set[str] = set()
+    for idx, item in enumerate(raw_list[:26], start=1):
+        if not isinstance(item, dict):
+            continue
+        loai_kh = chuan_hoa_enum(
+            item.get("loaiKhungHinh") or item.get("loai"),
+            LOAI_KHUNG_HINH_AI,
+            "boi_canh",
+        )
+        boi_canh = chuan_hoa_enum(item.get("boiCanh"), LOAI_BOI_CANH, "thu_vien_co_dien")
+        thoi_tiet = chuan_hoa_enum(item.get("thoiTiet"), LOAI_THOI_TIET, "nang_dep")
+        mo_ta_en = re.sub(
+            r"\s+",
+            " ",
+            str(item.get("moTaTiengAnh") or item.get("moTaEn") or item.get("promptEn") or "").strip(),
+        )
+        if not mo_ta_en:
+            continue
+        tien_to = "cc" if loai_kh == "can_canh_vat_the" else "bc"
+        ma_raw = str(item.get("maBoiCanhAI") or item.get("maBoiCanh") or item.get("id") or f"{tien_to}_{idx:02d}_{boi_canh}").strip()
+        ma_sach = tao_slug(ma_raw) or f"{tien_to}_{idx:02d}_{boi_canh}"
+        if ma_sach in da_dung_ma:
+            ma_sach = f"{ma_sach[:42]}_{idx:02d}"
+        da_dung_ma.add(ma_sach)
+        muc: dict[str, Any] = {
+            "maBoiCanhAI": ma_sach,
+            "loaiKhungHinh": loai_kh,
+            "boiCanh": boi_canh,
+            "thoiTiet": thoi_tiet,
+            "moTaTiengAnh": mo_ta_en[:320],
+        }
+        if item.get("daoCuChinh"):
+            muc["daoCuChinh"] = chuan_hoa_enum(item.get("daoCuChinh"), LOAI_DAO_CU, "")
+            if not muc["daoCuChinh"]:
+                muc.pop("daoCuChinh", None)
+        ket_qua.append(muc)
+    return ket_qua
+
+
+def _canh_la_nguoi_gia_hoac_giai_thuong(
+    nhan_vat: list[dict[str, Any]],
+    tieu_de_nho: str = "",
+    loi_thoai: str = "",
+) -> bool:
+    """Nhan dien canh nguoi gia / nhan giai thuong / cuoi doi de CAM chon nha_co_phong_sinh."""
+    if any(isinstance(nv, dict) and nv.get("doTuoi") == "gia" for nv in nhan_vat):
+        return True
+    van_ban = f"{tieu_de_nho} {loi_thoai}".lower()
+    return any(kw in van_ban for kw in _TU_KHOA_NGUOI_GIA_GIAI_THUONG)
+
+
+def _loc_vat_the_hop_le_boi_canh(
+    boi_canh: str,
+    vat_the: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Chan vat the moi truong lech boi canh (la_vang_gio trong phong kin, ngon_nen_den_dau trong vu tru)."""
+    ket_qua: list[dict[str, Any]] = []
+    for vt in vat_the:
+        loai = str(vt.get("loai") or "")
+        if boi_canh in BOI_CANH_TRONG_NHA and loai in VAT_THE_NGOAI_TROI_CAM_TRONG_NHA:
+            continue
+        if boi_canh in BOI_CANH_VU_TRU and loai in VAT_THE_CAM_TRONG_VU_TRU:
+            continue
+        if loai == "tuyet_cua_so" and boi_canh not in BOI_CANH_CO_CUA_SO_TUYET:
+            continue
+        ket_qua.append(vt)
+    return ket_qua
+
+
+def _chuan_hoa_thoi_tiet_boi_canh(boi_canh: str, thoi_tiet: str) -> str:
+    """Chan thoi tiet ngoai troi (la_roi, mua_nhe, tuyet_roi) roi tu do trong phong kin/vu tru."""
+    if boi_canh in BOI_CANH_TRONG_NHA:
+        if thoi_tiet == "la_roi":
+            return "khong"
+        if thoi_tiet in ("mua_nhe", "tuyet_roi") and boi_canh not in ("phong_benh_vien", "phong_tro_bep_lua"):
+            return "khong"
+    if boi_canh == "khong_gian_vu_tru_toan" and thoi_tiet in ("la_roi", "mua_nhe", "tuyet_roi"):
+        return "khong"
+    return thoi_tiet
+
+
+def _tinh_head_y_nhan_vat(nv: dict[str, Any], ti_le_canh: float = 1.25) -> float:
+    """Uoc tinh chinh xac toa do Y tam dau nhan vat tren khung 1920x1080."""
+    y_chan = float(nv.get("y") or 810.0)
+    ti_le = float(nv.get("tiLe") or 1.0) * ti_le_canh
+    do_tuoi = str(nv.get("doTuoi") or "truong_thanh")
+    tu_the = str(nv.get("tuThe") or "dung")
+    if do_tuoi == "so_sinh":
+        head_local = -62.0
+    elif tu_the == "ngoi_ban":
+        head_local = -136.0
+    elif tu_the == "nam_giuong":
+        head_local = -130.0
+    elif do_tuoi == "thieu_nien":
+        head_local = -142.0
+    elif do_tuoi == "gia":
+        head_local = -162.0
+    else:
+        head_local = -170.0
+    return y_chan + head_local * ti_le
+
+
+def lay_ho_so_mascot_kenh(
+    duong_dan_env: Path | str | None = None,
+    env_override: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Doc ho so Mascot kenh mac dinh (de tuy chinh ten/trangPhuc/kieuToc/mauAo qua .env)."""
+    tu_file = tai_env(duong_dan_env)
+    nguon: dict[str, str] = {}
+    nguon.update(tu_file)
+    for k in (
+        "MASCOT_ID",
+        "MASCOT_TEN",
+        "MASCOT_TRANG_PHUC",
+        "MASCOT_KIEU_TOC",
+        "MASCOT_CO_RAU",
+        "MASCOT_PHU_KIEN",
+        "MASCOT_MAU_AO",
+    ):
+        if os.environ.get(k):
+            nguon[k] = os.environ[k]
+    if env_override:
+        nguon.update(env_override)
+
+    ho_so = dict(MASCOT_KENH_MAC_DINH)
+    if str(nguon.get("MASCOT_ID") or "").strip():
+        ho_so["id"] = tao_slug(str(nguon["MASCOT_ID"]))
+    if str(nguon.get("MASCOT_TEN") or "").strip():
+        ho_so["ten"] = str(nguon["MASCOT_TEN"]).strip()[:40]
+    if str(nguon.get("MASCOT_TRANG_PHUC") or "").strip():
+        ho_so["trangPhuc"] = chuan_hoa_enum(nguon["MASCOT_TRANG_PHUC"], LOAI_TRANG_PHUC, ho_so["trangPhuc"])
+    if str(nguon.get("MASCOT_KIEU_TOC") or "").strip():
+        ho_so["kieuToc"] = chuan_hoa_enum(nguon["MASCOT_KIEU_TOC"], LOAI_KIEU_TOC, ho_so["kieuToc"])
+    if str(nguon.get("MASCOT_CO_RAU") or "").strip():
+        ho_so["coRau"] = chuan_hoa_enum(nguon["MASCOT_CO_RAU"], LOAI_CO_RAU, ho_so["coRau"])
+    if str(nguon.get("MASCOT_PHU_KIEN") or "").strip():
+        ho_so["phuKien"] = chuan_hoa_enum(nguon["MASCOT_PHU_KIEN"], LOAI_PHU_KIEN, ho_so["phuKien"])
+    if str(nguon.get("MASCOT_MAU_AO") or "").strip():
+        mau_ao = _ep_mau_hex(nguon["MASCOT_MAU_AO"], ho_so["mauAo"])
+        ho_so["mauAo"] = mau_ao
+        ho_so["mauChuDao"] = mau_ao
+    return ho_so
 
 
 def chuan_hoa_canh(
@@ -764,7 +1476,7 @@ def chuan_hoa_canh(
     """Chuan hoa 1 canh theo hop dong Canh trong src/kieu_dai.ts, tra ve (canh_sach, canh_bao_latex)."""
     canh_bao_latex: list[str] = []
     id_mac_dinh = danh_sach_nv_ids[0]
-    tap_nv = set(danh_sach_nv_ids)
+    tap_nv = set(danh_sach_nv_ids) | {ID_MASCOT_KENH}
 
     bo_cuc = chuan_hoa_enum(raw.get("boCuc"), LOAI_BO_CUC, "ke_chuyen")
     boi_canh_default_theo_bo_cuc = (
@@ -777,7 +1489,7 @@ def chuan_hoa_canh(
 
     loi_thoai = re.sub(r"\s+", " ", str(raw.get("loiThoai") or "").strip())
     if not loi_thoai:
-        loi_thoai = "Cau chuyen Toan hoc van dang tiep tuc mo ra nhung bat ngo thu vi."
+        loi_thoai = "Câu chuyện Toán học vẫn đang tiếp tục mở ra những bất ngờ thú vị."
 
     canh: dict[str, Any] = {
         "id": canh_id,
@@ -795,11 +1507,98 @@ def chuan_hoa_canh(
     if raw.get("vaiNoi") is not None:
         canh["vaiNoi"] = chuan_hoa_enum(raw.get("vaiNoi"), LOAI_VAI_NOI, "nguoi_dan")
     if raw.get("tieuDeNho"):
-        canh["tieuDeNho"] = str(raw["tieuDeNho"]).strip()[:110]
+        canh["tieuDeNho"] = cat_gon_theo_tu(str(raw["tieuDeNho"]).strip(), 110)
+    if raw.get("phuDeHoi"):
+        canh["phuDeHoi"] = cat_gon_theo_tu(str(raw["phuDeHoi"]).strip(), 140)
     if raw.get("namMoc"):
-        canh["namMoc"] = str(raw["namMoc"]).strip()[:50]
+        canh["namMoc"] = cat_gon_theo_tu(str(raw["namMoc"]).strip(), 50)
     if raw.get("loaiCanh") is not None:
         canh["loaiCanh"] = chuan_hoa_enum(raw.get("loaiCanh"), LOAI_CANH, "ke_chuyen")
+
+    # Truong v3.0: boi canh AI, khung tranh dac ta & anh sang moi truong
+    ma_bc_ai = str(raw.get("maBoiCanhAI") or raw.get("maBoiCanh") or "").strip()
+    if ma_bc_ai:
+        canh["maBoiCanhAI"] = tao_slug(ma_bc_ai)
+    if isinstance(raw.get("laKhungTranhDacTa"), bool):
+        canh["laKhungTranhDacTa"] = raw["laKhungTranhDacTa"]
+    if isinstance(raw.get("anhBoiCanh"), str) and raw["anhBoiCanh"].strip():
+        canh["anhBoiCanh"] = raw["anhBoiCanh"].strip()
+    raw_asmt = raw.get("anhSangMoiTruong")
+    if isinstance(raw_asmt, dict):
+        canh["anhSangMoiTruong"] = {
+            "mauAm": _ep_mau_hex(raw_asmt.get("mauAm"), "#FDE68A"),
+            "doToi": round(_ep_so(raw_asmt.get("doToi"), 0.25, 0.0, 1.0), 3),
+            "loaiAnhSang": chuan_hoa_enum(raw_asmt.get("loaiAnhSang"), LOAI_ANH_SANG_MOI_TRUONG, "trung_tinh"),
+        }
+
+    # Truong v3.5: ngat nhac punchline 0.8s, 3 khung hinh ke chuyen moi & End-Screen 15s
+    if isinstance(raw.get("ngatNhacPunchline"), bool) and raw["ngatNhacPunchline"]:
+        canh["ngatNhacPunchline"] = True
+
+    raw_bd = raw.get("banDoHanhTrinh")
+    if isinstance(raw_bd, dict):
+        diem_di = cat_gon_theo_tu(str(raw_bd.get("diemDi") or "").strip(), 48)
+        diem_den = cat_gon_theo_tu(str(raw_bd.get("diemDen") or "").strip(), 48)
+        if diem_di or diem_den:
+            bd_clean: dict[str, Any] = {
+                "diemDi": diem_di or "Điểm Khởi Hành",
+                "diemDen": diem_den or "Điểm Đích",
+                "phuongTien": chuan_hoa_enum(raw_bd.get("phuongTien"), PHUONG_TIEN_HANH_TRINH, "tau_thuy"),
+            }
+            if raw_bd.get("khoangCachNhan"):
+                bd_clean["khoangCachNhan"] = cat_gon_theo_tu(str(raw_bd["khoangCachNhan"]).strip(), 60)
+            if raw_bd.get("moTaHanhTrinh"):
+                bd_clean["moTaHanhTrinh"] = cat_gon_theo_tu(str(raw_bd["moTaHanhTrinh"]).strip(), 96)
+            if raw_bd.get("diemDungGiua"):
+                bd_clean["diemDungGiua"] = cat_gon_theo_tu(str(raw_bd["diemDungGiua"]).strip(), 40)
+            canh["banDoHanhTrinh"] = bd_clean
+
+    raw_bao = raw.get("baoChiCo")
+    if isinstance(raw_bao, dict):
+        td_bao = cat_gon_theo_tu(str(raw_bao.get("tieuDeBao") or "").strip(), 90)
+        if td_bao:
+            bao_clean: dict[str, Any] = {"tieuDeBao": td_bao}
+            if raw_bao.get("tenToBao"):
+                bao_clean["tenToBao"] = cat_gon_theo_tu(str(raw_bao["tenToBao"]).strip(), 50)
+            if raw_bao.get("ngayPhatHanh"):
+                bao_clean["ngayPhatHanh"] = cat_gon_theo_tu(str(raw_bao["ngayPhatHanh"]).strip(), 40)
+            if raw_bao.get("tieuDePhu"):
+                bao_clean["tieuDePhu"] = cat_gon_theo_tu(str(raw_bao["tieuDePhu"]).strip(), 110)
+            if raw_bao.get("nhanAnhMinhHoa"):
+                bao_clean["nhanAnhMinhHoa"] = cat_gon_theo_tu(str(raw_bao["nhanAnhMinhHoa"]).strip(), 70)
+            if raw_bao.get("daoCuMinhHoa"):
+                bao_clean["daoCuMinhHoa"] = chuan_hoa_enum(raw_bao["daoCuMinhHoa"], LOAI_DAO_CU, "cuon_giay")
+            if raw_bao.get("congThucMinhHoa"):
+                lx_bao, cb_bao = kiem_tra_latex(str(raw_bao["congThucMinhHoa"]))
+                if lx_bao:
+                    bao_clean["congThucMinhHoa"] = lx_bao
+                for cb in cb_bao:
+                    canh_bao_latex.append(f"[{canh_id}] {cb}")
+            canh["baoChiCo"] = bao_clean
+
+    raw_pu = raw.get("phanUngCam")
+    if isinstance(raw_pu, dict):
+        pu_clean: dict[str, Any] = {
+            "kieuPhanUng": chuan_hoa_enum(raw_pu.get("kieuPhanUng"), KIEU_PHAN_UNG_CAM, "nhap_tra"),
+        }
+        nv_pu = str(raw_pu.get("nhanVatId") or "").strip()
+        if nv_pu and nv_pu in tap_nv:
+            pu_clean["nhanVatId"] = nv_pu
+        if raw_pu.get("chuHieuUng"):
+            pu_clean["chuHieuUng"] = cat_gon_theo_tu(str(raw_pu["chuHieuUng"]).strip(), 28)
+        canh["phanUngCam"] = pu_clean
+
+    raw_es = raw.get("endScreen")
+    if isinstance(raw_es, dict):
+        es_clean: dict[str, Any] = {}
+        if raw_es.get("khungTraiNhan"):
+            es_clean["khungTraiNhan"] = cat_gon_theo_tu(str(raw_es["khungTraiNhan"]).strip(), 42)
+        if raw_es.get("khungPhaiNhan"):
+            es_clean["khungPhaiNhan"] = cat_gon_theo_tu(str(raw_es["khungPhaiNhan"]).strip(), 42)
+        if raw_es.get("loiDanXemTiep"):
+            es_clean["loiDanXemTiep"] = cat_gon_theo_tu(str(raw_es["loiDanXemTiep"]).strip(), 110)
+        if es_clean:
+            canh["endScreen"] = es_clean
 
     # Phu de (neu co san)
     if isinstance(raw.get("phuDe"), list):
@@ -833,7 +1632,7 @@ def chuan_hoa_canh(
             "kieu": "zoom_hai_huoc" if bo_cuc == "hai_huoc" else ("zoom_cham" if bo_cuc in ("mo_dau", "ket_thuc") else "tinh")
         }
 
-    # May quay dao dien v2.0 (gocQuay + tuDongFocusNguoiNoi)
+    # May quay dao dien v2.0 / v3.0 (gocQuay can mat + dao_goc_can_mat + tuDongFocusNguoiNoi)
     raw_mq = raw.get("mayQuay") if isinstance(raw.get("mayQuay"), dict) else {}
     goc_quay_raw = raw_mq.get("gocQuay") if raw_mq.get("gocQuay") is not None else raw.get("gocQuay")
     tu_dong_focus_raw = (
@@ -846,7 +1645,7 @@ def chuan_hoa_canh(
         if goc_quay_raw is not None:
             mq_sach["gocQuay"] = chuan_hoa_enum(goc_quay_raw, GOC_QUAY_CAMERA, "trung_canh")
         if raw_mq.get("doPhong") is not None:
-            mq_sach["doPhong"] = round(_ep_so(raw_mq.get("doPhong"), 1.15, 0.85, 1.8), 2)
+            mq_sach["doPhong"] = round(_ep_so(raw_mq.get("doPhong"), 1.15, 0.85, 2.35), 2)
         if isinstance(raw_mq.get("diemTieuCu"), dict):
             dtc = raw_mq["diemTieuCu"]
             mq_sach["diemTieuCu"] = {
@@ -860,7 +1659,7 @@ def chuan_hoa_canh(
         if mq_sach:
             canh["mayQuay"] = mq_sach
 
-    # Luot thoai da nhan vat (v2.0)
+    # Luot thoai da nhan vat (v2.0 / v3.0: ho tro kieuBongBong & dao_goc_can_mat)
     if isinstance(raw.get("luotThoai"), list):
         lt_sach: list[dict[str, Any]] = []
         frame_lt = 0
@@ -887,6 +1686,8 @@ def chuan_hoa_canh(
                 muc_lt["bieuCam"] = chuan_hoa_enum(lt.get("bieuCam"), LOAI_BIEU_CAM, "binh_thuong")
             if lt.get("dongTac") is not None:
                 muc_lt["dongTac"] = chuan_hoa_enum(lt.get("dongTac"), LOAI_HANH_DONG, "quay_nhin_doi_thoai")
+            if lt.get("kieuBongBong") is not None:
+                muc_lt["kieuBongBong"] = chuan_hoa_enum(lt.get("kieuBongBong"), KIEU_BONG_BONG_CHAT, "thuong")
             if isinstance(lt.get("bienDoAmThanh"), list):
                 rms_lt = [
                     round(min(1.0, max(0.0, float(v))), 2)
@@ -896,11 +1697,22 @@ def chuan_hoa_canh(
                 if rms_lt:
                     muc_lt["bienDoAmThanh"] = rms_lt
             lt_sach.append(muc_lt)
-            frame_lt = kt_f + 6
+            frame_lt = kt_f + 9
         if lt_sach:
             canh["luotThoai"] = lt_sach
             if not str(raw.get("loiThoai") or "").strip():
                 canh["loiThoai"] = " ".join(m["noiDung"] for m in lt_sach)
+            # Mac dinh goc dao_goc_can_mat cho canh doi_thoai >= 2 nguoi noi neu chua chi dinh gocQuay
+            nguoi_noi_khac = {m["nhanVatId"] for m in lt_sach}
+            if (
+                (bo_cuc == "doi_thoai" or canh.get("loaiCanh") == "doi_thoai")
+                and len(nguoi_noi_khac) >= 2
+                and not (isinstance(canh.get("mayQuay"), dict) and canh["mayQuay"].get("gocQuay"))
+            ):
+                mq_cur = canh.get("mayQuay") if isinstance(canh.get("mayQuay"), dict) else {}
+                mq_cur["gocQuay"] = "dao_goc_can_mat"
+                mq_cur["tuDongFocusNguoiNoi"] = True
+                canh["mayQuay"] = mq_cur
 
     # Cau hoi tuong tac khan gia (v2.0)
     raw_chtt = raw.get("cauHoiTuongTac")
@@ -925,21 +1737,28 @@ def chuan_hoa_canh(
                 chtt_sach["hienDapAnTuFrame"] = int(_ep_so(raw_chtt.get("hienDapAnTuFrame"), 120, 30, 900))
             canh["cauHoiTuongTac"] = chtt_sach
 
-    # Nhan vat trong canh
+    # Nhan vat trong canh (CHONG NHAN DOI cung 1 nhanVatId dung 2 lan trong cung canh)
     nv_sach: list[dict[str, Any]] = []
+    da_xuat_hien_nv: set[str] = set()
     raw_nvs = raw.get("nhanVat") if isinstance(raw.get("nhanVat"), list) else []
     vi_tri_mac_dinh = [660, 1260, 960] if bo_cuc != "giai_thich_toan" else [255, 1660, 255]
     for idx, nv in enumerate(raw_nvs[:3]):
         if not isinstance(nv, dict):
             continue
         nv_id_raw = str(nv.get("id") or "").strip()
-        nv_id = nv_id_raw if nv_id_raw in tap_nv else danh_sach_nv_ids[idx % len(danh_sach_nv_ids)]
-        x_default = vi_tri_mac_dinh[idx % len(vi_tri_mac_dinh)]
+        if nv_id_raw in tap_nv:
+            nv_id = nv_id_raw
+        else:
+            nv_id = next((nid for nid in danh_sach_nv_ids if nid not in da_xuat_hien_nv), "")
+        if not nv_id or nv_id in da_xuat_hien_nv:
+            continue
+        da_xuat_hien_nv.add(nv_id)
+        x_default = vi_tri_mac_dinh[len(nv_sach) % len(vi_tri_mac_dinh)]
         muc_nv: dict[str, Any] = {
             "id": nv_id,
             "x": round(_ep_so(nv.get("x"), x_default, 140, 1780), 1),
             "y": round(_ep_so(nv.get("y"), 810, 620, 880), 1),
-            "huong": chuan_hoa_enum(nv.get("huong"), HUONG_NHAN_VAT, "phai" if idx % 2 == 0 else "trai"),
+            "huong": chuan_hoa_enum(nv.get("huong"), HUONG_NHAN_VAT, "phai" if len(nv_sach) % 2 == 0 else "trai"),
             "hanhDong": chuan_hoa_enum(nv.get("hanhDong"), LOAI_HANH_DONG, "dung_tho"),
             "bieuCam": chuan_hoa_enum(nv.get("bieuCam"), LOAI_BIEU_CAM, "binh_thuong"),
         }
@@ -948,7 +1767,9 @@ def chuan_hoa_canh(
         if isinstance(nv.get("dangNoi"), bool):
             muc_nv["dangNoi"] = nv["dangNoi"]
         if nv.get("bongBongThoai"):
-            muc_nv["bongBongThoai"] = str(nv["bongBongThoai"]).strip()[:90]
+            muc_nv["bongBongThoai"] = cat_gon_theo_tu(str(nv["bongBongThoai"]).strip(), 90)
+        if nv.get("kieuBongBong") is not None:
+            muc_nv["kieuBongBong"] = chuan_hoa_enum(nv.get("kieuBongBong"), KIEU_BONG_BONG_CHAT, "thuong")
         if nv.get("diChuyenDenX") is not None:
             muc_nv["diChuyenDenX"] = round(_ep_so(nv.get("diChuyenDenX"), muc_nv["x"], 140, 1780), 1)
         if nv.get("tiLe") is not None:
@@ -957,6 +1778,16 @@ def chuan_hoa_canh(
             muc_nv["doTuoi"] = chuan_hoa_enum(nv.get("doTuoi"), DO_TUOI_NHAN_VAT, "truong_thanh")
         if nv.get("tuThe") is not None:
             muc_nv["tuThe"] = chuan_hoa_enum(nv.get("tuThe"), TU_THE_NHAN_VAT, "dung")
+        if nv.get("trangPhuc") is not None:
+            muc_nv["trangPhuc"] = chuan_hoa_enum(nv.get("trangPhuc"), LOAI_TRANG_PHUC, "ao_vest_co_dien")
+        if nv.get("kieuToc") is not None:
+            muc_nv["kieuToc"] = chuan_hoa_enum(nv.get("kieuToc"), LOAI_KIEU_TOC, "gon_gang")
+        if nv.get("coRau") is not None:
+            muc_nv["coRau"] = chuan_hoa_enum(nv.get("coRau"), LOAI_CO_RAU, "khong")
+        if nv.get("mauAo") is not None:
+            muc_nv["mauAo"] = _ep_mau_hex(nv.get("mauAo"), "#2563EB")
+        if nv.get("tamKhung") is not None:
+            muc_nv["tamKhung"] = chuan_hoa_enum(nv.get("tamKhung"), TAM_KHUNG_NHAN_VAT, "toan_canh")
         if isinstance(nv.get("tuongTacVoi"), str):
             ttv = nv["tuongTacVoi"].strip()
             if ttv == "khan_gia" or ttv in tap_nv:
@@ -995,22 +1826,56 @@ def chuan_hoa_canh(
         )
     canh["nhanVat"] = nv_sach
 
-    # Hieu ung hoat hinh
+    # Chan chon nha_co_phong_sinh cho canh nguoi gia / nhan giai thuong / cuoi doi
+    if canh["boiCanh"] == "nha_co_phong_sinh" and _canh_la_nguoi_gia_hoac_giai_thuong(
+        nv_sach,
+        str(canh.get("tieuDeNho") or ""),
+        loi_thoai,
+    ):
+        van_ban_low = f"{canh.get('tieuDeNho', '')} {loi_thoai}".lower()
+        canh["boiCanh"] = (
+            "giang_duong_dai_hoc"
+            if any(k in van_ban_low for k in ("giải thưởng", "huy chương", "vinh danh", "trao giải", "viện hàn lâm"))
+            else "thu_vien_co_dien"
+        )
+    canh["thoiTiet"] = _chuan_hoa_thoi_tiet_boi_canh(canh["boiCanh"], canh["thoiTiet"])
+
+    # Hieu ung hoat hinh (tu dong neo dung quanh headY cho cac hieu ung hai v3.0 & tranh de mat)
     if isinstance(raw.get("hieuUngHoatHinh"), list):
         hu_sach: list[dict[str, Any]] = []
+        ti_le_canh_est = 1.45 if bo_cuc == "hai_huoc" else 1.25
         for hu in raw["hieuUngHoatHinh"][:4]:
             if not isinstance(hu, dict):
                 continue
             loai_hu = chuan_hoa_enum(hu.get("loai"), LOAI_HIEU_UNG_HOAT_HINH, "sao_lap_lanh")
+            hx = round(_ep_so(hu.get("x"), 960, 120, 1800), 1)
+            hy = round(_ep_so(hu.get("y"), 480, 115, 860), 1)
+            if loai_hu in ("bong_den_nay_so", "bong_den_y_tuong", "cham_hoi_nay") and nv_sach:
+                nv_gan = min(nv_sach, key=lambda n: abs(float(n.get("x", 960)) - hx))
+                head_y = _tinh_head_y_nhan_vat(nv_gan, ti_le_canh_est)
+                hx = round(float(nv_gan.get("x", hx)), 1)
+                hy = round(max(115.0, min(520.0, head_y - 75.0)), 1)
+            elif loai_hu in ("mo_hoi_lon", "khoi_boc_tai", "mat_xoan_oc") and nv_sach:
+                nv_gan = min(nv_sach, key=lambda n: abs(float(n.get("x", 960)) - hx))
+                head_y = _tinh_head_y_nhan_vat(nv_gan, ti_le_canh_est)
+                hx = round(float(nv_gan.get("x", hx)), 1)
+                hy = round(max(120.0, min(620.0, head_y)), 1)
+            elif loai_hu == "nhan_chu_hai_huoc" and nv_sach:
+                for nv_c in nv_sach:
+                    nx = float(nv_c.get("x", 960))
+                    ny = float(nv_c.get("y", 810))
+                    head_y = _tinh_head_y_nhan_vat(nv_c, ti_le_canh_est)
+                    if abs(hx - nx) < 220 and (head_y - 45) <= hy <= (ny + 20):
+                        hy = round(max(130.0, head_y - 105.0), 1)
             muc_hu: dict[str, Any] = {
                 "loai": loai_hu,
-                "x": round(_ep_so(hu.get("x"), 960, 120, 1800), 1),
-                "y": round(_ep_so(hu.get("y"), 480, 120, 860), 1),
+                "x": hx,
+                "y": hy,
                 "tuFrame": int(_ep_so(hu.get("tuFrame"), 12, 0, 300)),
                 "thoiLuong": int(_ep_so(hu.get("thoiLuong"), 75, 20, 360)),
             }
             if hu.get("chuHienThi"):
-                muc_hu["chuHienThi"] = str(hu["chuHienThi"]).strip()[:45]
+                muc_hu["chuHienThi"] = cat_gon_theo_tu(str(hu["chuHienThi"]).strip(), 45)
             if hu.get("mau"):
                 muc_hu["mau"] = _ep_mau_hex(hu.get("mau"), "#FDE047")
             if hu.get("tiLe") is not None:
@@ -1019,12 +1884,16 @@ def chuan_hoa_canh(
         if hu_sach:
             canh["hieuUngHoatHinh"] = hu_sach
 
-    # Loi binh hai huoc
+    # Loi binh hai huoc (CAM hien thi tren boCuc giang_toan / dong_thoi_gian)
     raw_lb = raw.get("loiBinhHaiHuoc")
-    if isinstance(raw_lb, dict) and str(raw_lb.get("noiDung") or "").strip():
+    la_canh_cam_loi_binh = (
+        bo_cuc in ("giai_thich_toan", "dong_thoi_gian")
+        or canh.get("loaiCanh") == "giang_toan"
+    )
+    if not la_canh_cam_loi_binh and isinstance(raw_lb, dict) and str(raw_lb.get("noiDung") or "").strip():
         vi_tri = raw_lb.get("viTri") if raw_lb.get("viTri") in ("goc_phai", "goc_trai") else "goc_phai"
         canh["loiBinhHaiHuoc"] = {
-            "noiDung": str(raw_lb["noiDung"]).strip()[:140],
+            "noiDung": cat_gon_theo_tu(str(raw_lb["noiDung"]).strip(), 140),
             "viTri": vi_tri,
             "tuFrame": int(_ep_so(raw_lb.get("tuFrame"), 14, 0, 240)),
         }
@@ -1079,6 +1948,7 @@ def chuan_hoa_canh(
             if vt.get("bienSoXe"):
                 muc_vt["bienSoXe"] = str(vt["bienSoXe"]).strip()[:14]
             vt_sach.append(muc_vt)
+        vt_sach = _loc_vat_the_hop_le_boi_canh(canh["boiCanh"], vt_sach)
         if vt_sach:
             canh["vatTheXungQuanh"] = vt_sach
 
@@ -1168,17 +2038,20 @@ def chuan_hoa_canh(
         if ct_sach:
             canh["congThucLatex"] = ct_sach
 
-    # Moc thoi gian
+    # Moc thoi gian (cat gon theo ranh gioi tu, KHONG BAO GIO cat cut giua tu)
     if isinstance(raw.get("mocThoiGian"), list):
         mtg_sach: list[dict[str, Any]] = []
         for m in raw["mocThoiGian"][:5]:
             if not isinstance(m, dict):
                 continue
             nam = str(m.get("nam") or "").strip()
-            mo_ta = str(m.get("moTa") or "").strip()
+            mo_ta = str(m.get("moTa") or m.get("suKien") or "").strip()
             if not nam and not mo_ta:
                 continue
-            muc_m: dict[str, Any] = {"nam": nam[:30] or "...", "moTa": mo_ta[:90] or "..."}
+            muc_m: dict[str, Any] = {
+                "nam": cat_gon_theo_tu(nam, 30) or "...",
+                "moTa": cat_gon_theo_tu(mo_ta, 125) or "...",
+            }
             if isinstance(m.get("noiBat"), bool):
                 muc_m["noiBat"] = m["noiBat"]
             mtg_sach.append(muc_m)
@@ -1200,6 +2073,13 @@ def gan_frame_uoc_luong(du_lieu: dict[str, Any], fps: int = 30, tu_moi_giay: flo
             khoang_nghi = 0.75 if la_cuoi_chuong else 0.25
             giay = max(3.5, so_tu / tu_moi_giay) + khoang_nghi
             so_frame = max(90, int(round(giay * fps)))
+            # Canh tuong_tac_khan_gia can >= 7s (doc 1s + dem nguoc 3s + hien "DAP AN CHINH XAC" 3s)
+            chtt = canh.get("cauHoiTuongTac")
+            if str(canh.get("loaiCanh") or "") == "tuong_tac_khan_gia" or (
+                isinstance(chtt, dict) and str(chtt.get("cauHoi") or "").strip()
+            ):
+                dem_g = max(1, int((chtt or {}).get("thoiGianDemNguocGiay") or 3))
+                so_frame = max(so_frame, int(round((1.0 + dem_g + 3.0) * fps)))
             canh["tuFrame"] = frame_hien_tai
             canh["denFrame"] = frame_hien_tai + so_frame
             frame_hien_tai += so_frame
@@ -1275,6 +2155,20 @@ def kiem_dinh_schema_du_lieu_canh(du_lieu: dict[str, Any]) -> list[str]:
                 bv = mh.get("buocVe")
                 if not isinstance(bv, list) or len(bv) == 0:
                     loi.append(f"[{cid}] minhHoaToan 'tung_buoc' thieu danh sach buocVe.")
+            elif loai == "so_do_anh_xa":
+                ct = ts.get("cotTrai")
+                cp = ts.get("cotPhai")
+                if not (isinstance(ct, list) and len(ct) >= 2 and isinstance(cp, list) and len(cp) >= 2):
+                    loi.append(f"[{cid}] minhHoaToan 'so_do_anh_xa' thieu thamSo.cotTrai[] va cotPhai[] (>=2 phan tu).")
+            elif loai == "luoi_duong_cheo":
+                hang = ts.get("hang")
+                if not (isinstance(hang, list) and len(hang) >= 2):
+                    loi.append(f"[{cid}] minhHoaToan 'luoi_duong_cheo' thieu thamSo.hang[] (>=2 hang).")
+            elif loai == "bieu_do_cot":
+                nhan_c = ts.get("nhan")
+                gt_c = ts.get("giaTri")
+                if not (isinstance(nhan_c, list) and len(nhan_c) >= 2 and isinstance(gt_c, list) and len(gt_c) >= 2):
+                    loi.append(f"[{cid}] minhHoaToan 'bieu_do_cot' thieu thamSo.nhan[] va giaTri[] (>=2 cot).")
 
     return loi
 
@@ -1298,6 +2192,7 @@ def chuan_hoa_toan_bo_kich_ban(raw: dict[str, Any]) -> tuple[dict[str, Any], lis
             continue
         ch_id = str(ch.get("id") or f"chuong_{idx_ch + 1}").strip()
         ten_chuong = str(ch.get("tenChuong") or f"Hồi {idx_ch + 1}").strip()
+        phu_de_hoi = cat_gon_theo_tu(str(ch.get("phuDeHoi") or "").strip(), 140)
         canh_list_sach: list[dict[str, Any]] = []
         for c_raw in ch.get("canh") or []:
             if not isinstance(c_raw, dict):
@@ -1308,13 +2203,34 @@ def chuan_hoa_toan_bo_kich_ban(raw: dict[str, Any]) -> tuple[dict[str, Any], lis
             tat_ca_canh_bao.extend(cb_list)
             canh_list_sach.append(canh_clean)
         if canh_list_sach:
-            chuong_sach.append(
-                {
-                    "id": ch_id,
-                    "tenChuong": ten_chuong,
-                    "canh": canh_list_sach,
-                }
-            )
+            if not phu_de_hoi:
+                td_dau = next(
+                    (
+                        str(c.get("tieuDeNho") or "").strip()
+                        for c in canh_list_sach
+                        if str(c.get("tieuDeNho") or "").strip()
+                    ),
+                    "",
+                )
+                phu_de_hoi = cat_gon_theo_tu(
+                    f"{ten_chuong} — {td_dau}" if td_dau else f"Khám phá diễn biến trọng tâm của {ten_chuong}.",
+                    140,
+                )
+            tam_trang_md = KHUNG_6_HOI[idx_ch % len(KHUNG_6_HOI)].get("tamTrangNhacMacDinh", "vui_tuoi")
+            tam_trang = chuan_hoa_enum(ch.get("tamTrangNhac"), TAM_TRANG_NHAC, str(tam_trang_md))
+            muc_ch: dict[str, Any] = {
+                "id": ch_id,
+                "tenChuong": ten_chuong,
+                "phuDeHoi": phu_de_hoi,
+                "tamTrangNhac": tam_trang,
+                "canh": canh_list_sach,
+            }
+            open_loop = cat_gon_theo_tu(str(ch.get("openLoopCuoiHoi") or "").strip(), 160)
+            if open_loop:
+                muc_ch["openLoopCuoiHoi"] = open_loop
+            if canh_list_sach[0].get("boCuc") == "mo_dau" and not canh_list_sach[0].get("phuDeHoi"):
+                canh_list_sach[0]["phuDeHoi"] = phu_de_hoi
+            chuong_sach.append(muc_ch)
 
     # Chi cho phep boCuc='ket_thuc' o dung canh cuoi cung cua hoi cuoi cung toan tap
     tat_ca_canh = [c for ch in chuong_sach for c in ch["canh"]]
@@ -1331,6 +2247,32 @@ def chuan_hoa_toan_bo_kich_ban(raw: dict[str, Any]) -> tuple[dict[str, Any], lis
         "danhSachNhanVat": danh_sach_nv,
         "chuong": chuong_sach,
     }
+    if isinstance(raw.get("mascotKenh"), dict):
+        ket_qua["mascotKenh"] = raw["mascotKenh"]
+    ds_boi_canh_ai = chuan_hoa_danh_sach_boi_canh_ai(raw.get("danhSachBoiCanhAI"))
+    if ds_boi_canh_ai:
+        ket_qua["danhSachBoiCanhAI"] = ds_boi_canh_ai
+        tap_ma_ai = {m["maBoiCanhAI"]: m for m in ds_boi_canh_ai}
+        for c in tat_ca_canh:
+            ma_c = str(c.get("maBoiCanhAI") or "").strip()
+            if ma_c and ma_c not in tap_ma_ai:
+                # Khop mem theo boiCanh neu AI sinh sai ma nhe
+                khop = next((m["maBoiCanhAI"] for m in ds_boi_canh_ai if m["boiCanh"] == c.get("boiCanh")), "")
+                if khop:
+                    c["maBoiCanhAI"] = khop
+                else:
+                    c.pop("maBoiCanhAI", None)
+            elif not ma_c:
+                khop = next(
+                    (
+                        m["maBoiCanhAI"]
+                        for m in ds_boi_canh_ai
+                        if m["loaiKhungHinh"] == "boi_canh" and m["boiCanh"] == c.get("boiCanh")
+                    ),
+                    "",
+                )
+                if khop:
+                    c["maBoiCanhAI"] = khop
     if isinstance(raw.get("goiYThumbnail"), list) and raw.get("goiYThumbnail"):
         ket_qua["goiYThumbnail"] = chuan_hoa_goi_y_thumbnail(
             raw.get("goiYThumbnail"),
@@ -1446,30 +2388,38 @@ CAU TRUC 6 HOI BAT BUOC:
 
 DANH SACH ENUM HOP LE (BAT BUOC CHI CHON TRONG CAC GIA TRI NAY):
 - phuKien: {", ".join(LOAI_PHU_KIEN)}
+- trangPhuc: {", ".join(LOAI_TRANG_PHUC)}
+- kieuToc: {", ".join(LOAI_KIEU_TOC)}
+- coRau: {", ".join(LOAI_CO_RAU)}
 - doTuoi: {", ".join(DO_TUOI_NHAN_VAT)}
 - tuThe: {", ".join(TU_THE_NHAN_VAT)}
 - boiCanh (22 boi canh): {", ".join(LOAI_BOI_CANH)}
 - thoiTiet: {", ".join(LOAI_THOI_TIET)}
 - daoCuNoiBat (20 dao cu): {", ".join(LOAI_DAO_CU)}
 - vatTheXungQuanh (10 sinh vat/do vat): {", ".join(LOAI_VAT_THE_XUNG_QUANH)}
-- gocQuay: {", ".join(GOC_QUAY_CAMERA)}
+- gocQuay (12 goc may v3.0): {", ".join(GOC_QUAY_CAMERA)}
 - bieuCam: {", ".join(LOAI_BIEU_CAM)}
+- tamTrangNhac (4 sac thai nhac nen theo tung Hoi v3.5): {", ".join(TAM_TRANG_NHAC)}
+- boCuc ke chuyen moi (v3.5): ban_do_hanh_trinh (phuongTien: {", ".join(PHUONG_TIEN_HANH_TRINH)}), bao_chi_co, phan_ung_cam (kieuPhanUng: {", ".join(KIEU_PHAN_UNG_CAM)})
 
-YEU CAU KHOA TINH NHAT QUAN (2 VAI: BIEN KICH KE CHUYEN + DAO DIEN STORYBOARD):
-1. Khoa 2-4 nhan vat co dinh trong `danhSachNhanVat` (ten de nho, mauChuDao khac nhau, phuKien & doTuoi mac dinh phu hop lich su).
-2. TACH RIENG KHAU VIET HOOK 20-30 GIAY DAU trong `hookMoMan`: chon 1 nghich ly Toan hoc gay soc, cau do meo hack nao hoac tinh huong do khoc do cuoi cua nhan vat de mo man ngay giay thu 0 (TRANG TUYET DOI mo bai tieu su sach giao khoa kieu "X sinh nam ... tai ...").
-3. BEAT-DRIVEN 1-1 & DA DANG BOI CANH: Thiet ke mach chuyen doi `boiCanhChinh` va `thoiTietChinh` qua 6 hoi voi TOI THIEU 6 BOI CANH KHAC NHAU trong toan tap (tan dung kho 22 boi canh: `nha_co_phong_sinh`, `cang_bien_tau_thuy`, `phong_tro_bep_lua`, `phong_benh_vien`, `duong_pho_xe_co`, `giang_duong_dai_hoc`, `san_truong_co_dien`, `phong_thi_nghiem_co`, `khong_gian_vu_tru_toan`, `lang_que_an_do_a_dong`...), khop chinh xac voi tung giai doan cuoc doi nhan vat.
-4. CHONG LAP Y GIUA CAC HOI: Phan bo giai thoai, cuoc doi thoai va kien thuc Toan doc lap cho tung hoi (moi giai thoai chi ke 1 lan duy nhat o dung 1 hoi). Du kien san 2-3 cau do tuong tac khan gia (`tuong_tac_khan_gia`) rai deu o Hoi 2, Hoi 4 va Hoi 5.
-5. DE XUAT 3 PHUONG AN THUMBNAIL A/B (`goiYThumbnail` gom `bien_the` 1, 2, 3) de chay YouTube Test & Compare: moi phuong an co `tieuDeLon` toi da 2-4 tu gay to mo tuong phan cao, 1 `congThucLatex` cot loi, 1 `daoCuNoiBat` va `bieuCam` manh (`ngac_nhien`, `hoang_mang`, `tinh_quai`, `can_loi_mat_do`...). Neu trong BO NHO TU HOC HOI co quy tac toi uu CTR, Hook 30s, giu chan hoac bien the Thumbnail A/B thang tu so lieu YouTube that, BAT BUOC ap dung truc tiep vao `hookMoMan` va `goiYThumbnail`.
+YEU CAU KHOA TINH NHAT QUAN v3.5 (2 VAI: BIEN KICH KE CHUYEN + DAO DIEN STORYBOARD & BOI CANH AI):
+1. HO SO TAO HINH NHAN VAT CO DINH & MASCOT KENH (`{ID_MASCOT_KENH}`): Khoa 2-4 nhan vat lich su co dinh trong `danhSachNhanVat` voi HO SO TAO HINH CO DINH (`trangPhuc`, `kieuToc`, `coRau`, `mauAo`, `phuKien`, `doTuoi`). Dong thoi su dung Mascot dan chuyen co dinh cua kenh (`id: "{ID_MASCOT_KENH}"`, ten "{MASCOT_KENH_MAC_DINH['ten']}") cho 15 giay Cold Open mo man, cac canh do khan gia (`tuong_tac_khan_gia`) va 15 giay End-Screen cuoi tap.
+2. DANH SACH BOI CANH MINH HOA AI (`danhSachBoiCanhAI[]`): Thiet ke san 14-20 dia diem boi canh (`loaiKhungHinh: "boi_canh"`) + 4-6 khung tranh dac ta can canh vat the/ban do/so tay/kien truc (`loaiKhungHinh: "can_canh_vat_the"`) bang tieng Anh suc tich (`moTaTiengAnh` mo ta ro boi canh, anh sang, thoi dai lich su, KHONG co nguoi) de truyen thang cho `tao_boi_canh_ai.py`.
+3. COLD OPEN 15 GIAY DAU (`hookMoMan`) & AN DU HIEN DAI HAI HUOC: Chon 1 nghich ly Toan hoc gay soc, an du doi song/cong nghe hien dai hai huoc (vi du: Wi-Fi rot mang, drama mang xa hoi, GPS, kiem tra 15 phut...) hoac tinh huong do khoc do cuoi de mo man ngay giay thu 0 cung Mascot kenh (CAM tuyet doi mo bai tieu su sach giao khoa kieu "X sinh nam ... tai ...").
+4. NHAC NEN DA CAM XUC (`tamTrangNhac`) & OPEN LOOP CUOI MOI HOI (`openLoopCuoiHoi`): Gan `tamTrangNhac` (`vui_tuoi | bi_an | kich_tinh | tram_lang`) cho TUNG hoi de FFmpeg crossfade 1.5s muot ma giua cac hoi; moi Hoi 1..5 BAT BUOC co `openLoopCuoiHoi` (1 cau moc noi bo ngo gay to mo keo khan gia xem tiep hoi ke tiep).
+5. BEAT-DRIVEN 1-1, DA DANG BOI CANH & 3 KHUNG HINH KE CHUYEN MOI v3.5: Thiet ke mach chuyen doi `boiCanhChinh` va `thoiTietChinh` qua 6 hoi voi TOI THIEU 6 BOI CANH KHAC NHAU; phan bo hop ly trong 6 hoi it nhat 1-2 canh `ban_do_hanh_trinh`, 1-2 canh `bao_chi_co` va 2-3 canh `phan_ung_cam` (1.5-2.5s). KHONG chon `nha_co_phong_sinh` cho canh nguoi gia / nhan giai thuong / cuoi doi.
+6. CHONG LAP Y GIUA CAC HOI & PHU DE HOI RIENG BIET: Moi hoi trong `cacHoi[]` BAT BUOC co `phuDeHoi` RIENG BIET (1 cau tieng Viet co dau 8-18 tu mo ta dung noi dung rieng cua hoi do, CAM dung chung 1 cau cho nhieu hoi). Phan bo giai thoai, cuoc doi thoai va kien thuc Toan doc lap cho tung hoi. Du kien san 2-3 cau do tuong tac khan gia (`tuong_tac_khan_gia`) rai deu o Hoi 2, Hoi 4 va Hoi 5.
+7. DE XUAT 3 PHUONG AN THUMBNAIL A/B (`goiYThumbnail` gom `bien_the` 1, 2, 3) de chay YouTube Test & Compare: moi phuong an co `tieuDeLon` toi da 2-4 tu gay to mo tuong phan cao, 1 `congThucLatex` cot loi, 1 `daoCuNoiBat` va `bieuCam` manh.
+8. BAT BUOC 100% TIENG VIET CO DAU DAY DU cho moi tieu de, phuDeHoi, openLoopCuoiHoi, mo ta, ten nhan vat, diem hai huoc; TUYET DOI CAM viet tieng Viet khong dau (ngoai tru truong `moTaTiengAnh` trong `danhSachBoiCanhAI[]`)!
 
 Tra ve DUY NHAT JSON dung cau truc sau:
 {{
-  "tieuDe": "Tieu de video hap dan tieng Viet",
-  "chuDe": "Mo ta ngan 1 cau gay to mo",
+  "tieuDe": "Tiêu đề video hấp dẫn bằng tiếng Việt có dấu",
+  "chuDe": "Mô tả ngắn 1 câu gây tò mò bằng tiếng Việt có dấu",
   "hookMoMan": {{
     "loaiHook": "nghich_ly | cau_do_meo | tinh_huong_do_khoc_do_cuoi",
-    "moTa20_30s": "Kich ban tom tat 3-5 canh dau (20-30 giay) keo nguoi xem vao nghich ly/tinh huong oai oam truoc khi quay lai ke dien bien...",
-    "cauMoDauGaySoc": "1 cau mo man ngan gon bat ngo ngay giay thu 0..."
+    "moTa20_30s": "Kịch bản tóm tắt 3-5 cảnh đầu (20-30 giây) kéo người xem vào nghịch lý hoặc tình huống oái oăm trước khi quay lại kể diễn biến...",
+    "cauMoDauGaySoc": "1 câu mở màn ngắn gọn bất ngờ ngay giây thứ 0..."
   }},
   "goiYThumbnail": [
     {{
@@ -1521,23 +2471,47 @@ Tra ve DUY NHAT JSON dung cau truc sau:
   "danhSachNhanVat": [
     {{
       "id": "ten_khong_dau",
-      "ten": "Ten Hien Thi",
+      "ten": "Tên Hiển Thị Có Dấu",
       "mauThan": "#1E293B",
       "mauChuDao": "#2563EB",
       "mauDa": "#FFFDF7",
-      "phuKien": "kinh_tron"
+      "phuKien": "kinh_tron",
+      "trangPhuc": "ao_vest_co_dien",
+      "kieuToc": "gon_gang",
+      "coRau": "ria_mep",
+      "mauAo": "#1D4ED8"
+    }}
+  ],
+  "danhSachBoiCanhAI": [
+    {{
+      "maBoiCanhAI": "bc_01_giang_duong_sang",
+      "loaiKhungHinh": "boi_canh",
+      "boiCanh": "giang_duong_dai_hoc",
+      "thoiTiet": "nang_dep",
+      "moTaTiengAnh": "19th-century European wooden university lecture hall with tall arched windows, warm morning sunbeams, large chalkboard and empty flat wooden floor in lower third, no people"
+    }},
+    {{
+      "maBoiCanhAI": "cc_01_so_tay_nen",
+      "loaiKhungHinh": "can_canh_vat_the",
+      "boiCanh": "thu_vien_co_dien",
+      "thoiTiet": "ban_dem",
+      "daoCuChinh": "cuon_giay",
+      "moTaTiengAnh": "Close-up tabletop illustration of an open antique leather notebook with geometric diagrams, brass compass and warm flickering candle on an oak desk, no text, no people"
     }}
   ],
   "cacHoi": [
     {{
       "soHoi": 1,
       "id": "chuong_1",
-      "tenChuong": "1. Ten hoi cuon hut",
+      "tenChuong": "1. Tên hồi cuốn hút bằng tiếng Việt có dấu",
+      "phuDeHoi": "Câu mô tả riêng biệt tóm gọn nội dung chính của hồi 1 (không trùng hồi khác).",
+      "tamTrangNhac": "bi_an",
+      "openLoopCuoiHoi": "Câu móc nối bỏ ngỏ cuối hồi kéo người xem sang hồi tiếp theo...",
       "boiCanhChinh": "bo_bien_hy_lap",
       "thoiTietChinh": "nang_dep",
-      "tomTat": "Tom tat dien bien hoi...",
-      "diemHaiHuoc": ["Mieng hai 1...", "Mieng hai 2..."],
-      "kienThucToan": "Y tuong Toan hoc & cong thuc du kien..."
+      "tomTat": "Tóm tắt diễn biến hồi...",
+      "diemHaiHuoc": ["Miếng hài 1 kèm ẩn dụ hiện đại...", "Miếng hài 2..."],
+      "kienThucToan": "Ý tưởng Toán học & công thức dự kiến..."
     }}
   ]
 }}
@@ -1556,6 +2530,24 @@ def tao_prompt_tang_2_hoi(
 ) -> str:
     """Tang 2: Viet chi tiet 16-22 canh ngan cho 1 Hoi (2 vai: Bien kich ke chuyen + Dao dien Storyboard)."""
     nv_json = json.dumps(blueprint["danhSachNhanVat"], ensure_ascii=False)
+    ds_bc_ai = blueprint.get("danhSachBoiCanhAI") if isinstance(blueprint.get("danhSachBoiCanhAI"), list) else []
+    bc_ai_json = (
+        json.dumps(
+            [
+                {
+                    "maBoiCanhAI": m.get("maBoiCanhAI"),
+                    "loaiKhungHinh": m.get("loaiKhungHinh", "boi_canh"),
+                    "boiCanh": m.get("boiCanh"),
+                    "thoiTiet": m.get("thoiTiet"),
+                }
+                for m in ds_bc_ai[:24]
+                if isinstance(m, dict)
+            ],
+            ensure_ascii=False,
+        )
+        if ds_bc_ai
+        else "[]"
+    )
     khoi_tu_lieu = dinh_dang_tu_lieu_nghien_cuu(tu_lieu_nghien_cuu)
     khoi_bo_nho = ngu_canh_hoc_hoi.strip()
     khoi_chong_lap = ""
@@ -1578,12 +2570,12 @@ def tao_prompt_tang_2_hoi(
                 + (f"\n- Cau mo dau goi y: \"{cau_mo_dau}\"" if cau_mo_dau else "")
             )
         khoi_hook = (
-            "=== YEU CAU BAT BUOC: HOOK 20-30 GIAY DAU (3-5 CANH DAU TIEN) ===\n"
-            "- 3-5 canh dau tien (tong 55-85 tu, tuong duong 20-30 giay) PHAI di thang vao nghich ly Toan hoc, "
-            "cau do meo hoac tinh huong do khoc do cuoi cua nhan vat TRUOC KHI quay lai ke dien bien.\n"
+            "=== YEU CAU BAT BUOC v3.5: COLD OPEN 15 GIAY DAU / HOOK 20-30 GIAY DAU (2-3 CANH DAU TIEN) ===\n"
+            f"- 2-3 canh dau tien (tong 40-58 tu, tuong duong 15 giay) PHAI co Mascot kenh (`id: \"{ID_MASCOT_KENH}\"`) "
+            "di thang vao nghich ly Toan hoc gay soc, an du hien dai hai huoc hoac tinh huong do khoc do cuoi TRUOC KHI quay lai ke dien bien lich su.\n"
             "- CAM mo bai kieu tieu su sach giao khoa ('Sinh nam ... tai ...') hay loi chao hoi thong thuong.\n"
-            "- Trong 30 giay dau, moi canh dai ngan gon 12-20 tu (4-6 giay), luan phien `mayQuay.gocQuay` (`can_mat`, `trung_canh`, `zoom_dao_cu`, `pan_ngang`) "
-            "va it nhat 1 diem nhan hai (`loiBinhHaiHuoc` hoac `hieuUngHoatHinh`)."
+            "- Doi goc may/bo cuc nhanh moi 4-5 giay (`can_mat`, `trung_canh`, `zoom_dao_cu`, `pan_ngang`) "
+            "va chen it nhat 1 diem nhan hai (`hieuUngHoatHinh` hoac `ngatNhacPunchline: true`)."
             f"{chi_tiet_hook}"
         )
     phan_phu = "\n\n".join(x for x in (khoi_hook, khoi_chong_lap, khoi_tu_lieu, khoi_bo_nho) if x)
@@ -1606,39 +2598,53 @@ Ban dang dam nhiem 2 VAI (BIEN KICH KE CHUYEN + DAO DIEN STORYBOARD) de viet CHI
 - Tieu de phim: "{blueprint['tieuDe']}"
 - Giong ke: "{giong_ke}" (phong cach thien nhien + hai huoc di dom, KHONG danh dam)
 - Ten hoi: "{thong_tin_hoi['tenChuong']}"
+- Phu de mo hoi rieng biet (`phuDeHoi`): "{thong_tin_hoi.get('phuDeHoi') or thong_tin_hoi['tomTat']}"
 - Vai tro hoi: {khung_hoi['vaiTro']}
 - Boi canh chu dao: {thong_tin_hoi['boiCanhChinh']} | Thoi tiet chu dao: {thong_tin_hoi['thoiTietChinh']}
 - Tom tat hoi nay: {thong_tin_hoi['tomTat']}
 - Mieng hai du kien: {json.dumps(thong_tin_hoi.get('diemHaiHuoc', []), ensure_ascii=False)}
 - Kien thuc Toan trong tam: {thong_tin_hoi.get('kienThucToan', '')}
 - Mach noi tu hoi truoc: {tom_tat_hoi_truoc}
-- Danh sach nhan vat CO DINH (chi duoc dung dung id trong nay): {nv_json}
+- Danh sach nhan vat CO DINH (chi duoc dung dung id trong nay; giu nguyen ho so trangPhuc/kieuToc/coRau/mauAo xuyen suot tap): {nv_json}
+- Danh sach boi canh minh hoa AI da quy hoach (`maBoiCanhAI` de anh xa vao TUNG canh): {bc_ai_json}
 {phan_phu}
-=== VAI 1: BIEN KICH KE CHUYEN ===
-1. Sinh tu {khung_hoi['soCanh']} canh ngan (toi thieu 16 canh). Moi canh co `loiThoai` dai 16-28 tu tieng Viet tu nhien (TRANG canh dai >32 tu). TONG SO TU cua hoi nay BAT BUOC dat {khung_hoi['tuMucTieu']} tu (khong duoc duoi 260 tu).
-2. DOI THOAI THAT GIUA NHAN VAT (BAT BUOC): Moi hoi PHAI co it nhat 3 canh `loaiCanh="doi_thoai"` (kem `boCuc="doi_thoai"`) noi 2 nhan vat truc tiep tro chuyen voi nhau qua mang `luotThoai[]` (2-4 luot/canh, ghi ro `nhanVatId`, `noiDung`, `bieuCam`, `dongTac`), ket hop `tuongTacVoi` (chi dinh id nhan vat doi dien) va `mayQuay.tuDongFocusNguoiNoi: true` — KHONG de nguoi dan chuyen doc ho toan bo!
-3. NHIP TUONG TAC KHAN GIA: {yeu_cau_tuong_tac_hoi}
-4. Cai 2-3 diem nhan hai huoc tu nhien (`loiBinhHaiHuoc`, `can_loi_mat_do`, `giot_mo_hoi`/`co_lan_im_lang`/`nhan_chu_hai_huoc`) va gan nhan `vaiNoi` (`nguoi_dan` | `nhan_vat` | `binh_luan_hai`).
-5. {luu_y_outro}
-6. Yeu cau dac biet cua Hoi {khung_hoi['soHoi']}: {khung_hoi['yeuCauDacBiet']}
+=== VAI 1: BIEN KICH KE CHUYEN v3.5 ===
+1. Sinh tu {khung_hoi['soCanh']} canh ngan (toi thieu 16 canh). Moi canh co `loiThoai` dai 16-28 tu tieng Viet tu nhien (TRANG canh dai >32 tu; rieng canh `phan_ung_cam` rat ngan 4-8 tu tuong duong 1.5-2.5 giay). TONG SO TU cua hoi nay BAT BUOC dat {khung_hoi['tuMucTieu']} tu (khong duoc duoi 260 tu).
+2. DOI THOAI SAC BEN, AN DU HIEN DAI HAI HUOC & OPEN LOOP CUOI HOI (BAT BUOC):
+   - Moi hoi PHAI co it nhat 3 canh `loaiCanh="doi_thoai"` (`boCuc="doi_thoai"`) voi mang `luotThoai[]` **3-5 luot ngan sac ben (8-22 tu/luot)**, `mayQuay: {{"gocQuay": "dao_goc_can_mat", "tuDongFocusNguoiNoi": true}}`, `kieuBongBong` da dang (`thuong`, `quat_thao`, `suy_nghi`, `ca_khia`).
+   - Long ghep AN DU HIEN DAI HAI HUOC (so sanh khai niem Toan/lich su voi Wi-Fi rot mang, thuat toan Google Maps, drama mang xa hoi, deadline nop bai...) de giai thich vua di dom vua de hieu.
+   - Cuoi hoi (Hoi 1..5) BAT BUOC dat 1 CAU MOC NOI OPEN LOOP (`openLoopCuoiHoi` va o cau ket canh cuoi hoi) bo ngo tinh tiet bat ngo keo khan gia xem tiep hoi sau.
+3. NHAC NEN DA CAM XUC (`tamTrangNhac`) & NGAT NHAC PUNCHLINE (`ngatNhacPunchline`):
+   - Giu dung sac thai `tamTrangNhac` cho hoi nay (`{thong_tin_hoi.get('tamTrangNhac') or khung_hoi.get('tamTrangNhacMacDinh', 'vui_tuoi')}` trong: {", ".join(TAM_TRANG_NHAC)}).
+   - Gan `"ngatNhacPunchline": true` cho 1 canh punchline hai dat gia nhat trong hoi (neu phu hop) de FFmpeg ngat nhac dot ngot 0.8s tang do bat cuoi.
+4. PHAN BO 3 KIEU KHUNG HINH KE CHUYEN MOI v3.5 & MASCOT KENH (`{ID_MASCOT_KENH}`):
+   - `boCuc="ban_do_hanh_trinh"` kem `banDoHanhTrinh: {{"diemDi", "diemDen", "phuongTien": "tau_thuy|thu_tay|nguoi_di_bo|xe_ngua", "khoangCachNhan", "moTaHanhTrinh"}}` khi co chuyen di/gui thu/di cu lich su.
+   - `boCuc="bao_chi_co"` kem `baoChiCo: {{"tenToBao", "ngayPhatHanh", "tieuDeBao", "tieuDePhu", "nhanAnhMinhHoa", "daoCuMinhHoa"}}` khi co phat minh chan dong / tranh cai hoc thuat.
+   - `boCuc="phan_ung_cam"` (1.5-2.5s) kem `phanUngCam: {{"nhanVatId", "kieuPhanUng": "nhap_tra|nhuong_may|tron_mat|can_loi", "chuHieuUng"}}` de cat nhanh can mat phan ung hai ngay sau cau thoai gay soc.
+   - Cho Mascot kenh (`id: "{ID_MASCOT_KENH}"`) xuat hien o Cold Open 15s (Hoi 1), canh `tuong_tac_khan_gia`, va canh cuoi `ket_thuc` 15s (Hoi 6 kem `endScreen: {{"khungTraiNhan", "khungPhaiNhan", "loiDanXemTiep"}}`).
+5. NHIP TUONG TAC KHAN GIA: {yeu_cau_tuong_tac_hoi}
+6. {luu_y_outro}
+7. Yeu cau dac biet cua Hoi {khung_hoi['soHoi']}: {khung_hoi['yeuCauDacBiet']}
 
-=== VAI 2: DAO DIEN STORYBOARD ===
-7. KHOP BOI CANH 1-1 THEO TUNG CAU CHUYEN (BEAT-DRIVEN): Moi khi loi thoai doi moc doi, tuoi tac hoac dia diem, BAT BUOC doi `boiCanh`, `doTuoi`, `tuThe`, `daoCu`, `vatTheXungQuanh` tuong ung ngay lap tuc:
-   - Nhac moi sinh / tuoi tho -> `boiCanh="nha_co_phong_sinh"` + `doTuoi="so_sinh"` + `tuThe="om_em_be"` + `daoCu: [{{"loai":"noi_em_be"}}]`.
-   - Nhac vuot bien / len tau -> `boiCanh="cang_bien_tau_thuy"` + `daoCu: [{{"loai":"tau_thuy"}}]` + `vatTheXungQuanh: [{{"loai":"chim_hai_au"}}, {{"loai":"ca_gon_song"}}]`.
-   - Nhac phong tro / nau an ngheo kho -> `boiCanh="phong_tro_bep_lua"` + `daoCu: [{{"loai":"noi_sup"}}]` + `vatTheXungQuanh: [{{"loai":"hoi_khoi"}}]`.
-   - Nhac benh vien / om dau -> `boiCanh="phong_benh_vien"` + `tuThe="nam_giuong"` + `daoCu: [{{"loai":"giuong_benh"}}]` + `vatTheXungQuanh: [{{"loai":"tuyet_cua_so"}}]`.
-   - Nhac xe taxi / bien so xe -> `boiCanh="duong_pho_xe_co"` + `bienSoXe` dong + `daoCu: [{{"loai":"bien_so_xe", "bienSoXe":"..."}}]` + `vatTheXungQuanh: [{{"loai":"xe_taxi_co", "bienSoXe":"..."}}]`.
-   - Nhac giang duong / truong dai hoc -> `giang_duong_dai_hoc` hoac `san_truong_co_dien` + `chim_san_truong`.
-8. DAO DIEN CAMERA, NHIP NGAT THI GIAC 6-8 GIAY & BIEU CAM DONG (CAM LAP):
+=== VAI 2: DAO DIEN STORYBOARD & DIEN ANH v3.0 ===
+7. ANH XA `maBoiCanhAI` 1-1 & KHUNG TRANH DAC TA (6-12 GIAY DOI GOC MAY/BOI CANH):
+   - Moi canh BAT BUOC gan `maBoiCanhAI` khop 100% voi `danhSachBoiCanhAI[]` va loi ke. Cu moi 6-12 giay phai doi goc may (`can_mat_trai`, `can_mat_phai`, `can_mat_kich_tinh`, `dao_goc_can_mat`, `trung_canh`, `toan_canh`) hoac chuyen sang `maBoiCanhAI` moi.
+   - Xen ke 1-2 canh `laKhungTranhDacTa: true` (dung ma `cc_*` cua khung tranh can canh ban do/so tay/kien truc, `nhanVat: []`) de tao nhip dien anh.
+   - Khi loi thoai doi moc doi, tuoi tac hoac dia diem, BAT BUOC doi `boiCanh`, `doTuoi`, `tuThe`, `daoCu`, `vatTheXungQuanh` tuong ung ngay lap tuc (nhac moi sinh -> `nha_co_phong_sinh` + `so_sinh`; vuot bien -> `cang_bien_tau_thuy`; benh vien -> `phong_benh_vien` + `nam_giuong`; giang duong -> `giang_duong_dai_hoc`). KHONG hardcode bien so xe `"1729"` (chi gan `bienSoXe` khi cau chuyen thuc su nhac bien so do).
+8. DAO DIEN CAMERA CAN MAT, NHIP NGAT THI GIAC 6-8 GIAY & BIEU CAM DONG (CAM LAP):
    - LUAT NHIP NGAT THI GIAC 6-8 GIAY: Khong de canh nao hoac chuoi canh lien tiep dung yen cung 1 boCuc/camera='tinh' qua 6-8 giay.
-   - Gan `mayQuay.gocQuay` da dang cho MOI canh (`toan_canh`, `trung_canh`, `can_mat`, `focus_trai`, `focus_phai`, `zoom_dao_cu`, `pan_ngang`, `chia_doi_man_hinh`).
+   - Gan `mayQuay.gocQuay` da dang cho MOI canh (uu tien goc can mat dien anh: `can_mat_trai`, `can_mat_phai`, `can_mat_kich_tinh`, `dao_goc_can_mat`, `trung_canh`, `toan_canh`, `zoom_dao_cu`, `pan_ngang`).
    - CAM TUYET DOI 2 canh lien tiep trung CA `boiCanh` LAN `mayQuay.gocQuay`!
    - Dung `bieuCamTheoMoc` (`[{{"tienDo": 0.0, "bieuCam": "tram_tu"}}, {{"tienDo": 0.55, "bieuCam": "ngac_nhien"}}]`) cho nhan vat o cac canh chuyen bien cam xuc, va gan `vatTheXungQuanh` phu hop cho moi canh.
-9. DU LIEU TOAN & TIMELINE DAY DU (CAM RONG):
+9. DU LIEU TOAN, TIMELINE, CHONG DE CHU & TIENG VIET CO DAU (BAT BUOC):
+   - BAT BUOC 100% van ban tieng Viet (tieuDeNho, phuDeHoi, loiThoai, luotThoai[].noiDung, bongBongThoai, mocThoiGian[].moTa, minhHoaToan, congThucLatex[].nhan, cauHoiTuongTac) PHAI CO DAU DAY DU, dung chinh ta. CAM viet tieng Viet khong dau!
+   - CAM dat `loiBinhHaiHuoc` tren cac canh `boCuc="giai_thich_toan"`, `loaiCanh="giang_toan"` hoac `boCuc="dong_thoi_gian"`.
+   - CAM 1 `nhanVatId` xuat hien 2 lan trong cung 1 mang `nhanVat[]` cua 1 canh.
+   - RANG BUOC BOI CANH/THOI TIET: CAM `la_vang_gio` va `thoiTiet="la_roi"` trong phong kin (`giang_duong_dai_hoc`, `thu_vien_co_dien`, `phong_tro_bep_lua`, `phong_benh_vien`, `lop_hoc_bang_xanh`...); CAM `ngon_nen_den_dau` trong `khong_gian_vu_tru_toan`; CAM `nha_co_phong_sinh` cho canh nguoi gia / nhan giai thuong / cuoi doi.
    - Trong `congThucLatex`: dung LaTeX chuan KaTeX (thoat dau \\ thanh \\\\ trong JSON, khong boc dau $).
-   - Canh `giai_thich_toan` / `loaiCanh="giang_toan"` BAT BUOC co `congThucLatex[]` va `minhHoaToan` day du `thamSo` (hoac `buocVe` cho `loai="tung_buoc"`).
-   - Canh `dong_thoi_gian` BAT BUOC co `mocThoiGian[]` gom 3-5 moc that lay tu `timeline_su_kien` cua dung nhan vat/chu de tap nay.
+   - Canh `giai_thich_toan` / `loaiCanh="giang_toan"` BAT BUOC co `congThucLatex[]` va `minhHoaToan` truc quan day du tham so (se hien thi tren cuon giay da / bang phan khung go):
+     * `so_do_anh_xa`, `luoi_duong_cheo`, `bieu_do_cot`, `tam_giac_vuong`, `truc_so_vo_ti`, `do_thi_ham_so`, `hinh_hoc_chung_minh`, `chuoi_suy_luan`, hoac `buocVe` cho `loai="tung_buoc"` (co hinh ve that, CAM khung rong!).
+   - Canh `dong_thoi_gian` BAT BUOC co `mocThoiGian[]` gom 3-5 moc that lay tu `timeline_su_kien` (moi `moTa` ngan gon 8-14 tu tron ven, khong cat cut).
 10. CHI DUNG DUNG CAC GIA TRI ENUM SAU:
    - boCuc: {", ".join(LOAI_BO_CUC)}
    - loaiCanh: {", ".join(LOAI_CANH)}
@@ -1648,6 +2654,7 @@ Ban dang dam nhiem 2 VAI (BIEN KICH KE CHUYEN + DAO DIEN STORYBOARD) de viet CHI
    - chuyenCanh: {", ".join(LOAI_CHUYEN_CANH)}
    - camera.kieu: {", ".join(KIEU_CAMERA)}
    - mayQuay.gocQuay: {", ".join(GOC_QUAY_CAMERA)}
+   - kieuBongBong: {", ".join(KIEU_BONG_BONG_CHAT)}
    - doTuoi: {", ".join(DO_TUOI_NHAN_VAT)}
    - tuThe: {", ".join(TU_THE_NHAN_VAT)}
    - hanhDong: {", ".join(LOAI_HANH_DONG)}
@@ -1663,8 +2670,11 @@ Tra ve DUY NHAT JSON dung cau truc:
 {{
   "id": "{khung_hoi['id']}",
   "tenChuong": "{thong_tin_hoi['tenChuong']}",
-  "tomTatKetHoi": "1-2 cau tom tat diem ket hoi de noi mach sang hoi sau",
-  "suKienDaKe": ["Tom tat ngan giai thoai/moc chinh 1 da ke trong hoi nay", "Moc chinh 2..."],
+  "phuDeHoi": "{thong_tin_hoi.get('phuDeHoi') or thong_tin_hoi['tomTat']}",
+  "tamTrangNhac": "{thong_tin_hoi.get('tamTrangNhac') or khung_hoi.get('tamTrangNhacMacDinh', 'vui_tuoi')}",
+  "openLoopCuoiHoi": "{thong_tin_hoi.get('openLoopCuoiHoi') or 'Câu móc nối bỏ ngỏ kéo người xem sang hồi tiếp theo...'}",
+  "tomTatKetHoi": "1-2 câu tóm tắt điểm kết hồi để nối mạch sang hồi sau",
+  "suKienDaKe": ["Tóm tắt ngắn giai thoại/mốc chính 1 đã kể trong hồi này", "Mốc chính 2..."],
   "canh": [
     {{
       "boCuc": "ke_chuyen",
@@ -1674,8 +2684,8 @@ Tra ve DUY NHAT JSON dung cau truc:
       "thoiTiet": "{thong_tin_hoi['thoiTietChinh']}",
       "chuyenCanh": "mo_dan",
       "namMoc": "1914",
-      "tieuDeNho": "Tieu de ngan gon",
-      "loiThoai": "Loi thoai tieng Viet tu nhien dai 16-26 tu...",
+      "tieuDeNho": "Tiêu đề ngắn gọn có dấu",
+      "loiThoai": "Lời thoại tiếng Việt có dấu tự nhiên dài 16-26 từ...",
       "camera": {{"kieu": "pan_nhe"}},
       "mayQuay": {{"gocQuay": "trung_canh", "tuDongFocusNguoiNoi": true}},
       "vatTheXungQuanh": [{{"loai": "chim_san_truong", "soLuong": 3}}],
@@ -1713,22 +2723,22 @@ def tao_prompt_bo_sung_hoi(
     can_them = max(80, muc_tieu_tu - so_tu_hien_tai)
     doan_cuoi = " | ".join(c.get("loiThoai", "") for c in canh_hien_co[-2:])
     return f"""
-Hoi "{thong_tin_hoi['tenChuong']}" hien moi co {so_tu_hien_tai} tu (qua ngan, can them khoang {can_them} tu).
-Hay viet BO SUNG them 4-5 canh ke chi tiet giai thoai lich su, vi du doi song de hieu hoac 1 tinh huong hai huoc di dom de chen ngay truoc canh ket cua hoi nay.
-- Mach dang ke: "{doan_cuoi}"
-- Nhan vat co dinh: {json.dumps(blueprint['danhSachNhanVat'], ensure_ascii=False)}
-- Boi canh chu dao: {thong_tin_hoi['boiCanhChinh']} | Thoi tiet: {thong_tin_hoi['thoiTietChinh']}
-- Moi canh dai 22-35 tu, dung dung enum cua he thong.
+Hồi "{thong_tin_hoi['tenChuong']}" hiện mới có {so_tu_hien_tai} từ (quá ngắn, cần thêm khoảng {can_them} từ).
+Hãy viết BỔ SUNG thêm 4-5 cảnh kể chi tiết giai thoại lịch sử mới (KHÔNG lặp lại ý đã kể), ví dụ đời sống dễ hiểu hoặc 1 tình huống hài hước dí dỏm để chèn ngay trước cảnh kết của hồi này.
+- Mạch đang kể: "{doan_cuoi}"
+- Nhân vật cố định: {json.dumps(blueprint['danhSachNhanVat'], ensure_ascii=False)}
+- Bối cảnh chủ đạo: {thong_tin_hoi['boiCanhChinh']} | Thời tiết: {thong_tin_hoi['thoiTietChinh']}
+- Mỗi cảnh dài 22-35 từ, dùng đúng enum của hệ thống, BẮT BUỘC 100% tiếng Việt có dấu đầy đủ (CẤM viết không dấu).
 
-Tra ve DUY NHAT JSON:
+Trả về DUY NHẤT JSON:
 {{
   "canhBoSung": [
     {{
       "boCuc": "ke_chuyen",
       "boiCanh": "{thong_tin_hoi['boiCanhChinh']}",
       "thoiTiet": "{thong_tin_hoi['thoiTietChinh']}",
-      "tieuDeNho": "Chi tiet thu vi",
-      "loiThoai": "Loi thoai 24-34 tu...",
+      "tieuDeNho": "Chi tiết thú vị",
+      "loiThoai": "Lời thoại tiếng Việt có dấu tự nhiên dài 24-34 từ...",
       "camera": {{"kieu": "pan_nhe"}},
       "nhanVat": [
         {{
@@ -1755,12 +2765,6 @@ _HANH_DONG_DONG_LUAN_PHIEN: tuple[str, ...] = (
     "nhin_len_troi",
     "gai_dau_kho_hieu",
     "khoanh_tay_tu_man",
-)
-_LOI_BINH_TU_DONG: tuple[str, ...] = (
-    "Khoan đã, nghe kỹ khúc này kẻo bất ngờ!",
-    "Tới đoạn này ngay cả người trong cuộc cũng đứng hình!",
-    "Toán học mà kịch tính không thua phim trinh thám!",
-    "Góc nhìn này mới là chìa khóa của cả câu chuyện!",
 )
 
 
@@ -1945,14 +2949,6 @@ def kiem_dinh_nhip_ngat_thi_giac(
                         )
                         canh_2["nhanVat"][0]["hanhDong"] = hd_moi
 
-                    if not canh_2.get("loiBinhHaiHuoc") and canh_tu_lan_hai_truoc >= 2:
-                        canh_2["loiBinhHaiHuoc"] = {
-                            "noiDung": _LOI_BINH_TU_DONG[chi_so_toan_cuc % len(_LOI_BINH_TU_DONG)],
-                            "viTri": "goc_phai" if chi_so_toan_cuc % 2 == 0 else "goc_trai",
-                            "tuFrame": 14,
-                        }
-                        canh_tu_lan_hai_truoc = 0
-
                     if gan_vai_noi:
                         canh_1["vaiNoi"] = suy_luan_vai_noi_canh(canh_1)
                         canh_2["vaiNoi"] = suy_luan_vai_noi_canh(canh_2)
@@ -1965,12 +2961,12 @@ def kiem_dinh_nhip_ngat_thi_giac(
                         {
                             "id": cid,
                             "hanhDong": "tach_canh",
-                            "lyDo": f"Tu chia nho canh tinh dai {giay:.1f}s (> {nguong_tach_canh_giay:.1f}s) kem doi goc may & hanh dong.",
+                            "lyDo": f"Tự chia nhỏ cảnh tĩnh dài {giay:.1f}s (> {nguong_tach_canh_giay:.1f}s) kèm đổi góc máy & hành động.",
                         }
                     )
                     continue
 
-            # 2. Neu canh don le tinh qua nguong 6-8s -> nang cap camera dong + doi hanh dong + bat loiBinhHaiHuoc neu can
+            # 2. Neu canh don le tinh qua nguong 6-8s -> nang cap camera dong + doi hanh dong (KHONG chen loi binh cung lap lai)
             if la_tinh and giay > nguong_canh_bao_giay:
                 cam_moi = (
                     "zoom_hai_huoc"
@@ -1983,23 +2979,11 @@ def kiem_dinh_nhip_ngat_thi_giac(
                     nv_list[0]["hanhDong"] = _HANH_DONG_DONG_LUAN_PHIEN[
                         chi_so_toan_cuc % len(_HANH_DONG_DONG_LUAN_PHIEN)
                     ]
-                if (
-                    giay > nguong_tach_canh_giay
-                    and not canh.get("loiBinhHaiHuoc")
-                    and bo_cuc not in ("mo_dau", "ket_thuc")
-                    and canh_tu_lan_hai_truoc >= 2
-                ):
-                    canh["loiBinhHaiHuoc"] = {
-                        "noiDung": _LOI_BINH_TU_DONG[chi_so_toan_cuc % len(_LOI_BINH_TU_DONG)],
-                        "viTri": "goc_phai" if chi_so_toan_cuc % 2 == 0 else "goc_trai",
-                        "tuFrame": 14,
-                    }
-                    canh_tu_lan_hai_truoc = 0
                 da_xu_ly.append(
                     {
                         "id": cid,
                         "hanhDong": "doi_camera_va_hanh_dong",
-                        "lyDo": f"Canh tinh dai {giay:.1f}s (> {nguong_canh_bao_giay:.1f}s) -> chuyen sang camera='{cam_moi}'.",
+                        "lyDo": f"Cảnh tĩnh dài {giay:.1f}s (> {nguong_canh_bao_giay:.1f}s) -> chuyển sang camera='{cam_moi}'.",
                     }
                 )
 
@@ -2028,22 +3012,11 @@ def kiem_dinh_nhip_ngat_thi_giac(
                         hanh_dong_chinh = hd_moi
                     if not canh.get("chuyenCanh"):
                         canh["chuyenCanh"] = "quet_ngang"
-                    if (
-                        not canh.get("loiBinhHaiHuoc")
-                        and bo_cuc not in ("mo_dau", "ket_thuc")
-                        and canh_tu_lan_hai_truoc >= 2
-                    ):
-                        canh["loiBinhHaiHuoc"] = {
-                            "noiDung": _LOI_BINH_TU_DONG[chi_so_toan_cuc % len(_LOI_BINH_TU_DONG)],
-                            "viTri": "goc_phai" if chi_so_toan_cuc % 2 == 0 else "goc_trai",
-                            "tuFrame": 14,
-                        }
-                        canh_tu_lan_hai_truoc = 0
                     da_xu_ly.append(
                         {
                             "id": cid,
                             "hanhDong": "pha_chuoi_dung_yen",
-                            "lyDo": f"Chuoi lien tiep cung bo cuc/camera keo dai {giay_tich_luy:.1f}s -> doi camera='{cam_moi}' & hanhDong='{hanh_dong_chinh}'.",
+                            "lyDo": f"Chuỗi liên tiếp cùng bố cục/camera kéo dài {giay_tich_luy:.1f}s -> đổi camera='{cam_moi}' & hanhDong='{hanh_dong_chinh}'.",
                         }
                     )
                     giay_tich_luy = giay
@@ -2079,8 +3052,11 @@ def kiem_dinh_nhip_ngat_thi_giac(
 
 _GOC_QUAY_LUAN_PHIEN: tuple[str, ...] = (
     "trung_canh",
+    "can_mat_trai",
+    "can_mat_phai",
     "can_mat",
     "pan_ngang",
+    "can_mat_kich_tinh",
     "focus_trai",
     "focus_phai",
     "toan_canh",
@@ -2181,22 +3157,113 @@ def _la_canh_timeline_rong(canh: dict[str, Any]) -> bool:
     )
 
 
+def _chuan_hoa_tu_so_sanh(van_ban: str) -> list[str]:
+    """Tach tu thuong de so sanh trung lap giai thoai/cau noi chinh xac."""
+    return re.findall(r"[^\W_]+", (van_ban or "").lower(), flags=re.UNICODE)
+
+
+def kiem_tra_lap_y_toan_tap(kich_ban: dict[str, Any]) -> list[dict[str, Any]]:
+    """
+    Tang cuong kiem tra chong lap cung 1 giai thoai / cau noi / loi binh hai huoc qua 1 lan tren toan tap.
+    Phat hien:
+    - Cau loi thoai (>= 8 tu) bi lap nguyen cau hoac giong >= 75% (Jaccard) hoac trung 6-gram lien tiep giua 2 canh.
+    - Loi binh hai huoc (`loiBinhHaiHuoc.noiDung`) bi lap lai qua 1 lan trong tap.
+    """
+    vi_pham: list[dict[str, Any]] = []
+    cau_da_gap: list[tuple[str, str, set[str], set[tuple[str, ...]]]] = []
+    loi_binh_da_gap: dict[str, str] = {}
+
+    for ch in kich_ban.get("chuong") or []:
+        if not isinstance(ch, dict):
+            continue
+        for canh in ch.get("canh") or []:
+            if not isinstance(canh, dict):
+                continue
+            cid = str(canh.get("id") or "")
+
+            # 1. Kiem tra trung loiBinhHaiHuoc
+            lb = canh.get("loiBinhHaiHuoc")
+            if isinstance(lb, dict) and str(lb.get("noiDung") or "").strip():
+                nd_lb = str(lb["noiDung"]).strip()
+                khoa_lb = " ".join(_chuan_hoa_tu_so_sanh(nd_lb))
+                if khoa_lb:
+                    if khoa_lb in loi_binh_da_gap:
+                        vi_pham.append(
+                            {
+                                "loai": "lap_loi_binh_hai_huoc",
+                                "canhId": cid,
+                                "canhGoc": loi_binh_da_gap[khoa_lb],
+                                "moTa": f"[{cid}] Lời bình '{cat_gon_theo_tu(nd_lb, 60)}' bị lặp lại từ {loi_binh_da_gap[khoa_lb]}.",
+                            }
+                        )
+                    else:
+                        loi_binh_da_gap[khoa_lb] = cid
+
+            # 2. Kiem tra lap cau noi / giai thoai (>= 8 tu) giua cac canh
+            cac_doan = [str(canh.get("loiThoai") or "")]
+            for lt in canh.get("luotThoai") or []:
+                if isinstance(lt, dict) and str(lt.get("noiDung") or "").strip():
+                    cac_doan.append(str(lt["noiDung"]))
+            da_bao_canh = False
+            for doan in cac_doan:
+                for cau in re.split(r"(?<=[.!?;])\s+", doan.strip()):
+                    tu = _chuan_hoa_tu_so_sanh(cau)
+                    if len(tu) < 8:
+                        continue
+                    tap_tu = set(tu)
+                    ngrams = {tuple(tu[i : i + 6]) for i in range(max(0, len(tu) - 5))}
+                    for cid_truoc, cau_truoc, tap_truoc, ng_truoc in cau_da_gap:
+                        if cid_truoc == cid:
+                            continue
+                        giao = len(tap_tu & tap_truoc)
+                        hop = max(1, len(tap_tu | tap_truoc))
+                        jaccard = giao / float(hop)
+                        trung_ngram = bool(ngrams and ng_truoc and (ngrams & ng_truoc))
+                        if jaccard >= 0.72 or (trung_ngram and jaccard >= 0.55):
+                            vi_pham.append(
+                                {
+                                    "loai": "lap_giai_thoai_cau_noi",
+                                    "canhId": cid,
+                                    "canhGoc": cid_truoc,
+                                    "moTa": (
+                                        f"[{cid}] Lặp câu nói/giai thoại với {cid_truoc}: "
+                                        f"\"{cat_gon_theo_tu(cau, 70)}\""
+                                    ),
+                                }
+                            )
+                            da_bao_canh = True
+                            break
+                    if not da_bao_canh:
+                        cau_da_gap.append((cid, cau.strip(), tap_tu, ngrams))
+                    else:
+                        break
+                if da_bao_canh:
+                    break
+
+    return vi_pham
+
+
 def kiem_dinh_guardrail_kich_ban(
     kich_ban: dict[str, Any],
     ty_le_tuong_tac_toi_thieu: float = 0.25,
     so_boi_canh_toi_thieu: int = 6,
 ) -> list[dict[str, Any]]:
     """
-    Bo Guardrail kiem dinh tu dong (Python) sau khi sinh kich ban:
+    Bo Guardrail kiem dinh tu dong (Python v2.5) sau khi sinh kich ban:
     1. Cam 2 canh lien tiep trung ca boiCanh lan gocQuay.
     2. Cam canh giang_toan hoac timeline (dong_thoi_gian) co mang du lieu rong.
     3. Cam chuoi 'CAM ON' xuat hien o bat ky hoi nao khac hoi cuoi.
     4. Bat buoc >= 25% so canh la doi thoai/tuong tac va toi thieu 6 boi canh khac nhau trong toan tap.
+    5. Cam nhan doi cung 1 nhanVatId trong cung 1 canh.
+    6. Cam loiBinhHaiHuoc tren giang_toan / dong_thoi_gian.
+    7. Cam dao cu/thoi tiet lech boi canh (la_vang_gio trong phong kin, ngon_nen_den_dau trong vu tru, nha_co_phong_sinh cho nguoi gia/giai thuong).
+    8. Bat buoc moi hoi co `phuDeHoi` rieng biet (khi >= 2 hoi) & chong lap giai thoai/cau noi/loi binh toan tap.
+    9. Phat hien tieng Viet khong dau dai >= 20 ky tu.
     """
     vi_pham: list[dict[str, Any]] = []
     ds_chuong = [ch for ch in (kich_ban.get("chuong") or []) if isinstance(ch, dict)]
     if not ds_chuong:
-        return [{"loai": "kich_ban_rong", "canhId": "", "moTa": "Kich ban khong co chuong nao."}]
+        return [{"loai": "kich_ban_rong", "canhId": "", "moTa": "Kịch bản không có chương nào."}]
 
     tat_ca_canh: list[tuple[int, dict[str, Any]]] = []
     for idx_ch, ch in enumerate(ds_chuong):
@@ -2205,11 +3272,38 @@ def kiem_dinh_guardrail_kich_ban(
                 tat_ca_canh.append((idx_ch, canh))
 
     if not tat_ca_canh:
-        return [{"loai": "kich_ban_rong", "canhId": "", "moTa": "Kich ban khong co canh nao."}]
+        return [{"loai": "kich_ban_rong", "canhId": "", "moTa": "Kịch bản không có cảnh nào."}]
 
     so_hoi_cuoi = len(ds_chuong) - 1
     boi_canh_tap: set[str] = set()
     so_tuong_tac = 0
+
+    # Kiem tra phuDeHoi rieng biet cho tung hoi (khi co >= 2 hoi)
+    if len(ds_chuong) >= 2:
+        phu_de_da_dung: dict[str, int] = {}
+        for idx_ch, ch in enumerate(ds_chuong):
+            pd = str(ch.get("phuDeHoi") or "").strip()
+            khoa_pd = " ".join(_chuan_hoa_tu_so_sanh(pd))
+            if not khoa_pd:
+                vi_pham.append(
+                    {
+                        "loai": "thieu_hoac_trung_phu_de_hoi",
+                        "canhId": "",
+                        "chiSoChuong": idx_ch,
+                        "moTa": f"Hồi {idx_ch + 1} bị thiếu `phuDeHoi` mô tả riêng cho hồi.",
+                    }
+                )
+            elif khoa_pd in phu_de_da_dung:
+                vi_pham.append(
+                    {
+                        "loai": "thieu_hoac_trung_phu_de_hoi",
+                        "canhId": "",
+                        "chiSoChuong": idx_ch,
+                        "moTa": f"Hồi {idx_ch + 1} dùng trùng `phuDeHoi` với Hồi {phu_de_da_dung[khoa_pd] + 1}.",
+                    }
+                )
+            else:
+                phu_de_da_dung[khoa_pd] = idx_ch
 
     for i, (idx_ch, canh) in enumerate(tat_ca_canh):
         cid = str(canh.get("id") or f"canh_{i + 1:03d}")
@@ -2230,7 +3324,7 @@ def kiem_dinh_guardrail_kich_ban(
                     {
                         "loai": "trung_boi_canh_va_goc_quay",
                         "canhId": cid,
-                        "moTa": f"[{cid}] Trung lien tiep ca boiCanh='{bc}' lan gocQuay='{gq}' voi canh truoc.",
+                        "moTa": f"[{cid}] Trùng liên tiếp cả boiCanh='{bc}' lẫn gocQuay='{gq}' với cảnh trước.",
                     }
                 )
 
@@ -2240,7 +3334,7 @@ def kiem_dinh_guardrail_kich_ban(
                 {
                     "loai": "giang_toan_rong",
                     "canhId": cid,
-                    "moTa": f"[{cid}] Canh giang_toan thieu congThucLatex hoac minhHoaToan hop le.",
+                    "moTa": f"[{cid}] Cảnh giang_toan thiếu congThucLatex hoặc minhHoaToan hợp lệ.",
                 }
             )
         if _la_canh_timeline_rong(canh):
@@ -2248,7 +3342,7 @@ def kiem_dinh_guardrail_kich_ban(
                 {
                     "loai": "timeline_rong",
                     "canhId": cid,
-                    "moTa": f"[{cid}] Canh dong_thoi_gian thieu mang mocThoiGian hop le.",
+                    "moTa": f"[{cid}] Cảnh dong_thoi_gian thiếu mảng mocThoiGian hợp lệ.",
                 }
             )
 
@@ -2258,9 +3352,76 @@ def kiem_dinh_guardrail_kich_ban(
                 {
                     "loai": "cam_on_hoi_giua",
                     "canhId": cid,
-                    "moTa": f"[{cid}] Phat hien chuoi 'CẢM ƠN' o Hoi {idx_ch + 1} (chi cho phep o hoi cuoi).",
+                    "moTa": f"[{cid}] Phát hiện chuỗi 'CẢM ƠN' ở Hồi {idx_ch + 1} (chỉ cho phép ở hồi cuối).",
                 }
             )
+
+        # Rule 5: Cam nhan doi cung 1 nhanVatId trong cung 1 canh
+        nv_ids_canh = [str(nv.get("id") or "") for nv in (canh.get("nhanVat") or []) if isinstance(nv, dict) and nv.get("id")]
+        if len(nv_ids_canh) != len(set(nv_ids_canh)):
+            vi_pham.append(
+                {
+                    "loai": "nhan_doi_nhan_vat",
+                    "canhId": cid,
+                    "moTa": f"[{cid}] Phát hiện nhân đôi cùng 1 nhanVatId trong cùng một cảnh ({nv_ids_canh}).",
+                }
+            )
+
+        # Rule 6: Cam loiBinhHaiHuoc tren giang_toan / dong_thoi_gian
+        if (
+            canh.get("boCuc") in ("giai_thich_toan", "dong_thoi_gian")
+            or canh.get("loaiCanh") == "giang_toan"
+        ) and isinstance(canh.get("loiBinhHaiHuoc"), dict) and str(canh["loiBinhHaiHuoc"].get("noiDung") or "").strip():
+            vi_pham.append(
+                {
+                    "loai": "loi_binh_de_bang_toan_timeline",
+                    "canhId": cid,
+                    "moTa": f"[{cid}] Không được đặt 'GÓC BÌNH LUẬN' (loiBinhHaiHuoc) trên bố cục {canh.get('boCuc')}.",
+                }
+            )
+
+        # Rule 7: Vat the moi truong / boi canh lech ngu canh
+        vt_raw = canh.get("vatTheXungQuanh") if isinstance(canh.get("vatTheXungQuanh"), list) else []
+        vt_hop_le = _loc_vat_the_hop_le_boi_canh(bc, vt_raw)
+        if len(vt_hop_le) < len(vt_raw):
+            vi_pham.append(
+                {
+                    "loai": "vat_the_lech_boi_canh",
+                    "canhId": cid,
+                    "moTa": f"[{cid}] Có vật thể môi trường trái bối cảnh '{bc}' (vd: lá rơi trong phòng kín hoặc nến trong vũ trụ).",
+                }
+            )
+        if bc == "nha_co_phong_sinh" and _canh_la_nguoi_gia_hoac_giai_thuong(
+            canh.get("nhanVat") or [],
+            str(canh.get("tieuDeNho") or ""),
+            str(canh.get("loiThoai") or ""),
+        ):
+            vi_pham.append(
+                {
+                    "loai": "phong_sinh_nguoi_gia",
+                    "canhId": cid,
+                    "moTa": f"[{cid}] Không được chọn bối cảnh 'nha_co_phong_sinh' cho cảnh người già / giải thưởng / cuối đời.",
+                }
+            )
+
+        # Rule 7b: Cam bien so "1729" bi ro ri mac dinh sang tap khong phai Ramanujan
+        tieu_de_tap_low = f"{kich_ban.get('tieuDe', '')} {kich_ban.get('chuDe', '')}".lower()
+        la_tap_ramanujan = any(k in tieu_de_tap_low for k in ("ramanujan", "hardy", "taxicab", "1729"))
+        if not la_tap_ramanujan:
+            co_1729 = str(canh.get("bienSoXe") or "").strip() == "1729"
+            if not co_1729:
+                co_1729 = any(
+                    isinstance(item, dict) and str(item.get("bienSoXe") or "").strip() == "1729"
+                    for item in (list(canh.get("daoCu") or []) + list(canh.get("vatTheXungQuanh") or []))
+                )
+            if co_1729:
+                vi_pham.append(
+                    {
+                        "loai": "bien_so_1729_mac_dinh",
+                        "canhId": cid,
+                        "moTa": f"[{cid}] Không được gắn biển số '1729' mặc định cho tập không phải Ramanujan.",
+                    }
+                )
 
     # Rule 4: >= 25% doi thoai/tuong tac & >= 6 boi canh khac nhau
     tong_canh = len(tat_ca_canh)
@@ -2271,7 +3432,7 @@ def kiem_dinh_guardrail_kich_ban(
                 "loai": "thieu_doi_thoai_tuong_tac",
                 "canhId": "",
                 "moTa": (
-                    f"Ty le canh doi thoai/tuong tac moi dat {so_tuong_tac}/{tong_canh} "
+                    f"Tỉ lệ cảnh đối thoại/tương tác mới đạt {so_tuong_tac}/{tong_canh} "
                     f"({ty_le_tt * 100:.1f}% < {ty_le_tuong_tac_toi_thieu * 100:.0f}%)."
                 ),
             }
@@ -2284,11 +3445,17 @@ def kiem_dinh_guardrail_kich_ban(
                 "loai": "thieu_da_dang_boi_canh",
                 "canhId": "",
                 "moTa": (
-                    f"Toan tap moi co {len(boi_canh_tap)} boi canh khac nhau "
-                    f"(toi thieu {nguong_bc} boi canh)."
+                    f"Toàn tập mới có {len(boi_canh_tap)} bối cảnh khác nhau "
+                    f"(tối thiểu {nguong_bc} bối cảnh)."
                 ),
             }
         )
+
+    # Rule 8: Chong lap giai thoai / cau noi / loi binh toan tap
+    vi_pham.extend(kiem_tra_lap_y_toan_tap(kich_ban))
+
+    # Rule 9: Kiem tra tieng Viet khong dau >= 20 ky tu
+    vi_pham.extend(kiem_tra_dau_tieng_viet(kich_ban))
 
     return vi_pham
 
@@ -2335,10 +3502,10 @@ Hay tra ve DUY NHAT JSON hop le gom mang `canhSua` de khac phuc TRIET DE cac loi
       "id": "canh_005",
       "boiCanh": "san_truong_co_dien",
       "gocQuay": "can_mat",
-      "loiThoai": "Loi thoai da sua khong con chuoi cam on o hoi giua...",
-      "mocThoiGian": [{{"nam": "1913", "moTa": "Moc that tu tu lieu", "noiBat": true}}],
-      "congThucLatex": [{{"latex": "1729 = 1^3 + 12^3", "nhan": "So Taxi", "noiBat": true}}],
-      "minhHoaToan": {{"loai": "chuoi_suy_luan", "tieuDe": "Suy luan", "thamSo": {{"buoc": ["Buoc 1", "Buoc 2"]}}}}
+      "loiThoai": "Lời thoại đã sửa có dấu đầy đủ, không còn chuỗi cảm ơn ở hồi giữa...",
+      "mocThoiGian": [{{"nam": "1913", "moTa": "Mốc thật từ tư liệu nghiên cứu", "noiBat": true}}],
+      "congThucLatex": [{{"latex": "e^{{i\\pi}} + 1 = 0", "nhan": "Đồng nhất thức Euler", "noiBat": true}}],
+      "minhHoaToan": {{"loai": "chuoi_suy_luan", "tieuDe": "Suy luận cốt lõi", "thamSo": {{"buoc": ["Bước 1", "Bước 2"]}}}}
     }}
   ]
 }}
@@ -2360,7 +3527,7 @@ def _xoa_chuoi_cam_on(van_ban: str) -> str:
 
 
 def _tach_2_luot_thoai_tu_loi(loi_thoai: str, nv_ids: list[str]) -> list[dict[str, Any]]:
-    """Tao nhanh 2 luot thoai ngan gon tu loi thoai khi guardrail nang cap canh thanh doi_thoai."""
+    """Tao nhanh 3 luot thoai ngan sac ben (kem kieuBongBong v3.0) khi guardrail nang cap canh thanh doi_thoai."""
     nv1 = nv_ids[0]
     nv2 = nv_ids[1] if len(nv_ids) > 1 else nv_ids[0]
     tach = _tach_loi_thoai_hai_canh(loi_thoai, tu_toi_thieu_moi_phan=5)
@@ -2370,25 +3537,47 @@ def _tach_2_luot_thoai_tu_loi(loi_thoai: str, nv_ids: list[str]) -> list[dict[st
         tu = [t for t in loi_thoai.split() if t]
         giua = max(1, len(tu) // 2)
         p1 = " ".join(tu[:giua]) or loi_thoai
-        p2 = " ".join(tu[giua:]) or "Quả thật là một phát hiện không thể tin nổi!"
-    f1 = max(45, int(round(max(2.2, dem_tu(p1) / 2.65) * 30)))
-    f2 = max(45, int(round(max(2.2, dem_tu(p2) / 2.65) * 30)))
+        p2 = " ".join(tu[giua:]) or "Quả thật là một phát hiện khiến ai cũng phải tròn mắt!"
+
+    # Thu chia thanh 3 luot sac ben (8-22 tu) neu p2 du dai, nguoc lai them 1 cau phan hoi hai huoc co dau
+    tach_tiep = _tach_loi_thoai_hai_canh(p2, tu_toi_thieu_moi_phan=5)
+    if tach_tiep is not None:
+        p2a, p3 = tach_tiep
+    else:
+        p2a = p2
+        p3 = "Chính xác, nhưng điều bất ngờ nhất thì vẫn còn ở ngay phía sau!"
+
+    f1 = max(45, int(round(max(2.0, dem_tu(p1) / 2.65) * 30)))
+    f2 = max(45, int(round(max(2.0, dem_tu(p2a) / 2.65) * 30)))
+    f3 = max(45, int(round(max(2.0, dem_tu(p3) / 2.65) * 30)))
+    gap = 9  # 0.30s nhip hai giua luot thoai v3.0
     return [
         {
             "nhanVatId": nv1,
             "noiDung": p1,
             "bieuCam": "tram_tu",
             "dongTac": "quay_nhin_doi_thoai",
+            "kieuBongBong": "thuong",
             "batDauFrame": 0,
             "ketThucFrame": f1,
         },
         {
             "nhanVatId": nv2,
-            "noiDung": p2,
+            "noiDung": p2a,
             "bieuCam": "ngac_nhien",
             "dongTac": "chi_tro_giai_thich",
-            "batDauFrame": f1 + 6,
-            "ketThucFrame": f1 + 6 + f2,
+            "kieuBongBong": "ca_khia",
+            "batDauFrame": f1 + gap,
+            "ketThucFrame": f1 + gap + f2,
+        },
+        {
+            "nhanVatId": nv1,
+            "noiDung": p3,
+            "bieuCam": "tinh_quai",
+            "dongTac": "gat_gu_dong_tinh",
+            "kieuBongBong": "thuong",
+            "batDauFrame": f1 + gap + f2 + gap,
+            "ketThucFrame": f1 + gap + f2 + gap + f3,
         },
     ]
 
@@ -2456,8 +3645,8 @@ def sua_loi_guardrail_cuc_bo(
                         if isinstance(p.get("mocThoiGian"), list) and p["mocThoiGian"]:
                             c["mocThoiGian"] = [
                                 {
-                                    "nam": str(m.get("nam") or "...").strip()[:30],
-                                    "moTa": str(m.get("moTa") or m.get("suKien") or "...").strip()[:90],
+                                    "nam": cat_gon_theo_tu(str(m.get("nam") or "...").strip(), 30) or "...",
+                                    "moTa": cat_gon_theo_tu(str(m.get("moTa") or m.get("suKien") or "...").strip(), 125) or "...",
                                     **({"noiBat": bool(m["noiBat"])} if isinstance(m.get("noiBat"), bool) else {}),
                                 }
                                 for m in p["mocThoiGian"][:5]
@@ -2499,8 +3688,8 @@ def sua_loi_guardrail_cuc_bo(
             if isinstance(m, dict) and (str(m.get("nam") or "").strip() or str(m.get("suKien") or m.get("moTa") or "").strip()):
                 timeline_that.append(
                     {
-                        "nam": str(m.get("nam") or "...").strip()[:30],
-                        "moTa": str(m.get("suKien") or m.get("moTa") or "...").strip()[:90],
+                        "nam": cat_gon_theo_tu(str(m.get("nam") or "...").strip(), 30) or "...",
+                        "moTa": cat_gon_theo_tu(str(m.get("suKien") or m.get("moTa") or "...").strip(), 125) or "...",
                         "noiBat": bool(m.get("noiBat", idx_m == 0)),
                     }
                 )
@@ -2524,16 +3713,75 @@ def sua_loi_guardrail_cuc_bo(
                     lt["noiDung"] = _xoa_chuoi_cam_on(str(lt["noiDung"]))
             if canh.get("boCuc") == "ket_thuc":
                 canh["boCuc"] = "ke_chuyen"
-            nhat_ky_sua.append({"id": cid, "loai": "cam_on_hoi_giua", "moTa": "Da go bo chuoi 'CẢM ƠN' o hoi giua."})
+            nhat_ky_sua.append({"id": cid, "loai": "cam_on_hoi_giua", "moTa": "Đã gỡ bỏ chuỗi 'CẢM ƠN' ở hồi giữa."})
+
+        # 1b. Khu trung lap nhanVatId trong cung 1 canh
+        nv_raw = canh.get("nhanVat") if isinstance(canh.get("nhanVat"), list) else []
+        nv_khu_trung: list[dict[str, Any]] = []
+        da_thay_nv: set[str] = set()
+        for nv_item in nv_raw:
+            if not isinstance(nv_item, dict):
+                continue
+            nid = str(nv_item.get("id") or "").strip()
+            if not nid or nid in da_thay_nv:
+                continue
+            da_thay_nv.add(nid)
+            nv_khu_trung.append(nv_item)
+        if len(nv_khu_trung) < len(nv_raw):
+            canh["nhanVat"] = nv_khu_trung
+            nhat_ky_sua.append({"id": cid, "loai": "nhan_doi_nhan_vat", "moTa": "Đã loại bỏ nhân vật bị nhân đôi trong cùng cảnh."})
+
+        # 1c. Go bo loiBinhHaiHuoc tren giang_toan / dong_thoi_gian
+        if (
+            canh.get("boCuc") in ("giai_thich_toan", "dong_thoi_gian")
+            or canh.get("loaiCanh") == "giang_toan"
+        ) and canh.get("loiBinhHaiHuoc"):
+            canh.pop("loiBinhHaiHuoc", None)
+            nhat_ky_sua.append({"id": cid, "loai": "loi_binh_de_bang_toan_timeline", "moTa": "Đã gỡ hộp 'Góc bình luận' khỏi cảnh Toán/Dòng thời gian."})
+
+        # 1d. Chan dao cu / thoi tiet lech boi canh va nha_co_phong_sinh cho nguoi gia/giai thuong
+        bc_c = str(canh.get("boiCanh") or "")
+        if bc_c == "nha_co_phong_sinh" and _canh_la_nguoi_gia_hoac_giai_thuong(
+            canh.get("nhanVat") or [],
+            str(canh.get("tieuDeNho") or ""),
+            str(canh.get("loiThoai") or ""),
+        ):
+            canh["boiCanh"] = "giang_duong_dai_hoc"
+            bc_c = "giang_duong_dai_hoc"
+            nhat_ky_sua.append({"id": cid, "loai": "phong_sinh_nguoi_gia", "moTa": "Đã đổi bối cảnh từ nha_co_phong_sinh sang giang_duong_dai_hoc."})
+        if isinstance(canh.get("vatTheXungQuanh"), list):
+            vt_moi = _loc_vat_the_hop_le_boi_canh(bc_c, canh["vatTheXungQuanh"])
+            if len(vt_moi) < len(canh["vatTheXungQuanh"]):
+                canh["vatTheXungQuanh"] = vt_moi
+                nhat_ky_sua.append({"id": cid, "loai": "vat_the_lech_boi_canh", "moTa": f"Đã lọc bỏ vật thể môi trường lệch bối cảnh '{bc_c}'."})
+        tt_cu = str(canh.get("thoiTiet") or "khong")
+        tt_moi = _chuan_hoa_thoi_tiet_boi_canh(bc_c, tt_cu)
+        if tt_moi != tt_cu:
+            canh["thoiTiet"] = tt_moi
+
+        # 1e. Go bien so "1729" mac dinh neu day khong phai tap Ramanujan
+        tieu_de_tap_low = f"{ket_qua.get('tieuDe', '')} {ket_qua.get('chuDe', '')}".lower()
+        if not any(k in tieu_de_tap_low for k in ("ramanujan", "hardy", "taxicab", "1729")):
+            da_go_1729 = False
+            if str(canh.get("bienSoXe") or "").strip() == "1729":
+                canh.pop("bienSoXe", None)
+                da_go_1729 = True
+            for ds_ten in ("daoCu", "vatTheXungQuanh"):
+                for item_bs in canh.get(ds_ten) or []:
+                    if isinstance(item_bs, dict) and str(item_bs.get("bienSoXe") or "").strip() == "1729":
+                        item_bs.pop("bienSoXe", None)
+                        da_go_1729 = True
+            if da_go_1729:
+                nhat_ky_sua.append({"id": cid, "loai": "bien_so_1729_mac_dinh", "moTa": "Đã gỡ biển số '1729' mặc định khỏi tập không phải Ramanujan."})
 
         # 2. Sua canh giang_toan hoac timeline rong (KHONG hardcode Pythagoras!)
         if _la_canh_timeline_rong(canh):
             if timeline_that:
                 canh["mocThoiGian"] = copy.deepcopy(timeline_that)
-                nhat_ky_sua.append({"id": cid, "loai": "timeline_rong", "moTa": "Da nap mocThoiGian tu timeline_su_kien cua tu lieu."})
+                nhat_ky_sua.append({"id": cid, "loai": "timeline_rong", "moTa": "Đã nạp mốc thời gian từ tư liệu nghiên cứu."})
             else:
                 canh["boCuc"] = "ke_chuyen"
-                nhat_ky_sua.append({"id": cid, "loai": "timeline_rong", "moTa": "Thieu timeline_su_kien -> ha boCuc ve ke_chuyen sach."})
+                nhat_ky_sua.append({"id": cid, "loai": "timeline_rong", "moTa": "Thiếu dữ liệu dòng thời gian -> chuyển bố cục về kể chuyện sạch."})
 
         if _la_canh_giang_toan_rong(canh):
             cts = canh.get("congThucLatex")
@@ -2552,13 +3800,13 @@ def sua_loi_guardrail_cuc_bo(
                     "tieuDe": str(mh_hien_tai.get("tieuDe") or canh.get("tieuDeNho") or "Các bước suy luận")[:70],
                     "thamSo": {"buoc": ds_buoc},
                 }
-                nhat_ky_sua.append({"id": cid, "loai": "giang_toan_rong", "moTa": "Da bo sung thamSo.buoc cho minhHoaToan tu congThucLatex cua canh."})
+                nhat_ky_sua.append({"id": cid, "loai": "giang_toan_rong", "moTa": "Đã bổ sung các bước suy luận cho minh họa Toán từ công thức của cảnh."})
             else:
                 canh["boCuc"] = "ke_chuyen"
                 if canh.get("loaiCanh") == "giang_toan":
                     canh["loaiCanh"] = "ke_chuyen"
                 canh.pop("minhHoaToan", None)
-                nhat_ky_sua.append({"id": cid, "loai": "giang_toan_rong", "moTa": "Canh giang_toan thieu cong thuc -> chuyen ve ke_chuyen sach."})
+                nhat_ky_sua.append({"id": cid, "loai": "giang_toan_rong", "moTa": "Cảnh giảng Toán thiếu công thức -> chuyển về bố cục kể chuyện sạch."})
 
     # 3. Da dang hoa boi canh toi thieu 6 boi canh khac nhau
     boi_canh_hien_co = {str(c.get("boiCanh") or "") for _, c in tat_ca_canh if c.get("boiCanh")}
@@ -2646,7 +3894,7 @@ def sua_loi_guardrail_cuc_bo(
                 mq = canh_nc.get("mayQuay") if isinstance(canh_nc.get("mayQuay"), dict) else {}
                 mq["tuDongFocusNguoiNoi"] = True
                 if not mq.get("gocQuay"):
-                    mq["gocQuay"] = "focus_trai"
+                    mq["gocQuay"] = "dao_goc_can_mat"
                 canh_nc["mayQuay"] = mq
                 # Dam bao co 2 nhan vat nhin ve phia nhau neu danhSachNhanVat >= 2
                 nv_list = canh_nc.get("nhanVat") if isinstance(canh_nc.get("nhanVat"), list) else []
@@ -2670,7 +3918,7 @@ def sua_loi_guardrail_cuc_bo(
                         }
                     )
                     canh_nc["nhanVat"] = nv_list
-                nhat_ky_sua.append({"id": cid_nc, "loai": "thieu_doi_thoai_tuong_tac", "moTa": "Nang cap thanh canh doi_thoai co luotThoai[] & tuDongFocusNguoiNoi."})
+                nhat_ky_sua.append({"id": cid_nc, "loai": "thieu_doi_thoai_tuong_tac", "moTa": "Đã nâng cấp thành cảnh đối thoại 3 lượt kèm góc đảo cận mặt."})
             so_tt_hien_tai += 1
 
     # 5. Cam 2 canh lien tiep trung ca boiCanh lan gocQuay (chay cuoi de bat moi va cham sau buoc 3 & 4)
@@ -2698,6 +3946,69 @@ def sua_loi_guardrail_cuc_bo(
                     "id": str(canh.get("id") or ""),
                     "loai": "trung_boi_canh_va_goc_quay",
                     "moTa": f"Doi gocQuay '{gq}' -> '{gq_moi}' de tranh trung lien tiep voi canh truoc.",
+                }
+            )
+
+    # 5b. Dam bao moi hoi co phuDeHoi rieng biet & go bo loiBinhHaiHuoc bi lap lai toan tap
+    if len(ds_chuong) >= 2:
+        phu_de_da_co: set[str] = set()
+        for idx_ch, ch in enumerate(ds_chuong):
+            pd = str(ch.get("phuDeHoi") or "").strip()
+            khoa_pd = " ".join(_chuan_hoa_tu_so_sanh(pd))
+            if not khoa_pd or khoa_pd in phu_de_da_co:
+                ten_ch = str(ch.get("tenChuong") or f"Hồi {idx_ch + 1}").strip()
+                td_canh = next(
+                    (
+                        str(c.get("tieuDeNho") or "").strip()
+                        for c in (ch.get("canh") or [])
+                        if isinstance(c, dict) and str(c.get("tieuDeNho") or "").strip()
+                    ),
+                    "",
+                )
+                pd_moi = cat_gon_theo_tu(
+                    f"Hồi {idx_ch + 1}: {td_canh} — {ten_ch}" if td_canh else f"Khám phá điểm nhấn riêng của Hồi {idx_ch + 1}: {ten_ch}",
+                    140,
+                )
+                ch["phuDeHoi"] = pd_moi
+                if ch.get("canh") and isinstance(ch["canh"][0], dict) and ch["canh"][0].get("boCuc") == "mo_dau":
+                    ch["canh"][0]["phuDeHoi"] = pd_moi
+                phu_de_da_co.add(" ".join(_chuan_hoa_tu_so_sanh(pd_moi)))
+                nhat_ky_sua.append(
+                    {
+                        "id": str(ch.get("id") or f"chuong_{idx_ch + 1}"),
+                        "loai": "thieu_hoac_trung_phu_de_hoi",
+                        "moTa": f"Đã tạo `phuDeHoi` riêng biệt cho Hồi {idx_ch + 1}.",
+                    }
+                )
+            else:
+                phu_de_da_co.add(khoa_pd)
+
+    loi_binh_duy_nhat: set[str] = set()
+    for _, canh in tat_ca_canh:
+        lb = canh.get("loiBinhHaiHuoc")
+        if isinstance(lb, dict) and str(lb.get("noiDung") or "").strip():
+            khoa_lb = " ".join(_chuan_hoa_tu_so_sanh(str(lb["noiDung"])))
+            if khoa_lb in loi_binh_duy_nhat:
+                canh.pop("loiBinhHaiHuoc", None)
+                nhat_ky_sua.append(
+                    {
+                        "id": str(canh.get("id") or ""),
+                        "loai": "lap_loi_binh_hai_huoc",
+                        "moTa": "Đã gỡ hộp lời bình trùng lặp với cảnh trước.",
+                    }
+                )
+            else:
+                loi_binh_duy_nhat.add(khoa_lb)
+
+    # 5c. Neu co Gemini va phat hien chuoi tieng Viet khong dau >= 20 ky tu -> tu dong sua dau
+    if cho_phep_goi_ai and gemini is not None:
+        ket_qua, ds_sua_dau = tu_dong_sua_dau_tieng_viet(ket_qua, gemini=gemini)
+        for item_sd in ds_sua_dau:
+            nhat_ky_sua.append(
+                {
+                    "id": item_sd["duongDan"],
+                    "loai": "tieng_viet_khong_dau",
+                    "moTa": f"Đã khôi phục dấu tiếng Việt cho {item_sd['duongDan']}.",
                 }
             )
 
@@ -2813,27 +4124,27 @@ Chi liet ke vao `canhCanSua` nhung canh THUC SU co loi (toi da 10 canh). Neu kic
 Tra ve DUY NHAT JSON hop le dung cau truc:
 {{
   "diemTongThe": 8.8,
-  "nhanXetChung": "Nhan xet ngan gon 1-2 cau ve chat luong toan tap...",
+  "nhanXetChung": "Nhận xét ngắn gọn 1-2 câu về chất lượng toàn tập...",
   "canhCanSua": [
     {{
       "id": "canh_012",
-      "lyDo": "Sua lap y voi Hoi 2 / khop boi canh 1-1 / pha trung gocQuay / sua nhip hai...",
-      "loiThoaiMoi": "Loi thoai da sua chuan xac va tu nhien...",
+      "lyDo": "Sửa lặp ý với Hồi 2 / khớp bối cảnh 1-1 / phá trùng góc quay / sửa nhịp hài...",
+      "loiThoaiMoi": "Lời thoại đã sửa chuẩn xác, tự nhiên và có dấu tiếng Việt đầy đủ...",
       "boiCanhMoi": "phong_benh_vien",
       "gocQuayMoi": "can_mat",
       "vaiNoiMoi": "nguoi_dan",
       "cameraMoi": {{"kieu": "zoom_hai_huoc"}},
       "hanhDongMoi": "giat_minh_nhay_dung",
       "congThucLatexMoi": [
-        {{"latex": "a^2 + b^2 = c^2", "nhan": "Dinh ly", "noiBat": true}}
+        {{"latex": "a^2 + b^2 = c^2", "nhan": "Định lý", "noiBat": true}}
       ],
-      "loiBinhHaiHuocMoi": {{"noiDung": "Cau binh luan di dom...", "viTri": "goc_phai"}}
+      "loiBinhHaiHuocMoi": {{"noiDung": "Câu bình luận dí dỏm có dấu...", "viTri": "goc_phai"}}
     }}
   ],
   "baiHocMoi": [
     {{
       "loai": "toan_hoc",
-      "noiDung": "Quy tac ngan gon rut ra tu dot kiem dinh nay...",
+      "noiDung": "Quy tắc ngắn gọn rút ra từ đợt kiểm định này...",
       "mucDoUuTien": 4
     }}
   ]
@@ -3258,19 +4569,26 @@ def bien_kich_3_tang(
             ),
             "bangMau": raw_bp.get("bangMau") or BANG_MAU_MAC_DINH,
             "danhSachNhanVat": danh_sach_nv_bp,
+            "danhSachBoiCanhAI": chuan_hoa_danh_sach_boi_canh_ai(raw_bp.get("danhSachBoiCanhAI")),
             "cacHoi": [],
         }
         raw_cac_hoi = raw_bp.get("cacHoi") if isinstance(raw_bp.get("cacHoi"), list) else []
         for idx, khung in enumerate(KHUNG_6_HOI):
             item = raw_cac_hoi[idx] if idx < len(raw_cac_hoi) and isinstance(raw_cac_hoi[idx], dict) else {}
+            tom_tat_hoi = str(item.get("tomTat") or khung["vaiTro"]).strip()
+            phu_de_hoi = cat_gon_theo_tu(
+                str(item.get("phuDeHoi") or tom_tat_hoi or f"Khám phá nội dung trọng tâm của Hồi {khung['soHoi']}").strip(),
+                140,
+            )
             blueprint["cacHoi"].append(
                 {
                     "soHoi": khung["soHoi"],
                     "id": khung["id"],
                     "tenChuong": str(item.get("tenChuong") or f"{khung['soHoi']}. {khung['vaiTro']}").strip(),
+                    "phuDeHoi": phu_de_hoi,
                     "boiCanhChinh": chuan_hoa_enum(item.get("boiCanhChinh"), LOAI_BOI_CANH, "bo_bien_hy_lap"),
                     "thoiTietChinh": chuan_hoa_enum(item.get("thoiTietChinh"), LOAI_THOI_TIET, "nang_dep"),
-                    "tomTat": str(item.get("tomTat") or khung["vaiTro"]).strip(),
+                    "tomTat": tom_tat_hoi,
                     "diemHaiHuoc": item.get("diemHaiHuoc") if isinstance(item.get("diemHaiHuoc"), list) else [],
                     "kienThucToan": str(item.get("kienThucToan") or "").strip(),
                 }
@@ -3285,7 +4603,7 @@ def bien_kich_3_tang(
 
     # --- TANG 2: VIET CHI TIET 6 HOI NOI MACH ---
     danh_sach_chuong_raw: list[dict[str, Any]] = []
-    tom_tat_hoi_truoc = "Day la Hoi mo dau, dat nguoi xem ngay vao boi canh va tinh huong to mo."
+    tom_tat_hoi_truoc = "Đây là Hồi mở đầu, đặt người xem ngay vào bối cảnh và tình huống tò mò."
     su_kien_da_dung: list[str] = []
 
     for idx, khung in enumerate(KHUNG_6_HOI):
@@ -3367,9 +4685,14 @@ def bien_kich_3_tang(
                         c_hoi["boCuc"] = "ke_chuyen"
                 canh_hoi_sach[-1]["boCuc"] = "ket_thuc"
 
+            phu_de_hoi_kq = cat_gon_theo_tu(
+                str(du_lieu_hoi.get("phuDeHoi") or thong_tin_hoi.get("phuDeHoi") or thong_tin_hoi["tomTat"]).strip(),
+                140,
+            )
             du_lieu_hoi = {
                 "id": khung["id"],
                 "tenChuong": thong_tin_hoi["tenChuong"],
+                "phuDeHoi": phu_de_hoi_kq,
                 "tomTatKetHoi": str(du_lieu_hoi.get("tomTatKetHoi") or thong_tin_hoi["tomTat"]).strip(),
                 "suKienDaKe": [
                     str(x).strip()[:120]
@@ -3401,6 +4724,7 @@ def bien_kich_3_tang(
         "batPhuDe": True,
         "bangMau": blueprint["bangMau"],
         "danhSachNhanVat": blueprint["danhSachNhanVat"],
+        "danhSachBoiCanhAI": blueprint.get("danhSachBoiCanhAI") or [],
         "goiYThumbnail": blueprint.get("goiYThumbnail")
         or chuan_hoa_goi_y_thumbnail([], blueprint["danhSachNhanVat"], blueprint["tieuDe"]),
         "chuong": danh_sach_chuong_raw,
@@ -3452,6 +4776,13 @@ def bien_kich_3_tang(
             kich_ban_sach,
             tu_lieu_nghien_cuu=tu_lieu_dung,
         )
+
+    # Guardrail dau tieng Viet: phat hien bat ky chuoi >= 20 ky tu thieu dau va tu sua bang Gemini truoc khi xuat
+    vi_pham_dau = kiem_tra_dau_tieng_viet(kich_ban_sach)
+    if vi_pham_dau:
+        print(f"[Guardrail Tiếng Việt] Phát hiện {len(vi_pham_dau)} chuỗi thiếu dấu (>=20 ký tự), đang tự sửa bằng Gemini...")
+        kich_ban_sach, da_sua_dau = tu_dong_sua_dau_tieng_viet(kich_ban_sach, gemini=gemini)
+        print(f"[Guardrail Tiếng Việt] Đã tự động khôi phục dấu cho {len(da_sua_dau)}/{len(vi_pham_dau)} chuỗi.")
 
     file_json = base_dir / "nhap_kich_ban.json"
     file_md = base_dir / "doc_duyet_kich_ban.md"

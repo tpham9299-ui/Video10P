@@ -17,6 +17,7 @@ out/
 *.tmp
 public/audio/**/*.mp3
 public/audio/*.mp3
+public/boi_canh/
 
 # Cache noi bo pipeline Python
 __pycache__/
@@ -25,6 +26,7 @@ __pycache__/
 .pytest_cache/
 du_lieu/*/cache_chuong/
 du_lieu/*/cache_audio.json
+du_lieu/*/cache_boi_canh.json
 du_lieu/nhat_ky_san_xuat.log
 
 # He dieu hanh

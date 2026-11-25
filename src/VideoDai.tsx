@@ -22,9 +22,18 @@ import { CanhDoiThoai } from './canh/CanhDoiThoai';
 import { CanhHaiHuoc } from './canh/CanhHaiHuoc';
 import { CanhGiaiThichToan } from './canh/CanhGiaiThichToan';
 import { CanhDongThoiGian } from './canh/CanhDongThoiGian';
+import { CanhBanDoHanhTrinh } from './canh/CanhBanDoHanhTrinh';
+import { CanhBaoChiCo } from './canh/CanhBaoChiCo';
+import { CanhPhanUngCam } from './canh/CanhPhanUngCam';
 import { CanhKet } from './canh/CanhKet';
 import { CanhTuongTacKhanGia } from './canh/CanhTuongTacKhanGia';
 import { CanhChiaDoiManHinh } from './canh/CanhChiaDoiManHinh';
+import { TheTenHoi } from './canh/TheTenHoi';
+import { layHoSoMascotKenh } from './nhanvat/mascot_kenh';
+import {
+  THOI_LUONG_THE_TEN_HOI_GIAY,
+  coAnPhuDeTrungBongBong,
+} from './canh/phu_de_logic';
 import { timLuotThoaiTaiFrame } from './nhanvat/dien_xuat';
 import {
   chuanHoaKhungHinhLienMach,
@@ -182,12 +191,11 @@ const KhungChuyenCanhNoiTiep: React.FC<{
   );
 };
 
-/** Phu de 16:9 de doc tren ca nen sang (troi xanh/giay kem) lan nen toi (troi dem) */
+/** Phu de Clean Cinema v3.0: chu trang net dam vien toi manh (khong hop den day, khong blur), tu an neu da hien tren bong bong chat */
 const PhuDeCanh: React.FC<{
   canh: Canh;
-  mauVien: string;
   banDoNhanVat: Record<string, ThongTinNhanVat>;
-}> = ({ canh, mauVien, banDoNhanVat }) => {
+}> = ({ canh, banDoNhanVat }) => {
   const frame = useCurrentFrame();
   const tong = Math.max(1, canh.denFrame - canh.tuFrame);
   const luotHienTai = timLuotThoaiTaiFrame(canh.luotThoai, frame);
@@ -206,7 +214,7 @@ const PhuDeCanh: React.FC<{
     noiDung = danhSachDong[chiSo] ?? '';
   }
 
-  if (!noiDung) {
+  if (!noiDung || coAnPhuDeTrungBongBong(canh, frame, noiDung)) {
     return null;
   }
 
@@ -214,10 +222,10 @@ const PhuDeCanh: React.FC<{
     <div
       style={{
         position: 'absolute',
-        left: 120,
-        right: 120,
-        bottom: 24,
-        maxHeight: 120,
+        left: 110,
+        right: 110,
+        bottom: 22,
+        maxHeight: 116,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'flex-end',
@@ -227,17 +235,17 @@ const PhuDeCanh: React.FC<{
     >
       <div
         style={{
-          padding: '11px 28px',
-          borderRadius: 16,
-          backgroundColor: 'rgba(15, 23, 42, 0.92)',
-          border: `2.5px solid ${mauVien}`,
           color: '#FFFFFF',
-          fontSize: 26,
-          fontWeight: 700,
-          lineHeight: 1.32,
+          fontSize: 31,
+          fontWeight: 800,
+          lineHeight: 1.3,
           textAlign: 'center',
-          maxWidth: 1540,
+          maxWidth: 1580,
+          padding: '2px 12px',
+          letterSpacing: 0.2,
           fontFamily: 'Segoe UI, Arial, sans-serif',
+          textShadow:
+            '-2px -2px 0 #1A1A1A, 2px -2px 0 #1A1A1A, -2px 2px 0 #1A1A1A, 2px 2px 0 #1A1A1A, 0 3px 0 #1A1A1A',
         }}
       >
         {noiDung}
@@ -253,10 +261,12 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
   batSfx = true,
   batPhuDe = true,
   danhSachNhanVat,
+  mascotKenh,
   chuong,
 }) => {
-  const frameToanCuc = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
+  const { durationInFrames, fps } = useVideoConfig();
+  const soFrameTheHoi = Math.round(THOI_LUONG_THE_TEN_HOI_GIAY * Math.max(1, fps));
+  const hoSoMascot = useMemo(() => layHoSoMascotKenh(mascotKenh), [mascotKenh]);
 
   // Danh sach file that dang co trong public/ de chan crash neu 1 file SFX bi xoa trong tuong lai
   const tapFilePublic = useMemo(() => {
@@ -270,11 +280,14 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
 
   const banDoNhanVat = useMemo(() => {
     const map: Record<string, ThongTinNhanVat> = {};
+    if (hoSoMascot) {
+      map[hoSoMascot.id] = hoSoMascot;
+    }
     for (const nv of danhSachNhanVat) {
       map[nv.id] = nv;
     }
     return map;
-  }, [danhSachNhanVat]);
+  }, [danhSachNhanVat, hoSoMascot]);
 
   const { danhSachCanh: tatCaCanh, thongKeChuong, tongFrames } = useMemo(
     () => chuanHoaKhungHinhLienMach(chuong),
@@ -282,7 +295,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
   );
 
   const veNoiDungCanh = (muc: CanhDaCanKhung) => {
-    const { canh, tenChuong, hienManHinhKetThuc } = muc;
+    const { canh, tenChuong, phuDeHoi, hienManHinhKetThuc } = muc;
 
     // Uu tien bo cuc giang Toan va dong thoi gian de khong bi che khuat bang/thanh moc thoi gian
     if (
@@ -301,6 +314,25 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
     if (!hienManHinhKetThuc && canh.boCuc === 'dong_thoi_gian') {
       return (
         <CanhDongThoiGian
+          canh={canh}
+          bangMau={bangMau}
+          banDoNhanVat={banDoNhanVat}
+        />
+      );
+    }
+
+    // 3 kieu khung hinh ke chuyen moi v3.5: Ban do hanh trinh, Bao chi co, Phan ung cam
+    if (!hienManHinhKetThuc && canh.boCuc === 'ban_do_hanh_trinh') {
+      return <CanhBanDoHanhTrinh canh={canh} bangMau={bangMau} />;
+    }
+
+    if (!hienManHinhKetThuc && canh.boCuc === 'bao_chi_co') {
+      return <CanhBaoChiCo canh={canh} bangMau={bangMau} />;
+    }
+
+    if (!hienManHinhKetThuc && canh.boCuc === 'phan_ung_cam') {
+      return (
+        <CanhPhanUngCam
           canh={canh}
           bangMau={bangMau}
           banDoNhanVat={banDoNhanVat}
@@ -350,7 +382,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
           <CanhMoDau
             canh={canh}
             tieuDeVideo={tieuDe}
-            chuDeVideo={chuDe}
+            chuDeVideo={phuDeHoi ?? chuDe}
             bangMau={bangMau}
             banDoNhanVat={banDoNhanVat}
           />
@@ -397,7 +429,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
           />
         );
       case 'ket_thuc':
-        // Chi cho phep hien thi man hinh ket thuc / outro o canh cuoi cung cua hoi cuoi cung toan tap
+        // Chi cho phep hien thi man hinh ket thuc / outro End-Screen 15s o canh cuoi cung cua hoi cuoi cung toan tap
         if (hienManHinhKetThuc) {
           return (
             <CanhKet
@@ -405,6 +437,7 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
               tieuDeVideo={tieuDe}
               bangMau={bangMau}
               banDoNhanVat={banDoNhanVat}
+              mascot={hoSoMascot}
               hienBannerKetThuc={true}
             />
           );
@@ -465,7 +498,6 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
             {batPhuDe && (
               <PhuDeCanh
                 canh={muc.canh}
-                mauVien={bangMau.nhanManh || '#FACC15'}
                 banDoNhanVat={banDoNhanVat}
               />
             )}
@@ -497,77 +529,32 @@ export const VideoDai: React.FC<DuLieuVideoDai> = ({
         );
       })}
 
-      {/* Thanh tien do chuong gon dep o mep tren */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 38,
-          backgroundColor: 'rgba(15, 23, 42, 0.86)',
-          borderBottom: `2px solid ${bangMau.nhanManh || '#FACC15'}`,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 24px',
-          gap: 12,
-          boxSizing: 'border-box',
-          zIndex: 40,
-        }}
-      >
-        {thongKeChuong.map((ch) => {
-          const doDai = Math.max(1, ch.denFrame - ch.tuFrame);
-          const tiLeDoRong = (doDai / Math.max(1, durationInFrames)) * 100;
-          const tienDoChuong = Math.max(
-            0,
-            Math.min(1, (frameToanCuc - ch.tuFrame) / doDai),
-          );
-          const dangPhat =
-            frameToanCuc >= ch.tuFrame && frameToanCuc < ch.denFrame;
-
-          return (
-            <div
-              key={ch.id}
-              style={{
-                width: `${tiLeDoRong}%`,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: dangPhat ? 800 : 600,
-                  color: dangPhat ? '#FEF08A' : '#CBD5E1',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {ch.tenChuong}
-              </div>
-              <div
-                style={{
-                  height: 4,
-                  width: '100%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  borderRadius: 999,
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${tienDoChuong * 100}%`,
-                    backgroundColor: dangPhat ? '#FACC15' : '#94A3B8',
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {/* The ten Hoi trang nha phong cach giay da: chi hien 2.8s dau moi Hoi roi truot/mo bien mat hoan toan */}
+      {thongKeChuong.map((ch, idx) => {
+        const doDaiHoi = ch.denFrame - ch.tuFrame;
+        if (doDaiHoi <= 0) {
+          return null;
+        }
+        const canhDauHoi = chuong[idx]?.canh?.[0];
+        if (idx === 0 && canhDauHoi?.boCuc === 'mo_dau') {
+          return null;
+        }
+        const durThe = Math.min(soFrameTheHoi, doDaiHoi);
+        return (
+          <Sequence
+            key={`the-hoi-${ch.id}-${idx}`}
+            from={ch.tuFrame}
+            durationInFrames={durThe}
+            name={`TheTenHoi ${idx + 1}`}
+          >
+            <TheTenHoi
+              tenChuong={ch.tenChuong}
+              phuDeHoi={chuong[idx]?.phuDeHoi}
+              chiSoHoi={idx}
+            />
+          </Sequence>
+        );
+      })}
     </AbsoluteFill>
   );
 };

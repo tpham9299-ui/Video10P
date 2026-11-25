@@ -57,6 +57,60 @@ export function locMocThoiGianHopLe(
 }
 
 /**
+ * Chia dong & tu co co chu cho mo ta moc thoi gian (CanhDongThoiGian):
+ * - Giu gon toi da 3-4 dong tuy so moc (3..5 moc)
+ * - TUYET DOI KHONG cat cut giua tu (nhu "...Leopol", "...một sự công")
+ */
+export function chiaDongMoTaTimeline(
+  moTa: string,
+  soMoc: number,
+): { dong: string[]; fontSize: number; lineHeight: number } {
+  const sach = String(moTa || '').replace(/\s+/g, ' ').trim();
+  if (!sach) {
+    return { dong: [], fontSize: 18, lineHeight: 1.3 };
+  }
+
+  const cot = Math.max(1, Math.min(6, Math.round(soMoc) || 3));
+  // Chon co chu va so ky tu/dong phu hop be ngang cot tren man hinh 1920px (bang rong ~1650px)
+  let fontSize = cot <= 3 ? 19 : cot === 4 ? 17 : 15;
+  let maxKyTuDong = cot <= 3 ? 34 : cot === 4 ? 26 : 22;
+
+  const bocDong = (chuoi: string, limit: number): string[] => {
+    const cacTu = chuoi.split(' ');
+    const kq: string[] = [];
+    let hienTai = '';
+    for (const tu of cacTu) {
+      if (!hienTai) {
+        hienTai = tu;
+      } else if (hienTai.length + 1 + tu.length <= limit) {
+        hienTai = `${hienTai} ${tu}`;
+      } else {
+        kq.push(hienTai);
+        hienTai = tu;
+      }
+    }
+    if (hienTai) {
+      kq.push(hienTai);
+    }
+    return kq;
+  };
+
+  let dong = bocDong(sach, maxKyTuDong);
+  // Neu > 4 dong, giam co chu nhe va tang be rong ky tu/dong de van nam gon <= 4 dong ma KHONG cat giua tu
+  while (dong.length > 4 && fontSize > 12.5) {
+    fontSize = Math.round((fontSize - 1.2) * 10) / 10;
+    maxKyTuDong += 4;
+    dong = bocDong(sach, maxKyTuDong);
+  }
+
+  return {
+    dong,
+    fontSize,
+    lineHeight: fontSize <= 15 ? 1.24 : 1.3,
+  };
+}
+
+/**
  * Kiem tra xem minhHoaToan co du du lieu tham so tu JSON de render dung noi dung tap phim hay khong.
  * Neu thieu du lieu -> tra ve false de render khung trong sach.
  */
@@ -116,6 +170,33 @@ export function coDuLieuMinhHoaHopLe(
 
     case 'tung_buoc':
       return Array.isArray(data.buocVe) && data.buocVe.length > 0;
+
+    case 'so_do_anh_xa': {
+      const trai = ts?.cotTrai;
+      const phai = ts?.cotPhai;
+      return (
+        Array.isArray(trai) &&
+        trai.length >= 2 &&
+        Array.isArray(phai) &&
+        phai.length >= 2
+      );
+    }
+
+    case 'luoi_duong_cheo': {
+      const hang = ts?.hang;
+      return Array.isArray(hang) && hang.length >= 2;
+    }
+
+    case 'bieu_do_cot': {
+      const nhan = ts?.nhan;
+      const giaTri = ts?.giaTri;
+      return (
+        Array.isArray(nhan) &&
+        nhan.length >= 2 &&
+        Array.isArray(giaTri) &&
+        giaTri.length >= 2
+      );
+    }
 
     default:
       return false;

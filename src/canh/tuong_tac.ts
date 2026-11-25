@@ -3,6 +3,7 @@ import { kepGiaTri } from '../xuong/duong_cong.ts';
 
 export const FPS_MAC_DINH = 30;
 export const THOI_GIAN_DEM_NGUOC_MAC_DINH_GIAY = 3;
+export const THOI_GIAN_HIEN_DAP_AN_TOI_THIEU_GIAY = 2.5;
 
 export type TrangThaiCauHoiTuongTac = {
   /** Frame bat dau dem nguoc cuc bo trong canh */
@@ -47,18 +48,35 @@ export function tinhTrangThaiCauHoiTuongTac(
     ),
   );
   const soFrameDemNguoc = tongGiayDemNguoc * fpsHopLe;
+  const soFrameHienDapAnToiThieu = Math.min(
+    Math.round(tong * 0.55),
+    Math.round(THOI_GIAN_HIEN_DAP_AN_TOI_THIEU_GIAY * fpsHopLe),
+  );
+  const maxHienDapAn = Math.max(1, tong - soFrameHienDapAnToiThieu);
 
-  const batDauDemNguocFrame =
+  let batDauDemNguocFrame =
     typeof cauHoi.batDauDemNguocFrame === 'number' &&
     Number.isFinite(cauHoi.batDauDemNguocFrame)
       ? Math.max(0, Math.round(cauHoi.batDauDemNguocFrame))
-      : Math.min(24, Math.max(0, Math.floor((tong - soFrameDemNguoc) * 0.25)));
+      : Math.min(24, Math.max(0, Math.floor((maxHienDapAn - soFrameDemNguoc) * 0.5)));
 
-  const hienDapAnTuFrame =
+  let hienDapAnTuFrame =
     typeof cauHoi.hienDapAnTuFrame === 'number' &&
     Number.isFinite(cauHoi.hienDapAnTuFrame)
       ? Math.max(batDauDemNguocFrame + 1, Math.round(cauHoi.hienDapAnTuFrame))
       : batDauDemNguocFrame + soFrameDemNguoc;
+
+  // Bao dam hop "DAP AN CHINH XAC" luon giu du it nhat 2.5-3 giay cuoi canh sau khi dem nguoc ve 0
+  if (hienDapAnTuFrame > maxHienDapAn) {
+    hienDapAnTuFrame = maxHienDapAn;
+    batDauDemNguocFrame = Math.max(
+      0,
+      Math.min(batDauDemNguocFrame, hienDapAnTuFrame - soFrameDemNguoc),
+    );
+    if (batDauDemNguocFrame >= hienDapAnTuFrame) {
+      batDauDemNguocFrame = Math.max(0, hienDapAnTuFrame - Math.max(15, Math.floor(soFrameDemNguoc / 2)));
+    }
+  }
 
   const doDaiDemThuc = Math.max(1, hienDapAnTuFrame - batDauDemNguocFrame);
   const dangDocCauHoi = f < batDauDemNguocFrame;

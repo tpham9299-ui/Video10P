@@ -17,6 +17,12 @@ export const BAN_DO_SFX_HIEU_UNG: Record<LoaiHieuUngHoatHinh, TenFileSfx> = {
   khoi_chay_tron: 'whoosh.mp3',
   co_lan_im_lang: 'crickets.mp3',
   nhan_chu_hai_huoc: 'pop.mp3',
+  mo_hoi_lon: 'pop.mp3',
+  khoi_boc_tai: 'whoosh.mp3',
+  mat_xoan_oc: 'boing.mp3',
+  cham_hoi_nay: 'boing.mp3',
+  tia_toc_do: 'dramatic.mp3',
+  bong_den_y_tuong: 'ding.mp3',
 };
 
 /** Am luong mac dinh (0..1) vua phai cho tung loai SFX de khong lan giong ke */
@@ -29,6 +35,12 @@ export const AM_LUONG_SFX_THEO_LOAI: Record<LoaiHieuUngHoatHinh, number> = {
   khoi_chay_tron: 0.48,
   co_lan_im_lang: 0.45,
   nhan_chu_hai_huoc: 0.5,
+  mo_hoi_lon: 0.48,
+  khoi_boc_tai: 0.5,
+  mat_xoan_oc: 0.46,
+  cham_hoi_nay: 0.5,
+  tia_toc_do: 0.56,
+  bong_den_y_tuong: 0.55,
 };
 
 /**

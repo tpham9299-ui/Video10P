@@ -8,7 +8,6 @@ import { giaiTrangThaiNhanVatTrongCanh } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
 import { MayQuayDong } from '../vfx/MayQuayDong';
 import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
-import { KhungLoiBinhHaiHuoc } from './KhungLoiBinhHaiHuoc';
 import { LopCauHoiTuongTac } from './LopCauHoiTuongTac';
 
 type Props = {
@@ -53,15 +52,12 @@ export const CanhTuongTacKhanGia: React.FC<Props> = ({
   });
 
   const lopHud = (
-    <>
-      <LopCauHoiTuongTac
-        cauHoi={canh.cauHoiTuongTac}
-        bangMau={bangMau}
-        thoiLuongCanh={thoiLuong}
-        boCuc="phai_hai_cot"
-      />
-      <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
-    </>
+    <LopCauHoiTuongTac
+      cauHoi={canh.cauHoiTuongTac}
+      bangMau={bangMau}
+      thoiLuongCanh={thoiLuong}
+      boCuc="phai_hai_cot"
+    />
   );
 
   return (
@@ -74,6 +70,7 @@ export const CanhTuongTacKhanGia: React.FC<Props> = ({
         chuyenCanh={canh.chuyenCanh}
         nhanVat={danhSachNhanVat}
         thoiLuongCanh={thoiLuong}
+        anhSangMoiTruong={canh.anhSangMoiTruong}
         hud={lopHud}
       >
         <BoiCanhHoatHinh
@@ -83,6 +80,9 @@ export const CanhTuongTacKhanGia: React.FC<Props> = ({
           bienSoXe={canh.bienSoXe}
           nhanVat={canh.nhanVat}
           daoCu={daoCuHienThi}
+          anhBoiCanh={canh.anhBoiCanh}
+          anhSangMoiTruong={canh.anhSangMoiTruong}
+          thoiLuongCanh={thoiLuong}
         />
 
         <svg
@@ -109,7 +109,11 @@ export const CanhTuongTacKhanGia: React.FC<Props> = ({
               />
             );
           })}
-          <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
+          <HieuUngHoatHinh
+            danhSach={canh.hieuUngHoatHinh}
+            nhanVat={danhSachNhanVat}
+            tiLeNhanVat={1.32}
+          />
         </svg>
       </MayQuayDong>
     </div>

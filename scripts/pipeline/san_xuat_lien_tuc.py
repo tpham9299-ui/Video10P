@@ -156,6 +156,7 @@ def san_xuat_mot_tap(
     fps: int = MAC_DINH_FPS,
     nguong_chia_chunk_giay: float = NGUONG_CHIA_CHUNK_GIAY,
     bo_cache: bool = False,
+    tat_anh_ai: bool = False,
     duong_dan_bo_nho: Path | str | None = None,
     thu_muc_du_lieu: Path | None = None,
     loai_tru_slugs: set[str] | None = None,
@@ -350,7 +351,7 @@ def san_xuat_mot_tap(
             )
             return ket_qua
 
-        # 3. Tao giong doc TTS co cache SHA-256 & tinh frame 30fps + RMS
+        # 3. Tao giong doc TTS co cache SHA-256, tinh frame 30fps + RMS & sinh boi canh minh hoa AI
         t0 = time.perf_counter()
         file_render, thong_ke_tts = ham_tts(
             slug=slug,
@@ -360,6 +361,7 @@ def san_xuat_mot_tap(
             fps=fps,
             bo_cache=bo_cache,
             thu_muc_du_lieu=thu_muc_du_lieu,
+            tat_anh_ai=tat_anh_ai,
         )
         t_tts_rms = round(time.perf_counter() - t0, 2)
         thoi_luong_giay = float(thong_ke_tts.get("tongGiay") or 0.0)
@@ -481,6 +483,7 @@ def chay_san_xuat_lien_tuc(
     fps: int = MAC_DINH_FPS,
     nguong_chia_chunk_giay: float = NGUONG_CHIA_CHUNK_GIAY,
     bo_cache: bool = False,
+    tat_anh_ai: bool = False,
     duong_dan_bo_nho: Path | str | None = None,
     thu_muc_du_lieu: Path | None = None,
     file_log: Path | None = None,
@@ -532,6 +535,7 @@ def chay_san_xuat_lien_tuc(
                 fps=fps,
                 nguong_chia_chunk_giay=nguong_chia_chunk_giay,
                 bo_cache=bo_cache,
+                tat_anh_ai=tat_anh_ai,
                 duong_dan_bo_nho=path_bo_nho,
                 thu_muc_du_lieu=thu_muc_du_lieu,
                 loai_tru_slugs=slugs_bi_loi,
@@ -632,6 +636,7 @@ def tao_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--fps", type=int, default=MAC_DINH_FPS, help="So khung hinh/giay (mac dinh 30).")
     parser.add_argument("--bo-cache", action="store_true", help="Bo qua cache o cac buoc duoc chay.")
+    parser.add_argument("--tat-anh-ai", action="store_true", help="Tat sinh anh boi canh minh hoa AI (dung nen SVG).")
     parser.add_argument("--bo-nho", default="", help="Duong dan tuy chinh toi bo_nho_hoc_hoi.json.")
     return parser
 
@@ -669,6 +674,7 @@ def main(argv: list[str] | None = None) -> int:
         fps=args.fps,
         nguong_chia_chunk_giay=args.nguong_chia_chunk,
         bo_cache=args.bo_cache,
+        tat_anh_ai=args.tat_anh_ai,
         duong_dan_bo_nho=path_bo_nho,
     )
     co_thanh_cong = any(r.get("trangThai") == "thanh_cong" for r in ket_qua)

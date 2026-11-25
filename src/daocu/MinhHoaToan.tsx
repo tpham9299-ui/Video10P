@@ -2,6 +2,7 @@ import React from 'react';
 import { interpolate, useCurrentFrame } from 'remotion';
 import type {
   BuocVeToan,
+  CongThucLatexItem,
   KhungToaDoToan,
   LoaiHamDoThi,
   MinhHoaToanData,
@@ -14,6 +15,7 @@ import {
 type MinhHoaToanProps = {
   data: MinhHoaToanData;
   mauNhanManh?: string;
+  congThucLatex?: readonly CongThucLatexItem[];
 };
 
 function laySoTuyChon(
@@ -553,17 +555,52 @@ const HinhHocChungMinhSvg: React.FC<{
   );
 };
 
-/** 5. Chuoi suy luan tung buoc: chi render dung cac buoc tu thamSo JSON, khong fallback hardcode */
+/** 5. Chuoi suy luan tung buoc: tu dong nang cap thanh so do anh xa mui ten neu du lieu dang anh xa (a -> b / a ↔ b), khong ve 1 o trong tro troi */
 const ChuoiSuyLuanSvg: React.FC<{
   frame: number;
   thamSo?: Record<string, number | string | number[] | string[]>;
   mauNhanManh?: string;
-}> = ({ frame, thamSo, mauNhanManh = '#FEF08A' }) => {
-  const cacBuoc = layDanhSachBuocSuyLuan(thamSo);
-  if (cacBuoc.length === 0) {
+  congThucLatex?: readonly CongThucLatexItem[];
+}> = ({ frame, thamSo, mauNhanManh = '#FEF08A', congThucLatex }) => {
+  const cacBuocGoc = layDanhSachBuocSuyLuan(thamSo);
+  if (cacBuocGoc.length === 0) {
     return <KhungTrongSachSvg />;
   }
   const mauCuoi = layChuoiTuyChon(thamSo, 'mauNhanManh') ?? mauNhanManh;
+
+  // Neu cac buoc mang dang anh xa 2 cot ("1 -> 2", "n ↔ 2n"...) -> ve so do anh xa mui ten truc quan
+  const capAnhXa: Array<[string, string]> = [];
+  for (const b of cacBuocGoc) {
+    const m = b.match(/^(.+?)\s*(?:<->|<=>|↔|→|->|=>)\s*(.+)$/);
+    if (m && m[1].trim() && m[2].trim()) {
+      capAnhXa.push([m[1].trim(), m[2].trim()]);
+    }
+  }
+  if (capAnhXa.length >= 2) {
+    return (
+      <SoDoAnhXaSvg
+        frame={frame}
+        thamSo={{
+          tenTrai: layChuoiTuyChon(thamSo, 'tenTrai') ?? 'Tập nguồn',
+          tenPhai: layChuoiTuyChon(thamSo, 'tenPhai') ?? 'Tập đích',
+          cotTrai: capAnhXa.map((p) => p[0]),
+          cotPhai: capAnhXa.map((p) => p[1]),
+        }}
+        mauNhanManh={mauCuoi}
+      />
+    );
+  }
+
+  // Neu chi co 1 nhan don le, ghep them cac buoc nhan tu congThucLatex cua canh (khong hardcode!) de luon co so do lien ket truc quan
+  let cacBuoc = [...cacBuocGoc];
+  if (cacBuoc.length === 1 && Array.isArray(congThucLatex) && congThucLatex.length > 0) {
+    const buocTuCt = congThucLatex
+      .map((ct) => (ct.nhan || '').trim())
+      .filter((s) => s.length > 0 && s.toLowerCase() !== cacBuoc[0].toLowerCase());
+    if (buocTuCt.length > 0) {
+      cacBuoc = [...buocTuCt.slice(0, 3), cacBuoc[0]];
+    }
+  }
 
   const soBuoc = cacBuoc.length;
   const chieuCaoO = soBuoc <= 4 ? 72 : Math.max(48, Math.floor(330 / soBuoc));
@@ -597,12 +634,25 @@ const ChuoiSuyLuanSvg: React.FC<{
               stroke={mauVien}
               strokeWidth={dangActive ? 3.5 : 2.2}
             />
+            {/* Huy hieu thu tu buoc ben trai o */}
+            <circle cx={64} cy={y + chieuCaoO / 2} r={16} fill={mauVien} />
             <text
-              x={250}
+              x={64}
+              y={y + chieuCaoO / 2 + 6}
+              textAnchor="middle"
+              fill="#092B19"
+              fontSize={16}
+              fontWeight={900}
+              fontFamily="Segoe UI, Arial, sans-serif"
+            >
+              {idx + 1}
+            </text>
+            <text
+              x={266}
               y={y + chieuCaoO / 2 + 7}
               textAnchor="middle"
               fill={laCuoi ? '#FEF9C3' : '#FFFFFF'}
-              fontSize={text.length > 36 ? 17 : 20}
+              fontSize={text.length > 34 ? 16 : 19}
               fontWeight={laCuoi ? 900 : 700}
               fontFamily="Segoe UI, Arial, sans-serif"
             >
@@ -621,6 +671,326 @@ const ChuoiSuyLuanSvg: React.FC<{
           </g>
         );
       })}
+    </svg>
+  );
+};
+
+/** 7. So do anh xa 1-1 co mui ten noi 2 cot (tham so hoa 100% tu JSON: cotTrai[], cotPhai[], tenTrai, tenPhai) */
+const SoDoAnhXaSvg: React.FC<{
+  frame: number;
+  thamSo?: Record<string, number | string | number[] | string[]>;
+  mauNhanManh?: string;
+}> = ({ frame, thamSo, mauNhanManh = '#FACC15' }) => {
+  const cotTraiRaw = Array.isArray(thamSo?.cotTrai) ? thamSo.cotTrai : [];
+  const cotPhaiRaw = Array.isArray(thamSo?.cotPhai) ? thamSo.cotPhai : [];
+  const cotTrai = cotTraiRaw.slice(0, 6).map((v) => String(v).trim()).filter(Boolean);
+  const cotPhai = cotPhaiRaw.slice(0, 6).map((v) => String(v).trim()).filter(Boolean);
+  if (cotTrai.length < 2 || cotPhai.length < 2) {
+    return <KhungTrongSachSvg />;
+  }
+
+  const tenTrai = layChuoiTuyChon(thamSo, 'tenTrai') ?? 'Tập A';
+  const tenPhai = layChuoiTuyChon(thamSo, 'tenPhai') ?? 'Tập B';
+  const soCap = Math.max(cotTrai.length, cotPhai.length);
+  const topY = 104;
+  const stepY = Math.min(68, Math.floor(330 / Math.max(1, soCap)));
+  const boxH = Math.min(48, stepY - 14);
+
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 500 490">
+      {/* Khung 2 tap hop trai & phai */}
+      <rect x={26} y={44} width={162} height={396} rx={22} fill="#0B2E1B" fillOpacity={0.75} stroke="#7DD3FC" strokeWidth={3} />
+      <rect x={312} y={44} width={162} height={396} rx={22} fill="#0B2E1B" fillOpacity={0.75} stroke="#86EFAC" strokeWidth={3} />
+
+      {/* Ten 2 cot */}
+      <rect x={44} y={24} width={126} height={34} rx={12} fill="#0284C7" stroke="#E0F2FE" strokeWidth={2} />
+      <text x={107} y={47} textAnchor="middle" fill="#FFFFFF" fontSize={16} fontWeight={900} fontFamily="Segoe UI, Arial, sans-serif">
+        {tenTrai}
+      </text>
+      <rect x={330} y={24} width={126} height={34} rx={12} fill="#15803D" stroke="#DCFCE7" strokeWidth={2} />
+      <text x={393} y={47} textAnchor="middle" fill="#FFFFFF" fontSize={16} fontWeight={900} fontFamily="Segoe UI, Arial, sans-serif">
+        {tenPhai}
+      </text>
+
+      {Array.from({ length: soCap }).map((_, idx) => {
+        const y = topY + idx * stepY;
+        const startF = idx * 14;
+        const t = lamMuotTienDo(
+          interpolate(frame, [startF, startF + 16], [0, 1], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          }),
+        );
+        const trai = cotTrai[idx];
+        const phai = cotPhai[idx];
+        const x1 = 172;
+        const x2 = 328;
+        const curX = x1 + (x2 - x1) * t;
+
+        return (
+          <g key={`ax-${idx}`} opacity={Math.max(0.15, t)}>
+            {trai !== undefined && (
+              <g>
+                <rect x={42} y={y - boxH / 2} width={130} height={boxH} rx={12} fill="#1E3A8A" stroke="#7DD3FC" strokeWidth={2.4} />
+                <text x={107} y={y + 6} textAnchor="middle" fill="#FFFFFF" fontSize={trai.length > 10 ? 15 : 19} fontWeight={800}>
+                  {trai}
+                </text>
+              </g>
+            )}
+            {phai !== undefined && (
+              <g>
+                <rect x={328} y={y - boxH / 2} width={130} height={boxH} rx={12} fill="#14532D" stroke="#86EFAC" strokeWidth={2.4} />
+                <text x={393} y={y + 6} textAnchor="middle" fill="#FEF9C3" fontSize={phai.length > 10 ? 15 : 19} fontWeight={800}>
+                  {phai}
+                </text>
+              </g>
+            )}
+            {trai !== undefined && phai !== undefined && t > 0.05 && (
+              <g>
+                <line x1={x1} y1={y} x2={curX} y2={y} stroke={mauNhanManh} strokeWidth={3.6} strokeLinecap="round" />
+                <polygon
+                  points={`${curX.toFixed(1)},${y} ${(curX - 12).toFixed(1)},${y - 7} ${(curX - 12).toFixed(1)},${y + 7}`}
+                  fill={mauNhanManh}
+                />
+                <circle cx={x1} cy={y} r={4.5} fill={mauNhanManh} />
+              </g>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+/** 8. Bang luoi duong cheo to sang phan tu cheo (i, i) - tham so hoa 100% tu JSON */
+const LuoiDuongCheoSvg: React.FC<{
+  frame: number;
+  thamSo?: Record<string, number | string | number[] | string[]>;
+  mauNhanManh?: string;
+}> = ({ frame, thamSo, mauNhanManh = '#FACC15' }) => {
+  const hangRaw = Array.isArray(thamSo?.hang) ? thamSo.hang : [];
+  const hang = hangRaw.slice(0, 6).map((v) => String(v).trim()).filter(Boolean);
+  if (hang.length < 2) {
+    return <KhungTrongSachSvg />;
+  }
+
+  const nhanHangRaw = Array.isArray(thamSo?.nhanHang) ? thamSo.nhanHang : [];
+  const ketQuaCheo = layChuoiTuyChon(thamSo, 'ketQuaCheo');
+
+  // Tach tung hang thanh cac o ky tu (uu tien chu so sau dau phay neu la so thap phan, hoac tach ky tu/khoang trang)
+  const tachO = (s: string): string[] => {
+    const sauCham = s.includes('.') ? s.split('.')[1].replace(/[^\dA-Za-z]/g, '') : '';
+    if (sauCham.length >= 2) {
+      return sauCham.slice(0, 6).split('');
+    }
+    const theoCach = s.split(/[\s,|]+/).filter(Boolean);
+    if (theoCach.length >= 2) {
+      return theoCach.slice(0, 6);
+    }
+    return s.replace(/\s+/g, '').slice(0, 6).split('');
+  };
+
+  const maTran = hang.map(tachO);
+  const soHang = maTran.length;
+  const soCot = Math.max(2, Math.min(6, ...maTran.map((r) => r.length), maTran.reduce((m, r) => Math.max(m, r.length), 2)));
+
+  const startX = 112;
+  const startY = 58;
+  const cellW = Math.min(64, Math.floor(340 / soCot));
+  const cellH = Math.min(58, Math.floor(310 / soHang));
+  const gap = 8;
+
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 500 490">
+      {maTran.map((row, ri) => {
+        const y = startY + ri * (cellH + gap);
+        const nhan = String(nhanHangRaw[ri] ?? `H${ri + 1}`).trim();
+        const opHang = interpolate(frame, [ri * 8, ri * 8 + 10], [0, 1], {
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        });
+        return (
+          <g key={`ldc-r-${ri}`} opacity={opHang}>
+            <rect x={24} y={y + 4} width={74} height={cellH - 8} rx={10} fill="#1E293B" stroke="#7DD3FC" strokeWidth={2} />
+            <text x={61} y={y + cellH / 2 + 6} textAnchor="middle" fill="#BAE6FD" fontSize={18} fontWeight={800}>
+              {nhan}
+            </text>
+            {Array.from({ length: soCot }).map((_, ci) => {
+              const x = startX + ci * (cellW + gap);
+              const val = row[ci] ?? '·';
+              const laCheo = ri === ci;
+              const mocCheo = 22 + ri * 12;
+              const sangCheo = laCheo
+                ? interpolate(frame, [mocCheo, mocCheo + 10], [0, 1], {
+                    extrapolateLeft: 'clamp',
+                    extrapolateRight: 'clamp',
+                  })
+                : 0;
+              return (
+                <g key={`ldc-c-${ri}-${ci}`}>
+                  <rect
+                    x={x}
+                    y={y}
+                    width={cellW}
+                    height={cellH}
+                    rx={10}
+                    fill={laCheo && sangCheo > 0.2 ? mauNhanManh : '#0B2E1B'}
+                    fillOpacity={laCheo && sangCheo > 0.2 ? 0.35 + 0.55 * sangCheo : 0.85}
+                    stroke={laCheo && sangCheo > 0.2 ? '#FEF08A' : '#334155'}
+                    strokeWidth={laCheo && sangCheo > 0.2 ? 3.5 : 2}
+                  />
+                  <text
+                    x={x + cellW / 2}
+                    y={y + cellH / 2 + 8}
+                    textAnchor="middle"
+                    fill={laCheo && sangCheo > 0.4 ? '#0F172A' : '#FFFFFF'}
+                    fontSize={22}
+                    fontWeight={laCheo ? 900 : 700}
+                    fontFamily="Consolas, Segoe UI, monospace"
+                  >
+                    {val}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
+
+      {/* Duong cheo noi cac phan tu (i, i) */}
+      {(() => {
+        const k = Math.min(soHang, soCot);
+        const tLine = lamMuotTienDo(
+          interpolate(frame, [24, 24 + k * 12], [0, 1], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          }),
+        );
+        if (k < 2 || tLine <= 0.05) return null;
+        const x1 = startX + cellW / 2;
+        const y1 = startY + cellH / 2;
+        const x2 = startX + (k - 1) * (cellW + gap) + cellW / 2;
+        const y2 = startY + (k - 1) * (cellH + gap) + cellH / 2;
+        return (
+          <line
+            x1={x1}
+            y1={y1}
+            x2={x1 + (x2 - x1) * tLine}
+            y2={y1 + (y2 - y1) * tLine}
+            stroke="#FB7185"
+            strokeWidth={4}
+            strokeDasharray="8 6"
+            strokeLinecap="round"
+            strokeOpacity={0.85}
+          />
+        );
+      })()}
+
+      {ketQuaCheo && (
+        <g
+          opacity={interpolate(frame, [45, 60], [0, 1], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          })}
+        >
+          <rect x={28} y={406} width={444} height={58} rx={14} fill="#713F12" stroke={mauNhanManh} strokeWidth={3} />
+          <text x={250} y={442} textAnchor="middle" fill="#FEF9C3" fontSize={ketQuaCheo.length > 34 ? 17 : 20} fontWeight={900}>
+            {ketQuaCheo}
+          </text>
+        </g>
+      )}
+    </svg>
+  );
+};
+
+/** 9. Bieu do cot tham so hoa 100% tu JSON (nhan[], giaTri[], chuThich) */
+const BieuDoCotSvg: React.FC<{
+  frame: number;
+  thamSo?: Record<string, number | string | number[] | string[]>;
+  mauNhanManh?: string;
+}> = ({ frame, thamSo, mauNhanManh = '#FACC15' }) => {
+  const nhanRaw = Array.isArray(thamSo?.nhan) ? thamSo.nhan : [];
+  const giaTriRaw = Array.isArray(thamSo?.giaTri) ? thamSo.giaTri : [];
+  const soCot = Math.min(6, nhanRaw.length, giaTriRaw.length);
+  if (soCot < 2) {
+    return <KhungTrongSachSvg />;
+  }
+
+  const nhan = nhanRaw.slice(0, soCot).map((v) => String(v).trim());
+  const giaTri = giaTriRaw.slice(0, soCot).map((v) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  });
+  const maxVal = Math.max(...giaTri, 1);
+  const chuThich = layChuoiTuyChon(thamSo, 'chuThich');
+  const bangMauCot = ['#38BDF8', '#4ADE80', '#A78BFA', '#FB923C', '#F472B6', mauNhanManh];
+
+  const ox = 64;
+  const oy = 382;
+  const plotW = 392;
+  const plotH = 290;
+  const slotW = plotW / soCot;
+  const barW = Math.min(68, slotW * 0.62);
+
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 500 490">
+      {[1, 2, 3, 4].map((g) => (
+        <line
+          key={`bdc-g-${g}`}
+          x1={ox}
+          y1={oy - (g / 4) * plotH}
+          x2={ox + plotW}
+          y2={oy - (g / 4) * plotH}
+          stroke="#FFFFFF"
+          strokeOpacity={0.16}
+          strokeWidth={1.5}
+        />
+      ))}
+      <line x1={ox} y1={oy} x2={ox + plotW + 10} y2={oy} stroke="#FFFFFF" strokeWidth={3.5} />
+      <line x1={ox} y1={oy + 6} x2={ox} y2={oy - plotH - 18} stroke="#FFFFFF" strokeWidth={3.5} />
+
+      {giaTri.map((v, idx) => {
+        const t = lamMuotTienDo(
+          interpolate(frame, [idx * 10, idx * 10 + 22], [0, 1], {
+            extrapolateLeft: 'clamp',
+            extrapolateRight: 'clamp',
+          }),
+        );
+        const h = Math.max(8, (v / maxVal) * (plotH - 16) * t);
+        const bx = ox + idx * slotW + (slotW - barW) / 2;
+        const by = oy - h;
+        const laMax = v === maxVal;
+        const mauCot = laMax ? mauNhanManh : bangMauCot[idx % bangMauCot.length];
+        return (
+          <g key={`bdc-b-${idx}`}>
+            <rect
+              x={bx}
+              y={by}
+              width={barW}
+              height={h}
+              rx={8}
+              fill={mauCot}
+              fillOpacity={0.82}
+              stroke="#FFFFFF"
+              strokeWidth={laMax ? 3 : 2}
+            />
+            {t > 0.4 && (
+              <text x={bx + barW / 2} y={by - 10} textAnchor="middle" fill="#FEF9C3" fontSize={17} fontWeight={900}>
+                {v}
+              </text>
+            )}
+            <text x={bx + barW / 2} y={oy + 28} textAnchor="middle" fill="#FFFFFF" fontSize={nhan[idx].length > 8 ? 14 : 18} fontWeight={800}>
+              {nhan[idx]}
+            </text>
+          </g>
+        );
+      })}
+
+      {chuThich && (
+        <text x={250} y={456} textAnchor="middle" fill="#FEF9C3" fontSize={18} fontWeight={700}>
+          {chuThich}
+        </text>
+      )}
     </svg>
   );
 };
@@ -655,9 +1025,26 @@ const MinhHoaTungBuocSvg: React.FC<{
   frame: number;
   buocVe?: BuocVeToan[];
   khungToaDo?: KhungToaDoToan;
-}> = ({ frame, buocVe, khungToaDo }) => {
+  congThucLatex?: readonly CongThucLatexItem[];
+}> = ({ frame, buocVe, khungToaDo, congThucLatex }) => {
   if (!Array.isArray(buocVe) || buocVe.length === 0) {
     return <KhungTrongSachSvg />;
+  }
+  // Neu buocVe chi gom nhan_chu (khong co hinh ve hinh hoc nao), chuyen sang so do chuoi truc quan thay vi khung rong chi co 1 nhan chu
+  const chiCoNhanChu = buocVe.every((b) => b.loai === 'nhan_chu');
+  if (chiCoNhanChu) {
+    const dsChu = buocVe
+      .map((b) => (b.loai === 'nhan_chu' ? b.noiDung.trim() : ''))
+      .filter(Boolean);
+    if (dsChu.length > 0) {
+      return (
+        <ChuoiSuyLuanSvg
+          frame={frame}
+          thamSo={{ buoc: dsChu }}
+          congThucLatex={congThucLatex}
+        />
+      );
+    }
   }
   const danhSachBuoc = buocVe;
 
@@ -1085,6 +1472,7 @@ const MinhHoaTungBuocSvg: React.FC<{
 export const MinhHoaToan: React.FC<MinhHoaToanProps> = ({
   data,
   mauNhanManh = '#FDE047',
+  congThucLatex,
 }) => {
   const frame = useCurrentFrame();
 
@@ -1109,10 +1497,24 @@ export const MinhHoaToan: React.FC<MinhHoaToanProps> = ({
             frame={frame}
             buocVe={data.buocVe}
             khungToaDo={data.khungToaDo}
+            congThucLatex={congThucLatex}
           />
         );
       case 'chuoi_suy_luan':
-        return <ChuoiSuyLuanSvg frame={frame} thamSo={data.thamSo} mauNhanManh={mauHighlight} />;
+        return (
+          <ChuoiSuyLuanSvg
+            frame={frame}
+            thamSo={data.thamSo}
+            mauNhanManh={mauHighlight}
+            congThucLatex={congThucLatex}
+          />
+        );
+      case 'so_do_anh_xa':
+        return <SoDoAnhXaSvg frame={frame} thamSo={data.thamSo} mauNhanManh={mauHighlight} />;
+      case 'luoi_duong_cheo':
+        return <LuoiDuongCheoSvg frame={frame} thamSo={data.thamSo} mauNhanManh={mauHighlight} />;
+      case 'bieu_do_cot':
+        return <BieuDoCotSvg frame={frame} thamSo={data.thamSo} mauNhanManh={mauHighlight} />;
       default:
         return <KhungTrongSachSvg />;
     }

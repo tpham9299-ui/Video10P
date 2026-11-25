@@ -23,6 +23,8 @@ export type KetQuaBienDoiCamera = {
   gocQuayHieuLuc?: GocQuayCamera;
   nhanVatDangFocus?: string | null;
   laChiaDoiManHinh?: boolean;
+  /** Bat vien tia toc do SVG phang cho goc quay can_mat_kich_tinh (v3.0) */
+  hienTiaTocDo?: boolean;
 };
 
 export const CAMERA_MAC_DINH: KetQuaBienDoiCamera = {
@@ -33,6 +35,7 @@ export const CAMERA_MAC_DINH: KetQuaBienDoiCamera = {
   gocQuayHieuLuc: 'toan_canh',
   nhanVatDangFocus: null,
   laChiaDoiManHinh: false,
+  hienTiaTocDo: false,
 };
 
 const KHUNG_RONG = 1920;
@@ -80,6 +83,43 @@ export function tinhPanAnToan(
     panX: kepGiaTri(rawX, -maxPanX, maxPanX),
     panY: kepGiaTri(rawY, -maxPanY, maxPanY),
   };
+}
+
+/**
+ * Khoa diem mat nhan vat (worldX, worldY) vao dung vi tri quy tac 1/3 tren man hinh (dichManHinhX, dichManHinhY)
+ * va kẹp an toan trong bien [ -960*(z-1), +960*(z-1) ] de KHONG bao gio lo vien den.
+ */
+export function tinhPanQuyTacMotPhanBa(
+  worldX: number,
+  worldY: number,
+  zoom: number,
+  dichManHinhX: number,
+  dichManHinhY: number,
+): { panX: number; panY: number } {
+  const z = Math.max(1, Number.isFinite(zoom) ? zoom : 1);
+  const maxPanX = Math.max(0, TAM_X * (z - 1));
+  const maxPanY = Math.max(0, TAM_Y * (z - 1));
+  const rawX = dichManHinhX - TAM_X - (worldX - TAM_X) * z;
+  const rawY = dichManHinhY - TAM_Y - (worldY - TAM_Y) * z;
+  return {
+    panX: kepGiaTri(rawX, -maxPanX, maxPanX),
+    panY: kepGiaTri(rawY, -maxPanY, maxPanY),
+  };
+}
+
+function uocLuongToaDoMatY(nv: NhanVatTrongCanh): number {
+  const tiLe = Math.max(0.5, (nv.tiLe ?? 1) * 1.25);
+  const lechDau =
+    nv.doTuoi === 'so_sinh'
+      ? -62
+      : nv.tuThe === 'ngoi_ban'
+        ? -136
+        : nv.tuThe === 'nam_giuong'
+          ? -130
+          : nv.doTuoi === 'thieu_nien'
+            ? -144
+            : -172;
+  return nv.y + lechDau * tiLe;
 }
 
 /** Tinh trung binh bien do RMS trong cua so truot [frame - 10 .. frame] tat dinh 100% */
@@ -278,6 +318,95 @@ function tinhGocQuayCoSo(
       return { zoom, panX, panY, rot: 0 };
     }
 
+    case 'can_mat_trai': {
+      // Zoom 1.85x-2.1x khoa mat nhan vat ben trai tai quy tac 1/3 (x=640, y=380)
+      const zoomDich = kepGiaTri(mayQuay.doPhong ?? 1.96, 1.85, 2.1);
+      const loXo = kepGiaTri(springTatDinh(f, 14, 185), 0, 1.04);
+      const zoom = noiSuy(1.22, zoomDich, loXo) + easeInOutSine(tienDo) * 0.03;
+      const zoomKep = kepGiaTri(zoom, 1.2, 2.12);
+      const traiNhat =
+        dsNv.length > 0 ? [...dsNv].sort((a, b) => a.x - b.x)[0] : undefined;
+      const tam = coDiem
+        ? coDiem
+        : traiNhat
+          ? {
+              x: tinhViTriNhanVatTaiFrame(traiNhat, f, tong).x,
+              y: uocLuongToaDoMatY(traiNhat),
+            }
+          : { x: 520, y: 560 };
+      const { panX, panY } = tinhPanQuyTacMotPhanBa(tam.x, tam.y, zoomKep, 640, 380);
+      return { zoom: zoomKep, panX, panY, rot: 0 };
+    }
+
+    case 'can_mat_phai': {
+      // Zoom 1.85x-2.1x khoa mat nhan vat ben phai tai quy tac 2/3 (x=1280, y=380)
+      const zoomDich = kepGiaTri(mayQuay.doPhong ?? 1.96, 1.85, 2.1);
+      const loXo = kepGiaTri(springTatDinh(f, 14, 185), 0, 1.04);
+      const zoom = noiSuy(1.22, zoomDich, loXo) + easeInOutSine(tienDo) * 0.03;
+      const zoomKep = kepGiaTri(zoom, 1.2, 2.12);
+      const phaiNhat =
+        dsNv.length > 0 ? [...dsNv].sort((a, b) => b.x - a.x)[0] : undefined;
+      const tam = coDiem
+        ? coDiem
+        : phaiNhat
+          ? {
+              x: tinhViTriNhanVatTaiFrame(phaiNhat, f, tong).x,
+              y: uocLuongToaDoMatY(phaiNhat),
+            }
+          : { x: 1400, y: 560 };
+      const { panX, panY } = tinhPanQuyTacMotPhanBa(tam.x, tam.y, zoomKep, 1280, 380);
+      return { zoom: zoomKep, panX, panY, rot: 0 };
+    }
+
+    case 'can_mat_kich_tinh': {
+      // Zoom nay manh 2.2x kieu kich tinh + rung nhe luc bat vao + bat vien tia toc do SVG
+      const zoomDich = kepGiaTri(mayQuay.doPhong ?? 2.2, 2.05, 2.35);
+      const sp = kepGiaTri(springTatDinh(f, 10, 250), 0, 1.14);
+      const zoom = kepGiaTri(noiSuy(1.14, zoomDich, sp), 1.14, 2.42);
+      const nvChinh = dsNv.find((nv) => nv.dangNoi) ?? dsNv[0];
+      const tam = coDiem
+        ? coDiem
+        : nvChinh
+          ? {
+              x: tinhViTriNhanVatTaiFrame(nvChinh, f, tong).x,
+              y: uocLuongToaDoMatY(nvChinh),
+            }
+          : { x: TAM_X, y: TAM_Y - 40 };
+      const { panX: pxGoc, panY: pyGoc } = tinhPanQuyTacMotPhanBa(
+        tam.x,
+        tam.y,
+        zoom,
+        TAM_X,
+        420,
+      );
+      const suyGiam = f <= 16 ? 1 - f / 16 : 0;
+      const maxPanX = Math.max(0, TAM_X * (zoom - 1));
+      const maxPanY = Math.max(0, TAM_Y * (zoom - 1));
+      const panX = kepGiaTri(pxGoc + Math.sin(f * 2.2) * 8 * suyGiam, -maxPanX, maxPanX);
+      const panY = kepGiaTri(pyGoc + Math.cos(f * 2.6) * 6 * suyGiam, -maxPanY, maxPanY);
+      const rot = Math.sin(f * 1.9) * 1.1 * suyGiam;
+      return { zoom, panX, panY, rot };
+    }
+
+    case 'dao_goc_can_mat': {
+      // Shot-Reverse-Shot tu dong dao goc can mat qua lai giua nguoi noi A va B
+      const zoomDich = kepGiaTri(mayQuay.doPhong ?? 1.92, 1.85, 2.1);
+      const nvChinh = dsNv.find((nv) => nv.dangNoi) ?? dsNv[0];
+      if (!nvChinh) {
+        return { zoom: 1.08, panX: 0, panY: 0, rot: 0 };
+      }
+      const pos = tinhViTriNhanVatTaiFrame(nvChinh, f, tong);
+      const dichX = pos.x < TAM_X ? 660 : 1260;
+      const { panX, panY } = tinhPanQuyTacMotPhanBa(
+        pos.x,
+        uocLuongToaDoMatY(nvChinh),
+        zoomDich,
+        dichX,
+        385,
+      );
+      return { zoom: zoomDich, panX, panY, rot: 0 };
+    }
+
     case 'chia_doi_man_hinh':
     default:
       return { zoom: 1, panX: 0, panY: 0, rot: 0 };
@@ -320,9 +449,71 @@ export function tinhBienDoiCamera(
 
     const coSo = tinhGocQuayCoSo(gocQuay, f, tong, mayQuay, nhanVat, daoCu);
     let { zoom, panX, panY, rot } = coSo;
+    const hienTiaTocDo = gocQuay === 'can_mat_kich_tinh';
+
+    // Che do Shot-Reverse-Shot (dao_goc_can_mat): tu dong dao can mat (1.85x-2.1x) theo dung luotThoai[]
+    if (gocQuay === 'dao_goc_can_mat' && nhanVat && nhanVat.length > 0) {
+      const zoomShot = kepGiaTri(mayQuay.doPhong ?? 1.94, 1.85, 2.1);
+      const tinhShotChoNv = (nvId: string | null) => {
+        const nv = (nvId ? nhanVat.find((it) => it.id === nvId) : null) ?? nhanVat[0];
+        const pos = tinhViTriNhanVatTaiFrame(nv, f, tong);
+        const dichX = pos.x < TAM_X ? 660 : 1260;
+        const { panX: px, panY: py } = tinhPanQuyTacMotPhanBa(
+          pos.x,
+          uocLuongToaDoMatY(nv),
+          zoomShot,
+          dichX,
+          385,
+        );
+        return { zoom: zoomShot, panX: px, panY: py };
+      };
+
+      if (luotThoai && luotThoai.length > 0) {
+        const dsSapXep = [...luotThoai].sort((a, b) => a.batDauFrame - b.batDauFrame);
+        const idxCur = dsSapXep.findIndex((lt) => f >= lt.batDauFrame && f < lt.ketThucFrame);
+        if (idxCur >= 0) {
+          const cur = dsSapXep[idxCur];
+          const prev = idxCur > 0 ? dsSapXep[idxCur - 1] : null;
+          const dich = tinhShotChoNv(cur.nhanVatId);
+          // Chuyen goc can mat sac gon trong 6 frame kieu Shot-Reverse-Shot dien anh
+          if (prev && prev.nhanVatId !== cur.nhanVatId && f - cur.batDauFrame < 6) {
+            const truoc = tinhShotChoNv(prev.nhanVatId);
+            const tCut = easeInOutCubic(kepGiaTri((f - cur.batDauFrame) / 6, 0, 1));
+            zoom = noiSuy(truoc.zoom, dich.zoom, tCut);
+            panX = noiSuy(truoc.panX, dich.panX, tCut);
+            panY = noiSuy(truoc.panY, dich.panY, tCut);
+          } else {
+            zoom = dich.zoom;
+            panX = dich.panX;
+            panY = dich.panY;
+          }
+        } else {
+          // Khoang nghi giua luot: giu khung cua nguoi vua noi hoac nguoi sap noi
+          const ganNhat =
+            dsSapXep.find((lt) => lt.batDauFrame >= f) ?? dsSapXep[dsSapXep.length - 1];
+          const dich = tinhShotChoNv(ganNhat.nhanVatId);
+          zoom = dich.zoom;
+          panX = dich.panX;
+          panY = dich.panY;
+        }
+      } else if (nguoiDangNoi) {
+        const dich = tinhShotChoNv(nguoiDangNoi);
+        zoom = dich.zoom;
+        panX = dich.panX;
+        panY = dich.panY;
+      }
+    }
 
     // Tu dong lia & zoom nhe (1.2x - 1.45x) sang nhan vat dang noi / co bien do RMS, tra may muot khi doi nguoi
-    if (mayQuay.tuDongFocusNguoiNoi && nhanVat && nhanVat.length > 0) {
+    if (
+      gocQuay !== 'dao_goc_can_mat' &&
+      gocQuay !== 'can_mat_trai' &&
+      gocQuay !== 'can_mat_phai' &&
+      gocQuay !== 'can_mat_kich_tinh' &&
+      mayQuay.tuDongFocusNguoiNoi &&
+      nhanVat &&
+      nhanVat.length > 0
+    ) {
       const zoomFocus = kepGiaTri(mayQuay.doPhong ?? 1.32, 1.2, 1.45);
 
       const tinhMucTieuFocus = (nvId: string | null) => {
@@ -438,6 +629,7 @@ export function tinhBienDoiCamera(
       gocQuayHieuLuc: gocQuay,
       nhanVatDangFocus: nguoiDangNoi,
       laChiaDoiManHinh: false,
+      hienTiaTocDo,
     };
   }
 
