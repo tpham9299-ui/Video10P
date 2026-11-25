@@ -26,17 +26,33 @@ MAC_DINH_FALLBACK_MODELS = (
     "gemini-2.0-flash",
     "gemini-pro-latest",
 )
-# Lich nghi lui dan (giay) sau moi vong xoay het toan bo API key khi gap 503/429
-LICH_BACKOFF_THEO_VONG: tuple[float, ...] = (8.0, 20.0, 40.0, 60.0)
-SO_VONG_TOI_DA_MAC_DINH = 4
+# Lich nghi lui dan (giay) sau moi vong xoay het toan bo API key khi gap 503 qua tai server (toi da 3 vong)
+LICH_BACKOFF_THEO_VONG: tuple[float, ...] = (8.0, 20.0, 40.0)
+SO_VONG_TOI_DA_MAC_DINH = 3
 THOI_GIAN_NGHI_DOI_KEY_GIAY = 1.0
+THOI_GIAN_NGHI_CHUYEN_MODEL_429_GIAY = 2.0
 GEMINI_ENDPOINT_TEMPLATE = (
     "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 )
 GEMINI_MODELS_LIST_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 MA_LOI_XOAY_KEY = {429, 500, 502, 503, 504}
 MA_LOI_QUA_TAI_SERVER = {500, 502, 503, 504}
-TU_KHOA_LOAI_BO_MODEL = ("embedding", "tts", "image", "aqa")
+TU_KHOA_LOAI_BO_MODEL = (
+    "transcribe",
+    "computer-use",
+    "robotics",
+    "nano-banana",
+    "neon",
+    "image",
+    "imagen",
+    "veo",
+    "tts",
+    "audio",
+    "embedding",
+    "aqa",
+    "learnlm",
+    "exp",
+)
 
 
 class GeminiError(RuntimeError):
@@ -272,7 +288,7 @@ def _khoa_xep_hang_model(ten: str) -> tuple[Any, ...]:
 
 
 def loc_va_xep_hang_models(danh_sach_models: list[dict[str, Any]]) -> list[str]:
-    """Loc cac model ho tro generateContent, bo qua embedding/tts/image/aqa va sap xep uu tien."""
+    """Loc cac model sinh van ban Gemini chuan (generateContent), loai bo toan bo model chuyen biet/khong phu hop."""
     hop_le: list[str] = []
     for item in danh_sach_models:
         if not isinstance(item, dict):
@@ -288,6 +304,9 @@ def loc_va_xep_hang_models(danh_sach_models: list[dict[str, Any]]) -> list[str]:
             continue
         thap = ten.lower()
         if any(tk in thap for tk in TU_KHOA_LOAI_BO_MODEL):
+            continue
+        # Chi giu lai cac dong model van ban Gemini chuan (flash / pro)
+        if not thap.startswith("gemini-") or not ("flash" in thap or "pro" in thap):
             continue
         if ten not in hop_le:
             hop_le.append(ten)
@@ -309,6 +328,7 @@ class GeminiClient:
         backoff_co_so: float = 1.5,
         lich_backoff_theo_vong: tuple[float, ...] | list[float] | None = None,
         nghi_doi_key_giay: float = THOI_GIAN_NGHI_DOI_KEY_GIAY,
+        nghi_chuyen_model_429_giay: float = THOI_GIAN_NGHI_CHUYEN_MODEL_429_GIAY,
         so_vong_toi_da: int = SO_VONG_TOI_DA_MAC_DINH,
         http_caller: Callable[[str, dict[str, Any], str, int], tuple[int, str]] | None = None,
         http_get_caller: Callable[[str, int], tuple[int, str]] | None = None,
@@ -335,6 +355,7 @@ class GeminiClient:
         else:
             self.lich_backoff_theo_vong = LICH_BACKOFF_THEO_VONG
         self.nghi_doi_key_giay = max(0.0, float(nghi_doi_key_giay))
+        self.nghi_chuyen_model_429_giay = max(0.0, float(nghi_chuyen_model_429_giay))
         self.so_vong_toi_da = max(1, int(so_vong_toi_da))
         self._chi_so_key = 0
         self._http_caller = http_caller or self._goi_http_mac_dinh
@@ -669,9 +690,25 @@ class GeminiClient:
 
                 if _la_loi_model_khong_hop_le(status, body):
                     self._models_khong_kha_dung.add(model_hien_tai)
+                    con_fallback = [
+                        m
+                        for m in hang_doi_model
+                        if m not in models_da_thu and m not in self._models_khong_kha_dung
+                    ]
+                    if con_fallback:
+                        model_ke_tiep = con_fallback[0]
+                        print(
+                            f"[Gemini] Model '{model_hien_tai}' khong ton tai/khong hop le (HTTP {status}). "
+                            f"Chuyen sang model van ban chuan '{model_ke_tiep}'..."
+                        )
+                        self.model = model_ke_tiep
+                        hang_doi_model = con_fallback
+                        chuyen_model = True
+                        break
+
                     print(
                         f"[Gemini] Model '{model_hien_tai}' khong ton tai/khong hop le (HTTP {status}). "
-                        "Dang tu do model kha dung..."
+                        "Dang tu do model van ban chuan kha dung..."
                     )
                     model_tu_do = self.tu_do_model_kha_dung(
                         loai_tru=self._models_khong_kha_dung | models_da_thu,
@@ -680,12 +717,7 @@ class GeminiClient:
                     da_tu_do_trong_luot = True
 
                     if model_tu_do and model_tu_do not in models_da_thu:
-                        hang_doi_model = [
-                            m
-                            for m in hang_doi_model
-                            if m != model_tu_do and m not in self._models_khong_kha_dung
-                        ]
-                        hang_doi_model.insert(0, model_tu_do)
+                        hang_doi_model = [model_tu_do]
                         for m_do in self._models_da_do:
                             if (
                                 m_do != model_tu_do
@@ -694,16 +726,6 @@ class GeminiClient:
                                 and m_do not in self._models_khong_kha_dung
                             ):
                                 hang_doi_model.append(m_do)
-                        chuyen_model = True
-                        break
-
-                    con_fallback = [
-                        m
-                        for m in hang_doi_model
-                        if m not in models_da_thu and m not in self._models_khong_kha_dung
-                    ]
-                    if con_fallback:
-                        hang_doi_model = con_fallback
                         chuyen_model = True
                         break
 
@@ -724,23 +746,22 @@ class GeminiClient:
                     vong_hien_tai = (luot // so_key) + 1
                     het_vong = (luot + 1) % so_key == 0 or so_key == 1
 
+                    # Khi tat ca API key deu tra ve 429 tren 1 model -> chuyen nhanh sau 2.0s (KHONG lap 3 vong dai)
                     if len(keys_bi_429) >= so_key:
                         if con_fallback:
                             model_ke_tiep = con_fallback[0]
-                            thoi_gian_cho_chuyen = self._tinh_thoi_gian_cho_het_vong(vong_hien_tai)
+                            thoi_gian_cho_429 = self.nghi_chuyen_model_429_giay
                             print(
-                                f"[Gemini] Model '{model_hien_tai}' het quota (429) tren tat ca {so_key} API key "
-                                f"(vong {vong_hien_tai}/{so_vong}). Cho {thoi_gian_cho_chuyen:.1f}s roi chuyen "
-                                f"sang model du phong '{model_ke_tiep}'..."
+                                f"[Gemini] Model '{model_hien_tai}' het quota (429) tren tat ca {so_key} API key. "
+                                f"Cho {thoi_gian_cho_429:.1f}s roi chuyen ngay sang model du phong '{model_ke_tiep}'..."
                             )
-                            self._sleep(thoi_gian_cho_chuyen)
+                            self._sleep(thoi_gian_cho_429)
                             self.model = model_ke_tiep
                             hang_doi_model = con_fallback
                             chuyen_model = True
                             break
-                        if bat_tim_kiem_web and cho_phep_ha_cap_khong_tim_kiem:
-                            # Da het quota grounding o model cuoi cung -> thoat vong nhanh de ha cap ngay
-                            break
+                        # Het sach fallback va tat ca key deu 429 -> thoat ngay (de ha cap grounding hoac bao QuotaError)
+                        break
 
                     nhan_loi = (
                         f"rate limit/quota ({status})"

@@ -629,19 +629,75 @@ class TestGeminiClientOffline(unittest.TestCase):
         self.assertEqual(parse_json_an_toan(raw), {"a": 1, "b": [2, 3]})
         self.assertTrue(lam_sach_json(raw).startswith("{"))
 
-    def test_backoff_503_lien_tiep_4_vong_nghi_doi_key_1s_va_hang_doi_model(self) -> None:
+    def test_backoff_503_3_vong_chuyen_nhanh_429_2s_va_loc_model_chuan(self) -> None:
         import io
         from unittest import mock
 
         from scripts.pipeline.gemini_client import (
             LICH_BACKOFF_THEO_VONG,
             SO_VONG_TOI_DA_MAC_DINH,
+            THOI_GIAN_NGHI_CHUYEN_MODEL_429_GIAY,
             THOI_GIAN_NGHI_DOI_KEY_GIAY,
+            TU_KHOA_LOAI_BO_MODEL,
+            loc_va_xep_hang_models,
         )
 
-        self.assertEqual(LICH_BACKOFF_THEO_VONG, (8.0, 20.0, 40.0, 60.0))
-        self.assertEqual(SO_VONG_TOI_DA_MAC_DINH, 4)
+        self.assertEqual(LICH_BACKOFF_THEO_VONG, (8.0, 20.0, 40.0))
+        self.assertEqual(SO_VONG_TOI_DA_MAC_DINH, 3)
         self.assertEqual(THOI_GIAN_NGHI_DOI_KEY_GIAY, 1.0)
+        self.assertEqual(THOI_GIAN_NGHI_CHUYEN_MODEL_429_GIAY, 2.0)
+
+        # 0. Bo loc ListModels: loc sach toan bo model chuyen biet/khong phu hop sinh van ban
+        for tk in (
+            "transcribe",
+            "computer-use",
+            "robotics",
+            "nano-banana",
+            "neon",
+            "image",
+            "imagen",
+            "veo",
+            "tts",
+            "audio",
+            "embedding",
+            "aqa",
+            "learnlm",
+            "exp",
+        ):
+            self.assertIn(tk, TU_KHOA_LOAI_BO_MODEL)
+
+        ds_tho = [
+            {"name": "models/gemini-4-neon", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-3.5-transcribe", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-2.5-computer-use-preview-10-2025", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-nano-banana-2.1", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-robotics-er-2-preview", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-2.5-flash-image", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/imagen-3.0-generate-002", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/veo-2.0-generate-001", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-2.5-flash-tts", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-2.5-flash-native-audio", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-embedding-001", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/aqa", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/learnlm-2.0-flash", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-2.0-flash-exp", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-2.5-flash", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-2.5-flash-lite", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-flash-latest", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-2.0-flash", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-pro-latest", "supportedGenerationMethods": ["generateContent"]},
+        ]
+        ds_sach = loc_va_xep_hang_models(ds_tho)
+        self.assertEqual(
+            set(ds_sach),
+            {
+                "gemini-flash-latest",
+                "gemini-2.5-flash",
+                "gemini-2.5-flash-lite",
+                "gemini-2.0-flash",
+                "gemini-pro-latest",
+            },
+        )
 
         # 1. Hang doi model mac dinh: khi bat dau tu gemini-flash-latest, gemini-pro-latest LUON o cuoi cung
         client_q = GeminiClient(
@@ -658,15 +714,45 @@ class TestGeminiClientOffline(unittest.TestCase):
         self.assertIn("gemini-2.5-flash-lite", hang_doi[:-1])
         self.assertIn("gemini-2.0-flash", hang_doi[:-1])
 
-        # 2. Gap 503 lien tiep 3 vong (6 luot voi 2 key) -> nghi 1.0s doi key, 8s/20s/40s het vong -> thanh cong o vong 4
+        # 2. Khi tat ca key deu 429 tren 1 model -> nghi dung 2.0s roi chuyen ngay sang model du phong (KHONG lap 3 vong)
+        cho_429: list[float] = []
+        goi_429: list[tuple[str, str]] = []
+
+        def fake_429_all_keys(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            m = url.split("/models/")[1].split(":")[0]
+            goi_429.append((m, api_key))
+            return 429, '{"error": {"status": "RESOURCE_EXHAUSTED"}}'
+
+        client_429 = GeminiClient(
+            api_keys=["key_1", "key_2"],
+            model="gemini-2.5-flash",
+            fallback_models=["gemini-2.5-flash", "gemini-2.5-flash-lite"],
+            http_caller=fake_429_all_keys,
+            sleep_fn=cho_429.append,
+        )
+        with self.assertRaises(GeminiQuotaError):
+            client_429.tao_van_ban("Test 429 chuyen nhanh 2s")
+        # Moi model chi thu dung 1 vong (2 key), giua 2 key nghi 1.0s, chuyen model nghi 2.0s, model cuoi thoat ngay!
+        self.assertEqual(
+            goi_429,
+            [
+                ("gemini-2.5-flash", "key_1"),
+                ("gemini-2.5-flash", "key_2"),
+                ("gemini-2.5-flash-lite", "key_1"),
+                ("gemini-2.5-flash-lite", "key_2"),
+            ],
+        )
+        self.assertEqual(cho_429, [1.0, 2.0, 1.0])
+
+        # 3. Gap 503 lien tiep 2 vong (4 luot voi 2 key) -> nghi 1.0s doi key, 8s/20s het vong -> thanh cong o vong 3
         cac_lan_cho: list[float] = []
         luot_503 = {"n": 0}
 
         def fake_503_then_ok(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
             luot_503["n"] += 1
-            if luot_503["n"] <= 6:
+            if luot_503["n"] <= 4:
                 return 503, '{"error": {"code": 503, "message": "The model is overloaded. Please try again later."}}'
-            return 200, json.dumps({"candidates": [{"content": {"parts": [{"text": "OK sau 3 vong 503"}]}}]})
+            return 200, json.dumps({"candidates": [{"content": {"parts": [{"text": "OK sau 2 vong 503"}]}}]})
 
         client_503 = GeminiClient(
             api_keys=["key_1", "key_2"],
@@ -677,23 +763,21 @@ class TestGeminiClientOffline(unittest.TestCase):
         )
         buf = io.StringIO()
         with mock.patch("sys.stdout", buf):
-            kq = client_503.tao_van_ban("Test 503 backoff 4 vong")
-        self.assertEqual(kq, "OK sau 3 vong 503")
+            kq = client_503.tao_van_ban("Test 503 backoff 3 vong")
+        self.assertEqual(kq, "OK sau 2 vong 503")
         self.assertEqual(client_503.model, "gemini-2.5-flash")
-        self.assertEqual(cac_lan_cho, [1.0, 8.0, 1.0, 20.0, 1.0, 40.0])
+        self.assertEqual(cac_lan_cho, [1.0, 8.0, 1.0, 20.0])
         log_txt = buf.getvalue()
-        self.assertIn("vong 1/4", log_txt)
-        self.assertIn("vong 2/4", log_txt)
-        self.assertIn("vong 3/4", log_txt)
+        self.assertIn("vong 1/3", log_txt)
+        self.assertIn("vong 2/3", log_txt)
         self.assertIn("8.0s", log_txt)
         self.assertIn("20.0s", log_txt)
-        self.assertIn("40.0s", log_txt)
 
-        # 3. Gap 503 tron 4 vong tren model 1 -> nghi du 8s, 20s, 40s, 60s roi moi sang model du phong 2
+        # 4. Gap 503 tron 3 vong tren model 1 -> nghi du 8s, 20s, 40s roi sang model du phong 2
         cac_lan_cho_2: list[float] = []
         models_goi: list[str] = []
 
-        def fake_503_full_4_vong(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+        def fake_503_full_3_vong(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
             m = url.split("/models/")[1].split(":")[0]
             models_goi.append(m)
             if m == "gemini-2.5-flash":
@@ -704,16 +788,16 @@ class TestGeminiClientOffline(unittest.TestCase):
             api_keys=["key_1", "key_2"],
             model="gemini-2.5-flash",
             fallback_models=["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-pro-latest"],
-            http_caller=fake_503_full_4_vong,
+            http_caller=fake_503_full_3_vong,
             sleep_fn=cac_lan_cho_2.append,
         )
-        kq2 = client_chuyen.tao_van_ban("Test 503 chuyen model sau 4 vong")
+        kq2 = client_chuyen.tao_van_ban("Test 503 chuyen model sau 3 vong")
         self.assertEqual(kq2, "OK tu 2.5-flash-lite")
         self.assertEqual(client_chuyen.model, "gemini-2.5-flash-lite")
-        self.assertEqual(models_goi.count("gemini-2.5-flash"), 8)  # 4 vong x 2 key
-        self.assertEqual(cac_lan_cho_2, [1.0, 8.0, 1.0, 20.0, 1.0, 40.0, 1.0, 60.0])
+        self.assertEqual(models_goi.count("gemini-2.5-flash"), 6)  # 3 vong x 2 key
+        self.assertEqual(cac_lan_cho_2, [1.0, 8.0, 1.0, 20.0, 1.0, 40.0])
 
-        # 4. Google Search Grounding gap 503 tren tat ca key/model -> tu ha cap goi khong dung search thanh cong
+        # 5. Google Search Grounding gap 503 tren tat ca key/model -> tu ha cap goi khong dung search thanh cong
         luot_search: list[tuple[str, bool]] = []
 
         def fake_grounding_503(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
