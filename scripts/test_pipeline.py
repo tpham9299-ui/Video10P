@@ -2292,8 +2292,34 @@ class TestGiuChanNguoiXemV07Offline(unittest.TestCase):
         self.assertTrue(args_cli.bo_qua_thumbnail)
         self.assertTrue(args_cli.bo_qua_visual_qa)
 
-        cmd_don = dung_lenh_render_thumbnail(Path("a.json"), Path("out.png"), npx_bin="npx")
-        self.assertEqual(cmd_don, ["npx", "remotion", "still", "src/index.ts", THUMBNAIL_STILL_ID, "out.png", "--props=a.json"])
+        cmd_cuc_bo = dung_lenh_render_thumbnail(
+            Path("a.json"),
+            Path("out.png"),
+            npx_bin="npx",
+            env={},
+        )
+        self.assertEqual(
+            cmd_cuc_bo,
+            ["npx", "remotion", "still", "src/index.ts", THUMBNAIL_STILL_ID, "out.png", "--props=a.json"],
+        )
+
+        cmd_ci = dung_lenh_render_thumbnail(
+            Path("a.json"),
+            Path("out.png"),
+            npx_bin="npx",
+            env={"CI": "true"},
+        )
+        self.assertEqual(
+            cmd_ci,
+            ["npx", "remotion", "still", "src/index.ts", THUMBNAIL_STILL_ID, "out.png", "--props=a.json", "--log=warn"],
+        )
+        # remotion still khong ho tro --concurrency va anh PNG khong can --jpeg-quality
+        self.assertFalse(any(a.startswith("--concurrency") for a in cmd_ci))
+        self.assertFalse(any(a.startswith("--jpeg-quality") for a in cmd_ci))
+
+        # Goi mac dinh (doc env hien tai) phai khop dung che do local hoac CI=true
+        cmd_mac_dinh = dung_lenh_render_thumbnail(Path("a.json"), Path("out.png"), npx_bin="npx")
+        self.assertEqual(cmd_mac_dinh, cmd_ci if dang_chay_tren_ci() else cmd_cuc_bo)
 
     def test_v08_enum_moi_minh_hoa_tung_buoc_va_goi_y_thumbnail(self) -> None:
         # 1. Kiem tra 12 boi canh, 11 dao cu, va 'tung_buoc'

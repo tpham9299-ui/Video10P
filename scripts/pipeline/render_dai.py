@@ -1020,10 +1020,11 @@ def dung_lenh_render_thumbnail(
     file_anh_xuat: Path,
     npx_bin: str | None = None,
     che_do_ci: bool | None = None,
+    env: dict[str, str] | None = None,
 ) -> list[str]:
-    """Dung lenh Remotion still de render 1 anh Thumbnail 1280x720."""
+    """Dung lenh Remotion still de render 1 anh Thumbnail 1280x720 (chi dung co hop le voi remotion still)."""
     bin_cmd = npx_bin or shutil.which("npx") or ("npx.cmd" if os.name == "nt" else "npx")
-    la_ci = dang_chay_tren_ci() if che_do_ci is None else bool(che_do_ci)
+    la_ci = dang_chay_tren_ci(env) if che_do_ci is None else bool(che_do_ci)
     cmd = [
         bin_cmd,
         "remotion",
@@ -1043,6 +1044,8 @@ def render_bo_thumbnail(
     thu_muc_slug: Path,
     npx_bin: str | None = None,
     command_runner: Callable[[list[str], Path | None], None] | None = None,
+    che_do_ci: bool | None = None,
+    env: dict[str, str] | None = None,
 ) -> list[Path]:
     """Tu dong render 3 bien the thumbnail_1.png, thumbnail_2.png, thumbnail_3.png bang Remotion <Still>."""
     thu_muc_slug.mkdir(parents=True, exist_ok=True)
@@ -1061,7 +1064,13 @@ def render_bo_thumbnail(
                 newline="\n",
             )
             file_anh = thu_muc_slug / f"thumbnail_{bt}.png"
-            cmd = dung_lenh_render_thumbnail(file_props_tam, file_anh, npx_bin=npx_bin)
+            cmd = dung_lenh_render_thumbnail(
+                file_props_tam,
+                file_anh,
+                npx_bin=npx_bin,
+                che_do_ci=che_do_ci,
+                env=env,
+            )
             runner(cmd, GOC_DU_AN)
             ket_qua.append(file_anh)
 
@@ -1674,6 +1683,7 @@ def render_toan_bo_video(
                 thu_muc_slug,
                 npx_bin=bin_cmd,
                 command_runner=runner,
+                che_do_ci=che_do_ci,
             )
             ket_qua_xuat["thumbnails"] = ds_thumb
             print(
