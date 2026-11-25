@@ -375,7 +375,14 @@ class TestGeminiClientOffline(unittest.TestCase):
             self.assertEqual(fb2, list(MAC_DINH_FALLBACK_MODELS))
             self.assertEqual(
                 fb2,
-                ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"],
+                [
+                    "gemini-2.5-flash",
+                    "gemini-2.5-flash-lite",
+                    "gemini-flash-latest",
+                    "gemini-flash-lite-latest",
+                    "gemini-2.0-flash",
+                    "gemini-pro-latest",
+                ],
             )
 
     def test_xoay_vong_key_khi_429_503_va_thu_lai_json(self) -> None:
@@ -621,6 +628,117 @@ class TestGeminiClientOffline(unittest.TestCase):
         raw = 'Loi mo dau...\n```json\n{"a": 1, "b": [2, 3,],}\n```\nLoi ket.'
         self.assertEqual(parse_json_an_toan(raw), {"a": 1, "b": [2, 3]})
         self.assertTrue(lam_sach_json(raw).startswith("{"))
+
+    def test_backoff_503_lien_tiep_4_vong_nghi_doi_key_1s_va_hang_doi_model(self) -> None:
+        import io
+        from unittest import mock
+
+        from scripts.pipeline.gemini_client import (
+            LICH_BACKOFF_THEO_VONG,
+            SO_VONG_TOI_DA_MAC_DINH,
+            THOI_GIAN_NGHI_DOI_KEY_GIAY,
+        )
+
+        self.assertEqual(LICH_BACKOFF_THEO_VONG, (8.0, 20.0, 40.0, 60.0))
+        self.assertEqual(SO_VONG_TOI_DA_MAC_DINH, 4)
+        self.assertEqual(THOI_GIAN_NGHI_DOI_KEY_GIAY, 1.0)
+
+        # 1. Hang doi model mac dinh: khi bat dau tu gemini-flash-latest, gemini-pro-latest LUON o cuoi cung
+        client_q = GeminiClient(
+            api_keys=["k1"],
+            model="gemini-flash-latest",
+            fallback_models=list(MAC_DINH_FALLBACK_MODELS),
+            http_caller=lambda u, p, k, t: (200, "{}"),
+            sleep_fn=lambda _: None,
+        )
+        hang_doi = client_q._tao_hang_doi_model()
+        self.assertEqual(hang_doi[0], "gemini-flash-latest")
+        self.assertEqual(hang_doi[-1], "gemini-pro-latest")
+        self.assertIn("gemini-2.5-flash", hang_doi[:-1])
+        self.assertIn("gemini-2.5-flash-lite", hang_doi[:-1])
+        self.assertIn("gemini-2.0-flash", hang_doi[:-1])
+
+        # 2. Gap 503 lien tiep 3 vong (6 luot voi 2 key) -> nghi 1.0s doi key, 8s/20s/40s het vong -> thanh cong o vong 4
+        cac_lan_cho: list[float] = []
+        luot_503 = {"n": 0}
+
+        def fake_503_then_ok(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            luot_503["n"] += 1
+            if luot_503["n"] <= 6:
+                return 503, '{"error": {"code": 503, "message": "The model is overloaded. Please try again later."}}'
+            return 200, json.dumps({"candidates": [{"content": {"parts": [{"text": "OK sau 3 vong 503"}]}}]})
+
+        client_503 = GeminiClient(
+            api_keys=["key_1", "key_2"],
+            model="gemini-2.5-flash",
+            fallback_models=["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-pro-latest"],
+            http_caller=fake_503_then_ok,
+            sleep_fn=cac_lan_cho.append,
+        )
+        buf = io.StringIO()
+        with mock.patch("sys.stdout", buf):
+            kq = client_503.tao_van_ban("Test 503 backoff 4 vong")
+        self.assertEqual(kq, "OK sau 3 vong 503")
+        self.assertEqual(client_503.model, "gemini-2.5-flash")
+        self.assertEqual(cac_lan_cho, [1.0, 8.0, 1.0, 20.0, 1.0, 40.0])
+        log_txt = buf.getvalue()
+        self.assertIn("vong 1/4", log_txt)
+        self.assertIn("vong 2/4", log_txt)
+        self.assertIn("vong 3/4", log_txt)
+        self.assertIn("8.0s", log_txt)
+        self.assertIn("20.0s", log_txt)
+        self.assertIn("40.0s", log_txt)
+
+        # 3. Gap 503 tron 4 vong tren model 1 -> nghi du 8s, 20s, 40s, 60s roi moi sang model du phong 2
+        cac_lan_cho_2: list[float] = []
+        models_goi: list[str] = []
+
+        def fake_503_full_4_vong(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            m = url.split("/models/")[1].split(":")[0]
+            models_goi.append(m)
+            if m == "gemini-2.5-flash":
+                return 503, "Service Unavailable"
+            return 200, json.dumps({"candidates": [{"content": {"parts": [{"text": "OK tu 2.5-flash-lite"}]}}]})
+
+        client_chuyen = GeminiClient(
+            api_keys=["key_1", "key_2"],
+            model="gemini-2.5-flash",
+            fallback_models=["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-pro-latest"],
+            http_caller=fake_503_full_4_vong,
+            sleep_fn=cac_lan_cho_2.append,
+        )
+        kq2 = client_chuyen.tao_van_ban("Test 503 chuyen model sau 4 vong")
+        self.assertEqual(kq2, "OK tu 2.5-flash-lite")
+        self.assertEqual(client_chuyen.model, "gemini-2.5-flash-lite")
+        self.assertEqual(models_goi.count("gemini-2.5-flash"), 8)  # 4 vong x 2 key
+        self.assertEqual(cac_lan_cho_2, [1.0, 8.0, 1.0, 20.0, 1.0, 40.0, 1.0, 60.0])
+
+        # 4. Google Search Grounding gap 503 tren tat ca key/model -> tu ha cap goi khong dung search thanh cong
+        luot_search: list[tuple[str, bool]] = []
+
+        def fake_grounding_503(url: str, payload: dict[str, Any], api_key: str, timeout: int) -> tuple[int, str]:
+            m = url.split("/models/")[1].split(":")[0]
+            co_search = bool(payload.get("tools"))
+            luot_search.append((m, co_search))
+            if co_search:
+                return 503, "Search Grounding Overloaded"
+            return 200, json.dumps({"candidates": [{"content": {"parts": [{"text": '{"ok": true}'}]}}]})
+
+        client_gs = GeminiClient(
+            api_keys=["key_1"],
+            model="gemini-2.5-flash",
+            fallback_models=["gemini-2.5-flash"],
+            so_vong_toi_da=2,
+            lich_backoff_theo_vong=(0.0, 0.0),
+            nghi_doi_key_giay=0.0,
+            http_caller=fake_grounding_503,
+            sleep_fn=lambda _: None,
+        )
+        kq_gs, nguon_gs = client_gs.tao_json("Nghien cuu web", bat_tim_kiem_web=True, tra_ve_nguon=True)
+        self.assertEqual(kq_gs, {"ok": True})
+        self.assertEqual(nguon_gs, [])
+        self.assertTrue(any(cs for _, cs in luot_search))
+        self.assertEqual(luot_search[-1], ("gemini-2.5-flash", False))
 
 
 class TestSanitizerVaBienKichOffline(unittest.TestCase):
