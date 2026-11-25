@@ -1,4 +1,9 @@
-import type { HuongNhanVat, LoaiHanhDong } from '../kieu_dai';
+import type {
+  DoTuoiNhanVat,
+  HuongNhanVat,
+  LoaiHanhDong,
+  TuTheNhanVat,
+} from '../kieu_dai';
 import { tinhGocKhopDongTac } from './dong_tac.ts';
 import { baoToanCoGian, kepGiaTri } from './duong_cong.ts';
 
@@ -17,6 +22,10 @@ export type DoTrePhuKien = {
 export type TuyChonKhungXuong = {
   dangNoi?: boolean;
   vanTocDiChuyenX?: number;
+  /** Bien the do tuoi hinh the nhan vat (v2.0) */
+  doTuoi?: DoTuoiNhanVat;
+  /** Tu the boi canh cua nhan vat (v2.0) */
+  tuThe?: TuTheNhanVat;
 };
 
 export type TuTheKhungXuong = {
@@ -58,6 +67,13 @@ const DAI_CANH_TAY_TREN = 31;
 const DAI_CANG_TAY = 29;
 const DAI_DUI = 46;
 const DAI_CANG_CHAN = 45;
+
+// Gioi han giai phau an toan cho goc xoay dau & truc co (do) — ngan dau bi lat nguoc hoac lech truc
+export const GIOI_HAN_GOC_DAU_MIN = -18;
+export const GIOI_HAN_GOC_DAU_MAX = 22;
+export const GIOI_HAN_GOC_CO_MIN = -16;
+export const GIOI_HAN_GOC_CO_MAX = 20;
+export const GIOI_HAN_LECH_DAU_CO = 16;
 
 const DO_SANG_RAD = Math.PI / 180;
 
@@ -132,24 +148,124 @@ function giaiKhungXuongTaiFrame(
   frame: number,
   huong: HuongNhanVat,
   dangNoi: boolean,
+  doTuoi: DoTuoiNhanVat = 'truong_thanh',
+  tuThe: TuTheNhanVat = 'dung',
 ): KetQuaNoiBo {
   const dir = huong === 'trai' ? -1 : 1;
-  const p = tinhGocKhopDongTac(hanhDong, frame, dangNoi);
+  const pGoc = tinhGocKhopDongTac(hanhDong, frame, dangNoi);
+  const p = { ...pGoc };
+
+  // Bien the ty le chieu dai xuong theo doTuoi (v2.0)
+  const tiLeThan =
+    doTuoi === 'so_sinh'
+      ? 0.48
+      : doTuoi === 'thieu_nien'
+        ? 0.82
+        : doTuoi === 'gia'
+          ? 0.94
+          : 1.0;
+  const tiLeChi =
+    doTuoi === 'so_sinh'
+      ? 0.45
+      : doTuoi === 'thieu_nien'
+        ? 0.8
+        : doTuoi === 'gia'
+          ? 0.95
+          : 1.0;
+
+  if (doTuoi === 'gia') {
+    p.gocThan = kepGiaTri(p.gocThan + 6, -10, 26);
+    p.doCongThan -= 4.5;
+  } else if (doTuoi === 'thieu_nien') {
+    // Tre trung, nhun nang dong hon nhe
+    p.offsetY += Math.sin(frame * 0.22) * 1.4;
+  } else if (doTuoi === 'so_sinh') {
+    // Em be nam gon trong noi, dung dua nhe
+    p.offsetY = 18 + Math.sin(frame * 0.09) * 1.8;
+    p.gocThan = Math.sin(frame * 0.09) * 3;
+    p.gocDau = Math.sin(frame * 0.11) * 4;
+    p.vaiPhaiGoc = 42 + Math.sin(frame * 0.24) * 14;
+    p.khuyuPhaiGoc = 44 + Math.cos(frame * 0.24) * 10;
+    p.vaiTraiGoc = -42 - Math.sin(frame * 0.24 + 0.6) * 14;
+    p.khuyuTraiGoc = 42 + Math.cos(frame * 0.24 + 0.6) * 10;
+    p.duiPhaiGoc = 22;
+    p.goiPhaiGoc = -30;
+    p.duiTraiGoc = -22;
+    p.goiTraiGoc = -28;
+    p.khoaMatDat = false;
+  }
+
+  // Dieu chinh khung xuong theo tuThe boi canh (v2.0)
+  if (doTuoi !== 'so_sinh') {
+    if (tuThe === 'ngoi_ban') {
+      p.offsetY = 34 + Math.sin(frame * 0.11) * 1.1;
+      p.duiPhaiGoc = 76;
+      p.goiPhaiGoc = -76;
+      p.duiTraiGoc = 66;
+      p.goiTraiGoc = -70;
+      p.gocThan = kepGiaTri(p.gocThan * 0.5 + 11, -6, 20);
+      p.doCongThan = -6;
+      if (hanhDong === 'dung_tho' || hanhDong === 'ngoi_doc_sach') {
+        const viet = Math.sin(frame * 0.34);
+        p.vaiPhaiGoc = 56 + viet * 5;
+        p.khuyuPhaiGoc = 44 + Math.cos(frame * 0.34) * 6;
+        p.vaiTraiGoc = 38;
+        p.khuyuTraiGoc = 56;
+        p.gocDau = kepGiaTri(12 + Math.sin(frame * 0.12) * 2.5, -18, 22);
+      }
+    } else if (tuThe === 'nam_giuong') {
+      // Tua lung em ai len goi cao tren giuong, chan duoi thang duoi chan (giu ro mat & lip-sync)
+      p.offsetY = 40 + Math.sin(frame * 0.08) * 1.4;
+      p.gocThan = -14 + Math.sin(frame * 0.08) * 1.5;
+      p.doCongThan = 5;
+      p.duiPhaiGoc = 86;
+      p.goiPhaiGoc = -14;
+      p.duiTraiGoc = 78;
+      p.goiTraiGoc = -18;
+      p.khoaMatDat = false;
+      if (hanhDong === 'dung_tho') {
+        p.vaiPhaiGoc = 34 + Math.sin(frame * 0.09) * 3;
+        p.khuyuPhaiGoc = 38;
+        p.vaiTraiGoc = 18;
+        p.khuyuTraiGoc = 42;
+      }
+    } else if (tuThe === 'om_em_be') {
+      // Vong tay om ru em be diu dang truoc nguc
+      const ru = Math.sin(frame * 0.12);
+      p.gocThan = 4 + ru * 2.5;
+      p.gocDau = kepGiaTri(10 + ru * 2.2, -18, 22);
+      p.vaiPhaiGoc = 48 + ru * 4;
+      p.khuyuPhaiGoc = 66 + ru * 3;
+      p.vaiTraiGoc = 32 - ru * 3;
+      p.khuyuTraiGoc = 72 - ru * 3;
+    } else if (tuThe === 'mac_ao_khoac') {
+      // Hoi co vai giu am mua dong nhung van giu nguyen dong tac chinh
+      p.nhunVai += 1.6;
+    }
+  }
+
   const { squashX, squashY } = baoToanCoGian(p.squashY);
 
-  const chieuDaiThan = DAI_THAN_GOC * squashY;
+  const daiThanBase = DAI_THAN_GOC * tiLeThan;
+  const daiCanhTayTren = DAI_CANH_TAY_TREN * tiLeChi;
+  const daiCangTay = DAI_CANG_TAY * tiLeChi;
+  const daiDui = DAI_DUI * tiLeChi;
+  const daiCangChan = DAI_CANG_CHAN * tiLeChi;
+  const hongYGoc = HONG_Y_GOC * tiLeChi;
+
+  const chieuDaiThan = daiThanBase * squashY;
 
   // 1. Goc hong ban dau
   let hongX = p.offsetX * dir;
-  let hongY = HONG_Y_GOC + p.offsetY;
+  let hongY = hongYGoc + p.offsetY;
 
   // 2. Giai chuoi chan FK: hong -> goi -> banChan
   const hongTam: Diem2D = { x: hongX, y: hongY };
-  let goiPhai = buocFK(hongTam, p.duiPhaiGoc, DAI_DUI, dir);
-  let banChanPhai = buocFK(goiPhai, p.duiPhaiGoc + p.goiPhaiGoc, DAI_CANG_CHAN, dir);
+  let goiPhai = buocFK(hongTam, p.duiPhaiGoc, daiDui, dir);
+  let banChanPhai = buocFK(goiPhai, p.duiPhaiGoc + p.goiPhaiGoc, daiCangChan, dir);
 
-  let goiTrai = buocFK(hongTam, p.duiTraiGoc, DAI_DUI, dir);
-  let banChanTrai = buocFK(goiTrai, p.duiTraiGoc + p.goiTraiGoc, DAI_CANG_CHAN, dir);
+  let goiTrai = buocFK(hongTam, p.duiTraiGoc, daiDui, dir);
+  let banChanTrai = buocFK(goiTrai, p.duiTraiGoc + p.goiTraiGoc, daiCangChan, dir);
 
   // Tu kep ban chan sat mat dat (y = 0) khi dung/di de khong bi troi truot hay lo lung
   if (p.khoaMatDat) {
@@ -166,14 +282,16 @@ function giaiKhungXuongTaiFrame(
 
   const hong: Diem2D = { x: hongX, y: hongY };
 
-  // Khong bao gio cho ban chan xuyen xuong duoi san y = 0
-  const chanPhaiKep = kepChanTrenMatDat(hong, goiPhai, banChanPhai, dir);
-  goiPhai = chanPhaiKep.goi;
-  banChanPhai = chanPhaiKep.banChan;
+  // Khong bao gio cho ban chan xuyen xuong duoi san y = 0 (tru truong hop nam_giuong/so_sinh co san giuong/noi rieng)
+  if (doTuoi !== 'so_sinh' && tuThe !== 'nam_giuong') {
+    const chanPhaiKep = kepChanTrenMatDat(hong, goiPhai, banChanPhai, dir);
+    goiPhai = chanPhaiKep.goi;
+    banChanPhai = chanPhaiKep.banChan;
 
-  const chanTraiKep = kepChanTrenMatDat(hong, goiTrai, banChanTrai, dir);
-  goiTrai = chanTraiKep.goi;
-  banChanTrai = chanTraiKep.banChan;
+    const chanTraiKep = kepChanTrenMatDat(hong, goiTrai, banChanTrai, dir);
+    goiTrai = chanTraiKep.goi;
+    banChanTrai = chanTraiKep.banChan;
+  }
 
   // 3. Cot song cong Quadratic Bezier: hong -> diemUonThan -> co
   const radThan = p.gocThan * DO_SANG_RAD;
@@ -194,33 +312,48 @@ function giaiKhungXuongTaiFrame(
     y: (hong.y + co.y) * 0.5 + phapY * p.doCongThan * squashX,
   };
 
-  // 4. Dau giai theo FK tu co, bam theo do nghieng cot song
-  const gocCoDauRad = (p.gocThan * 0.55 + p.gocDau * 0.3) * DO_SANG_RAD;
+  // 4. Dau giai theo FK tu co, kep cung gioi han goc xoay dau/co de khong bi lat nguoc hay lech truc
+  const gocDauCoBan = kepGiaTri(
+    p.gocDau,
+    GIOI_HAN_GOC_DAU_MIN,
+    GIOI_HAN_GOC_DAU_MAX,
+  );
+  const gocCoDauDo = kepGiaTri(
+    p.gocThan * 0.45 + gocDauCoBan * 0.25,
+    GIOI_HAN_GOC_CO_MIN,
+    GIOI_HAN_GOC_CO_MAX,
+  );
+  const gocDauAnToan = kepGiaTri(
+    gocDauCoBan,
+    Math.max(GIOI_HAN_GOC_DAU_MIN, gocCoDauDo - GIOI_HAN_LECH_DAU_CO),
+    Math.min(GIOI_HAN_GOC_DAU_MAX, gocCoDauDo + GIOI_HAN_LECH_DAU_CO),
+  );
+  const gocCoDauRad = gocCoDauDo * DO_SANG_RAD;
   const dau: Diem2D = {
     x: co.x + Math.sin(gocCoDauRad) * DAI_CO_DAU * dir,
     y: co.y - Math.cos(gocCoDauRad) * DAI_CO_DAU,
   };
 
   // 5. Chuoi canh tay FK: hong -> co -> vai -> khuyu -> banTay -> diemCamVat
-  const rongVai = 10.5 * squashX;
+  const rongVai = 10.5 * tiLeThan * squashX;
   const vaiPhai: Diem2D = {
     x: co.x + rongVai * dir,
-    y: co.y + 6 - p.nhunVai,
+    y: co.y + 6 * tiLeThan - p.nhunVai,
   };
   const vaiTrai: Diem2D = {
     x: co.x - rongVai * dir,
-    y: co.y + 6 - p.nhunVai,
+    y: co.y + 6 * tiLeThan - p.nhunVai,
   };
 
   const gocCanhTayPhai = p.gocThan * 0.35 + p.vaiPhaiGoc;
   const gocCangTayPhai = gocCanhTayPhai + p.khuyuPhaiGoc;
-  const khuyuPhai = buocFK(vaiPhai, gocCanhTayPhai, DAI_CANH_TAY_TREN, dir);
-  const banTayPhai = buocFK(khuyuPhai, gocCangTayPhai, DAI_CANG_TAY, dir);
+  const khuyuPhai = buocFK(vaiPhai, gocCanhTayPhai, daiCanhTayTren, dir);
+  const banTayPhai = buocFK(khuyuPhai, gocCangTayPhai, daiCangTay, dir);
 
   const gocCanhTayTrai = p.gocThan * 0.35 + p.vaiTraiGoc;
   const gocCangTayTrai = gocCanhTayTrai + p.khuyuTraiGoc;
-  const khuyuTrai = buocFK(vaiTrai, gocCanhTayTrai, DAI_CANH_TAY_TREN, dir);
-  const banTayTrai = buocFK(khuyuTrai, gocCangTayTrai, DAI_CANG_TAY, dir);
+  const khuyuTrai = buocFK(vaiTrai, gocCanhTayTrai, daiCanhTayTren, dir);
+  const banTayTrai = buocFK(khuyuTrai, gocCangTayTrai, daiCangTay, dir);
 
   const diemCamVat = buocFK(banTayPhai, gocCangTayPhai, 4.5, dir);
 
@@ -240,12 +373,12 @@ function giaiKhungXuongTaiFrame(
     goiPhai,
     banChanPhai,
     diemCamVat,
-    gocDau: p.gocDau * dir,
+    gocDau: gocDauAnToan * dir,
     gocCangTayPhai: gocCangTayPhai * dir,
     doCaoNhay: Math.max(0, -p.nhayY),
     dichNgangNoiBo: p.dichNgangNoiBo,
     offsetX: hong.x,
-    offsetY: hong.y - HONG_Y_GOC,
+    offsetY: hong.y - hongYGoc,
     squashX,
     squashY,
     coVetBui: p.coVetBui,
@@ -267,13 +400,15 @@ export function tinhKhungXuongCoBan(
 ): TuTheKhungXuong {
   const f = Number.isFinite(frameCucBo) ? frameCucBo : 0;
   const dangNoi = Boolean(tuyChon?.dangNoi);
+  const doTuoi = tuyChon?.doTuoi ?? 'truong_thanh';
+  const tuThe = tuyChon?.tuThe ?? 'dung';
   const vanTocNgoaiX = Number.isFinite(tuyChon?.vanTocDiChuyenX)
     ? (tuyChon?.vanTocDiChuyenX ?? 0)
     : 0;
 
-  const hienTai = giaiKhungXuongTaiFrame(hanhDong, f, huong, dangNoi);
-  const truoc1 = giaiKhungXuongTaiFrame(hanhDong, f - 1, huong, dangNoi);
-  const tre3 = giaiKhungXuongTaiFrame(hanhDong, f - 3, huong, dangNoi);
+  const hienTai = giaiKhungXuongTaiFrame(hanhDong, f, huong, dangNoi, doTuoi, tuThe);
+  const truoc1 = giaiKhungXuongTaiFrame(hanhDong, f - 1, huong, dangNoi, doTuoi, tuThe);
+  const tre3 = giaiKhungXuongTaiFrame(hanhDong, f - 3, huong, dangNoi, doTuoi, tuThe);
 
   const vanTocThan: Diem2D = {
     x:
@@ -295,7 +430,7 @@ export function tinhKhungXuongCoBan(
       42,
     ),
     dy: kepGiaTri(tre3.co.y - hienTai.co.y, -32, 32),
-    gocTre: kepGiaTri(tre3.gocDau - hienTai.gocDau, -24, 24),
+    gocTre: kepGiaTri(tre3.gocDau - hienTai.gocDau, -14, 14),
     doRung: Math.sin((f - 3) * 0.22),
   };
 

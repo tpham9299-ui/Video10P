@@ -1,21 +1,16 @@
 import React from 'react';
-import { Composition, type CalculateMetadataFunction } from 'remotion';
+import { Composition, Still, type CalculateMetadataFunction } from 'remotion';
 import type { DuLieuVideoDai } from './kieu_dai';
 import { VideoDai } from './VideoDai';
+import { THUMBNAIL_MAC_DINH, ThumbnailToanHoc } from './Thumbnail';
+import { chuanHoaKhungHinhLienMach } from './canh/dieu_phoi_canh';
 import mauPythagoras from '../du_lieu/mau_pythagoras.json';
 
 const duLieuMau = mauPythagoras as DuLieuVideoDai;
 
 function tinhTongFrames(duLieu: DuLieuVideoDai): number {
-  let maxFrame = 0;
-  for (const ch of duLieu.chuong) {
-    for (const c of ch.canh) {
-      if (c.denFrame > maxFrame) {
-        maxFrame = c.denFrame;
-      }
-    }
-  }
-  return Math.max(30, maxFrame);
+  const { tongFrames } = chuanHoaKhungHinhLienMach(duLieu.chuong ?? []);
+  return Math.max(30, tongFrames);
 }
 
 const tinhMetadata: CalculateMetadataFunction<DuLieuVideoDai> = ({ props }) => {
@@ -26,15 +21,24 @@ const tinhMetadata: CalculateMetadataFunction<DuLieuVideoDai> = ({ props }) => {
 
 export const RemotionRoot: React.FC = () => {
   return (
-    <Composition
-      id="VideoDaiNguoiQue"
-      component={VideoDai}
-      width={1920}
-      height={1080}
-      fps={30}
-      durationInFrames={tinhTongFrames(duLieuMau)}
-      defaultProps={duLieuMau}
-      calculateMetadata={tinhMetadata}
-    />
+    <>
+      <Composition
+        id="VideoDaiNguoiQue"
+        component={VideoDai}
+        width={1920}
+        height={1080}
+        fps={30}
+        durationInFrames={tinhTongFrames(duLieuMau)}
+        defaultProps={duLieuMau}
+        calculateMetadata={tinhMetadata}
+      />
+      <Still
+        id="ThumbnailToanHoc"
+        component={ThumbnailToanHoc}
+        width={1280}
+        height={720}
+        defaultProps={THUMBNAIL_MAC_DINH}
+      />
+    </>
   );
 };

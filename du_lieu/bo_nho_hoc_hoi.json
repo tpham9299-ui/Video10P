@@ -1,0 +1,77 @@
+{
+  "phienBan": "0.5",
+  "capNhatLanCuoi": "2026-11-25T09:26:24",
+  "chu_de_da_lam": [
+    {
+      "slug": "ramanujan_so_tay_bi_an_1729",
+      "tieuDe": "Srinivasa Ramanujan: Chàng Kế Toán Ấn Độ Làm Đảo Lộn Cambridge Với Con Số 1729",
+      "nhanVatChinh": "Srinivasa Ramanujan, G. H. Hardy",
+      "tomTat1Cau": "Hành trình phi thường của thiên tài tự học Srinivasa Ramanujan từ nhân viên kế toán Madras đến nhà toán học lỗi lạc tại Cambridge, người mang đến những công thức toán học kỳ diệu làm nền tảng cho vật lý lỗ đen hiện đại.",
+      "thoiLuongGiay": 695.87,
+      "ngayTao": "2026-11-25",
+      "nguonThamKhao": [
+        "https://en.wikipedia.org/wiki/Srinivasa_Ramanujan",
+        "https://en.wikipedia.org/wiki/1729_(number)",
+        "https://mathshistory.st-andrews.ac.uk/Biographies/Ramanujan/",
+        "https://www.britannica.com/biography/Srinivasa-Ramanujan"
+      ]
+    }
+  ],
+  "hang_doi_chu_de": [
+    {
+      "slug": "galois_ly_thuyet_nhom_tuoi_teen",
+      "tieuDe": "Évariste Galois: Thiên Tài 20 Tuổi Và Đêm Trắng Đổi Thay Lịch Sử Toán Học",
+      "gocKhaiThac": "Cuộc đời dở khóc dở cười của cậu thiếu niên ngông cuồng làm đảo lộn Viện Hàn lâm Pháp, viết vội Lý thuyết Nhóm trong một đêm - nền tảng mã hóa mật mã iPhone và thuật toán giải Rubik ngày nay.",
+      "diemThuHut": 9.5,
+      "doSauToanHoc": 9.2,
+      "trangThai": "cho"
+    },
+    {
+      "slug": "cardano_tartaglia_phuong_trinh_bac_ba",
+      "tieuDe": "Cardano vs Tartaglia: Trận Chiến Mật Mã Bậc 3 Và Sự Ra Đời Của Số Ảo i",
+      "gocKhaiThac": "Cuộc drama nảy lửa thời Phục Hưng về công thức giải phương trình bậc 3: lời thề bí mật bị phản bội, trận đấu trí công khai và bước ngoặt khai sinh ra số ảo i - chìa khóa cho kỹ thuật sóng wifi hiện đại.",
+      "diemThuHut": 9.4,
+      "doSauToanHoc": 8.8,
+      "trangThai": "cho"
+    },
+    {
+      "slug": "cantor_cac_cap_do_vo_cuc",
+      "tieuDe": "Georg Cantor Và Vô Cực: Khi Có Những Đống Vô Cực To Hơn Đống Vô Cực Khác",
+      "gocKhaiThac": "Cantor thách thức giới toán học cổ điển bằng cách chứng minh vô cực cũng có 'size S, M, L', tạo nên cuộc tranh luận nảy lửa với Kronecker và đặt nền móng cho Lý thuyết Tập hợp trong bộ nhớ máy tính.",
+      "diemThuHut": 9.3,
+      "doSauToanHoc": 9.5,
+      "trangThai": "cho"
+    },
+    {
+      "slug": "ramanujan_so_tay_bi_an_1729",
+      "tieuDe": "Srinivasa Ramanujan: Chàng Kế Toán Ấn Độ Làm Đảo Lộn Cambridge Với Con Số 1729",
+      "gocKhaiThac": "Hành trình từ nhân viên ghi sổ tự học toán đến cuộc gặp gỡ lịch sử với G.H. Hardy, giải mã con số taxi 1729 huyền thoại và các công thức kỳ lạ mở đường cho lý thuyết vật lý lỗ đen.",
+      "diemThuHut": 9.6,
+      "doSauToanHoc": 9.4,
+      "trangThai": "xong"
+    },
+    {
+      "slug": "chuyen_phieu_luu_cua_so_0",
+      "tieuDe": "Cuộc Phiêu Lưu Của Số 0: Từ Con Số 'Không Là Gì' Đến Kẻ Làm Sập Hệ Thống Máy Tính",
+      "gocKhaiThac": "Hành trình hài hước của Số 0 từ các bản viết tay Ấn Độ (Brahmagupta) qua giới thương nhân Ả Rập đến Châu Âu - nơi nó từng bị cấm vì coi là 'con số ma quỷ' trước khi trở thành mã nhị phân 0-1 của Internet.",
+      "diemThuHut": 9.2,
+      "doSauToanHoc": 8.5,
+      "trangThai": "cho"
+    }
+  ],
+  "bai_hoc_rut_ra": [
+    {
+      "ngay": "2026-11-25",
+      "loai": "toan_hoc",
+      "noiDung": "Tại các cảnh giải thích toán học (giai_thich_toan), luôn đính kèm biểu thức LaTeX chính xác và chuẩn hóa ký tự thoát chuỗi JSON.",
+      "mucDoUuTien": 5
+    },
+    {
+      "ngay": "2026-11-25",
+      "loai": "hai_huoc",
+      "noiDung": "Khai thác tối đa sự tương phản hài hước giữa tư duy logic chặt chẽ phương Tây và trực giác toán học tâm linh phương Đông để tạo tiếng cười diễm lệ.",
+      "mucDoUuTien": 4
+    }
+  ],
+  "phan_hoi_kenh": []
+}

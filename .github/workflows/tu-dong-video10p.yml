@@ -2,22 +2,39 @@ name: Tu Dong San Xuat Video Toan Hoc >10 Phut
 
 on:
   schedule:
-    # Chay tu dong moi thu 2 va thu 5 luc 02:00 UTC (09:00 gio Viet Nam)
-    - cron: '0 2 * * 1,4'
+    # Tu dong chay 00:00 UTC = 07:00 sang hang ngay theo gio Viet Nam (UTC+7).
+    # Goi y tiet kiem quota tren repo Private (chay cach ngay thu 2, 4, 6 luc 07:00 VN):
+    # - cron: '0 0 * * 1,3,5'
+    - cron: '0 0 * * *'
   workflow_dispatch:
     inputs:
-      so_tap:
-        description: 'So tap phim can san xuat lien tiep (mac dinh 1)'
-        required: false
-        default: '1'
-        type: string
-      chu_de_tuy_chon:
-        description: 'Chu de dat hang rieng (de trong de AI tu san & chon tu hang doi)'
+      chu_de:
+        description: 'Chu de dat hang rieng (de trong de AI tu dong san & chon tu hang doi)'
         required: false
         default: ''
         type: string
+      slug:
+        description: 'Slug tuy chinh hoac slug da co san trong du_lieu/ (de trong de tu sinh)'
+        required: false
+        default: ''
+        type: string
+      chi_chay_lai_chunk:
+        description: 'Chi chay lai 1 hoac nhieu chunk cu the (vd: hoi_03_p1 hoac hoi_02,hoi_03_p1; de trong = chay tat ca)'
+        required: false
+        default: ''
+        type: string
+      tat_visual_qa:
+        description: 'Bo qua buoc Gemini Vision Visual QA de tiet kiem quota/thoi gian'
+        required: false
+        default: false
+        type: boolean
       chi_tao_kich_ban:
         description: 'Chi nghien cuu web + tao kich ban & tu kiem dinh (khong render MP4)'
+        required: false
+        default: false
+        type: boolean
+      tat_nhac_nen:
+        description: 'Tat nhac nen khi ghep video (van chuan hoa -14 LUFS)'
         required: false
         default: false
         type: boolean
@@ -25,14 +42,21 @@ on:
 permissions:
   contents: write
 
+# Khoa trang thai theo nhom workflow de tranh 2 lan chay chong cheo ghi de bo_nho_hoc_hoi.json
 concurrency:
-  group: san-xuat-video10p-main
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  san-xuat-tu-dong:
+  chuan-bi:
+    name: 1. Chuan bi (San chu de, Nghien cuu, Bien kich, TTS + RMS & Chia Chunk)
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 25
+    outputs:
+      slug: ${{ steps.xuat_output.outputs.slug }}
+      danh_sach_hoi: ${{ steps.xuat_output.outputs.danh_sach_hoi }}
+      danh_sach_chunk: ${{ steps.xuat_output.outputs.danh_sach_chunk }}
+      chi_tao_kich_ban: ${{ steps.xuat_output.outputs.chi_tao_kich_ban }}
 
     steps:
       - name: Lay ma nguon tu repo
@@ -53,56 +77,290 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.txt'
 
-      - name: Cai dat FFmpeg va font Unicode cho Pillow
+      - name: Cache node_modules theo package-lock.json
+        id: cache_node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-node20-
+
+      - name: Cai dat FFmpeg, font Unicode va thu vien
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-dejavu-core
-
-      - name: Cai dat thu vien Node.js va Python
-        run: |
-          npm ci
-          python -m pip install --upgrade pip
+          if [ "${{ steps.cache_node_modules.outputs.cache-hit }}" != "true" ]; then
+            npm ci
+          fi
           pip install -r requirements.txt
-
-      - name: Cache Chromium / Playwright cho Remotion
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/.remotion
-            ~/.cache/remotion
-            ~/.cache/ms-playwright
-          key: remotion-browser-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            remotion-browser-${{ runner.os }}-
-
-      - name: Dam bao trinh duyet Chromium cua Remotion san sang
-        if: ${{ inputs.chi_tao_kich_ban != true }}
-        run: npx remotion browser ensure
 
       - name: Chay bo kiem thu offline truoc khi san xuat
         run: npm run kiem-tra:all
 
-      - name: Chay he thong AI san xuat video tu chu
+      - name: San chu de, nghien cuu web, bien kich & TTS + RMS
         env:
           GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-flash-latest' }}
           GEMINI_FALLBACK_MODELS: ${{ vars.GEMINI_FALLBACK_MODELS || 'gemini-flash-latest,gemini-flash-lite-latest,gemini-pro-latest' }}
           TTS_VOICE: ${{ vars.TTS_VOICE || 'vi-VN-NamMinhNeural' }}
-          SO_TAP: ${{ inputs.so_tap || '1' }}
-          CHU_DE_TUY_CHON: ${{ inputs.chu_de_tuy_chon || '' }}
+          TTS_VOICE_NGUOI_DAN: ${{ vars.TTS_VOICE_NGUOI_DAN || 'vi-VN-NamMinhNeural' }}
+          TTS_VOICE_NHAN_VAT: ${{ vars.TTS_VOICE_NHAN_VAT || 'vi-VN-HoaiMyNeural' }}
+          TTS_VOICE_BINH_LUAN_HAI: ${{ vars.TTS_VOICE_BINH_LUAN_HAI || 'vi-VN-HoaiMyNeural' }}
+          CHU_DE_INPUT: ${{ inputs.chu_de || '' }}
+          SLUG_INPUT: ${{ inputs.slug || '' }}
           CHI_TAO_KICH_BAN: ${{ inputs.chi_tao_kich_ban || false }}
         run: |
-          ARGS=("--so-tap" "$SO_TAP" "--nghi-giay" "20" "--concurrency" "2")
-          if [ -n "$CHU_DE_TUY_CHON" ]; then
-            ARGS+=("--chu-de" "$CHU_DE_TUY_CHON")
+          ARGS=("--so-tap" "1" "--xuat-meta-json" "out/thong_tin_chuan_bi.json" "--nguong-chia-chunk" "120")
+          if [ -n "$CHU_DE_INPUT" ]; then
+            ARGS+=("--chu-de" "$CHU_DE_INPUT")
+          fi
+          if [ -n "$SLUG_INPUT" ]; then
+            ARGS+=("--slug" "$SLUG_INPUT")
           fi
           if [ "$CHI_TAO_KICH_BAN" = "true" ]; then
             ARGS+=("--chi-tao-kich-ban")
+          else
+            ARGS+=("--chi-chuan-bi")
           fi
           python -X utf8 scripts/pipeline/san_xuat_lien_tuc.py "${ARGS[@]}"
 
-      - name: Tai len artifact video, mo ta YouTube va luoi kiem dinh 18 khung hinh
+      - name: Xuat danh sach chunk matrix cho job render song song
+        id: xuat_output
+        env:
+          CHI_CHAY_LAI_CHUNK: ${{ inputs.chi_chay_lai_chunk || '' }}
+        run: |
+          python -X utf8 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          meta = json.loads(Path("out/thong_tin_chuan_bi.json").read_text(encoding="utf-8"))
+          ds_hoi = list(meta.get("danhSachHoi") or [])
+          ds_chunk = list(meta.get("danhSachChunk") or [f"hoi_{int(h):02d}" for h in ds_hoi])
+
+          loc_raw = os.environ.get("CHI_CHAY_LAI_CHUNK", "").strip()
+          if loc_raw:
+              yeu_cau = [x.strip() for x in loc_raw.split(",") if x.strip()]
+              ds_hop_le = [ck for ck in ds_chunk if ck in yeu_cau]
+              ds_chunk = ds_hop_le or yeu_cau
+
+          out_path = Path(os.environ["GITHUB_OUTPUT"])
+          with out_path.open("a", encoding="utf-8") as fh:
+              fh.write(f"slug={meta.get('slug', '')}\n")
+              fh.write(f"danh_sach_hoi={json.dumps(ds_hoi)}\n")
+              fh.write(f"danh_sach_chunk={json.dumps(ds_chunk)}\n")
+              fh.write(f"chi_tao_kich_ban={'true' if meta.get('chiTaoKichBan') else 'false'}\n")
+          PY
+
+      - name: Tai len artifact trung gian gon nhe (retention 1 ngay)
+        uses: actions/upload-artifact@v4
+        with:
+          name: chuan-bi-video10p-${{ github.run_number }}
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            out/thong_tin_chuan_bi.json
+            du_lieu/bo_nho_hoc_hoi.json
+            du_lieu/${{ steps.xuat_output.outputs.slug }}/du_lieu_render.json
+            du_lieu/${{ steps.xuat_output.outputs.slug }}/tu_lieu_nghien_cuu.json
+            du_lieu/${{ steps.xuat_output.outputs.slug }}/doc_duyet_kich_ban.md
+            public/audio/${{ steps.xuat_output.outputs.slug }}/*.mp3
+
+  render-song-song:
+    name: 2. Render song song Chunk ${{ matrix.chunk }}
+    needs: [chuan-bi]
+    if: needs.chuan-bi.outputs.chi_tao_kich_ban != 'true' && needs.chuan-bi.outputs.slug != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        chunk: ${{ fromJson(needs.chuan-bi.outputs.danh_sach_chunk) }}
+
+    steps:
+      - name: Lay ma nguon tu repo
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js 20 (co cache npm)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cai dat Python 3.11 (co cache pip)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'requirements.txt'
+
+      - name: Cache node_modules theo package-lock.json
+        id: cache_node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-node20-
+
+      - name: Cai dat FFmpeg va thu vien can thiet
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          if [ "${{ steps.cache_node_modules.outputs.cache-hit }}" != "true" ]; then
+            npm ci
+          fi
+          pip install -r requirements.txt
+
+      - name: Cache trinh duyet headless Chromium cua Remotion
+        id: cache_remotion_browser
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.remotion
+            ~/.cache/remotion
+          key: remotion-browser-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            remotion-browser-${{ runner.os }}-
+
+      - name: Dam bao Chromium san sang (bo qua tai lai neu da co cache)
+        if: steps.cache_remotion_browser.outputs.cache-hit != 'true'
+        run: npx remotion browser ensure
+
+      - name: Tai xuong artifact trung gian tu job chuan-bi
+        uses: actions/download-artifact@v4
+        with:
+          name: chuan-bi-video10p-${{ github.run_number }}
+          path: .
+
+      - name: Render rieng Chunk ${{ matrix.chunk }} (che do CI an toan RAM)
+        env:
+          CI: 'true'
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        run: |
+          python -X utf8 scripts/pipeline/render_dai.py \
+            --slug "${{ needs.chuan-bi.outputs.slug }}" \
+            --chi-render-chunk "${{ matrix.chunk }}" \
+            --che-do-ci \
+            --concurrency 2 \
+            --jpeg-quality 85
+
+      - name: Tai len artifact MP4 cua Chunk ${{ matrix.chunk }} (retention 1 ngay)
+        uses: actions/upload-artifact@v4
+        with:
+          name: chunk-${{ matrix.chunk }}-video10p-${{ github.run_number }}
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            out/${{ needs.chuan-bi.outputs.slug }}/chuong/hoi_*.mp4
+            out/${{ needs.chuan-bi.outputs.slug }}/chuong/cache_hoi_*.json
+
+  ghep-va-luu:
+    name: 3. Ghep video, Visual QA, Thumbnail A/B & Luu bo nho
+    needs: [chuan-bi, render-song-song]
+    if: always() && needs.chuan-bi.result == 'success' && (needs.render-song-song.result == 'success' || needs.render-song-song.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+
+    steps:
+      - name: Lay ma nguon tu repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cai dat Node.js 20 (co cache npm)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cai dat Python 3.11 (co cache pip)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'requirements.txt'
+
+      - name: Cache node_modules theo package-lock.json
+        id: cache_node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-node20-
+
+      - name: Cai dat FFmpeg, font Unicode va thu vien
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+          if [ "${{ steps.cache_node_modules.outputs.cache-hit }}" != "true" ]; then
+            npm ci
+          fi
+          pip install -r requirements.txt
+
+      - name: Cache trinh duyet headless Chromium cua Remotion (xuat Thumbnail A/B)
+        id: cache_remotion_browser
+        if: needs.chuan-bi.outputs.chi_tao_kich_ban != 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.remotion
+            ~/.cache/remotion
+          key: remotion-browser-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            remotion-browser-${{ runner.os }}-
+
+      - name: Dam bao Chromium san sang de xuat Thumbnail A/B
+        if: needs.chuan-bi.outputs.chi_tao_kich_ban != 'true' && steps.cache_remotion_browser.outputs.cache-hit != 'true'
+        run: npx remotion browser ensure
+
+      - name: Tai xuong artifact trung gian tu job chuan-bi
+        uses: actions/download-artifact@v4
+        with:
+          name: chuan-bi-video10p-${{ github.run_number }}
+          path: .
+
+      - name: Tai xuong toan bo cac chunk video da render song song
+        if: needs.chuan-bi.outputs.chi_tao_kich_ban != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: chunk-*-video10p-${{ github.run_number }}
+          merge-multiple: true
+          path: out/${{ needs.chuan-bi.outputs.slug }}/chuong
+
+      - name: Ghep FFmpeg auto-ducking -14 LUFS, xuat chapters/SRT, luoi keyframe QA & Thumbnail A/B
+        if: needs.chuan-bi.outputs.chi_tao_kich_ban != 'true'
+        env:
+          CI: 'true'
+          NODE_OPTIONS: '--max-old-space-size=4096'
+          GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-flash-latest' }}
+          GEMINI_FALLBACK_MODELS: ${{ vars.GEMINI_FALLBACK_MODELS || 'gemini-flash-latest,gemini-flash-lite-latest,gemini-pro-latest' }}
+          TAT_NHAC_NEN: ${{ inputs.tat_nhac_nen || false }}
+          TAT_VISUAL_QA: ${{ inputs.tat_visual_qa || false }}
+        run: |
+          ARGS=("--slug" "${{ needs.chuan-bi.outputs.slug }}" "--chi-ghep-hoan-chinh" "--che-do-ci")
+          if [ "$TAT_NHAC_NEN" = "true" ]; then
+            ARGS+=("--tat-nhac-nen")
+          fi
+          if [ "$TAT_VISUAL_QA" = "true" ]; then
+            ARGS+=("--bo-qua-visual-qa")
+          fi
+          python -X utf8 scripts/pipeline/render_dai.py "${ARGS[@]}"
+
+      - name: Danh dau da hoan thanh & xoa chu de khoi hang doi trong bo_nho_hoc_hoi.json
+        if: needs.chuan-bi.outputs.chi_tao_kich_ban != 'true'
+        run: |
+          python -X utf8 scripts/pipeline/san_xuat_lien_tuc.py --hoan-tat-tu-meta out/thong_tin_chuan_bi.json
+
+      - name: Tai len artifact san pham hoan chinh (retention 14 ngay)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -112,12 +370,15 @@ jobs:
           path: |
             out/*/video_hoan_chinh.mp4
             out/*/chapters_va_mo_ta.txt
+            out/*/phu_de.srt
             out/*/luoi_kiem_dinh.png
+            out/*/bao_cao_visual_qa.json
+            out/*/thumbnail_*.png
             du_lieu/*/doc_duyet_kich_ban.md
             du_lieu/*/tu_lieu_nghien_cuu.json
             du_lieu/bo_nho_hoc_hoi.json
 
-      - name: Tu dong luu bo nho hoc hoi & kich ban nhe ve nhanh main
+      - name: Tu dong luu bo nho hoc hoi & tu lieu/kich ban nhe ve nhanh main
         if: always()
         run: |
           git config user.name "github-actions[bot]"
@@ -128,11 +389,11 @@ jobs:
           fi
 
           # Chi add cac file JSON / Markdown nhe trong du_lieu/, tuyet doi KHONG push mp4/mp3/out
-          find du_lieu -maxdepth 3 -type f \( -name "*.json" -o -name "*.md" \) -print0 | xargs -0 -r git add --
+          find du_lieu -maxdepth 2 -type f \( -name "*.json" -o -name "*.md" \) ! -name "cache_audio.json" -print0 | xargs -0 -r git add --
 
           if [ -n "$(git status --porcelain du_lieu)" ]; then
             git commit -m "chore(ai): cap nhat bo nho hoc hoi va tu lieu/kich ban tu dong [skip ci]"
-            git pull --rebase origin main || true
+            git pull --rebase origin main
             git push origin HEAD:main
           else
             echo "Khong co thay doi moi trong du_lieu/ de commit."

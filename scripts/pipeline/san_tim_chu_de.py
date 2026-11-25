@@ -23,8 +23,18 @@ from scripts.pipeline.bo_nho_hoc_hoi import (
     tai_bo_nho,
     them_chu_de_hang_doi,
 )
+from scripts.pipeline.chuan_hoa_doc_toan import chuan_hoa_tu_dien_phat_am
 from scripts.pipeline.gemini_client import GeminiClient
-from scripts.pipeline.tao_kich_ban_10p import kiem_tra_latex, tao_slug
+from scripts.pipeline.tao_kich_ban_10p import (
+    DO_TUOI_NHAN_VAT,
+    LOAI_BOI_CANH,
+    LOAI_DAO_CU,
+    LOAI_VAT_THE_XUNG_QUANH,
+    TU_THE_NHAN_VAT,
+    chuan_hoa_enum,
+    kiem_tra_latex,
+    tao_slug,
+)
 
 WIKI_SUMMARY_TEMPLATE = "https://{lang}.wikipedia.org/api/rest_v1/page/summary/{title}"
 WIKI_OPENSEARCH_TEMPLATE = (
@@ -144,14 +154,18 @@ def tra_cuu_tom_tat_wikipedia(
     return ket_qua
 
 
+SO_LUONG_NAP_MAC_DINH = 6
+
+
 def nap_hang_doi_chu_de(
-    so_luong: int = 5,
+    so_luong: int = SO_LUONG_NAP_MAC_DINH,
     duong_dan_bo_nho: Path | str | None = None,
     client: GeminiClient | None = None,
 ) -> list[dict[str, Any]]:
     """
-    Goi Gemini bat Google Search Grounding (bat_tim_kiem_web=True) de tu san chu de lich su Toan hoc
-    thu vi, loai bo chu de trung voi chu_de_da_lam & hang_doi_chu_de, luu vao bo_nho_hoc_hoi.json.
+    Goi Gemini bat Google Search Grounding (bat_tim_kiem_web=True) de tu san 5-8 chu de lich su Toan hoc
+    thu vi (uu tien tinh ke chuyen cao, nhieu giai thoai doi thuc), loai bo chu de trung voi
+    chu_de_da_lam & hang_doi_chu_de, luu vao bo_nho_hoc_hoi.json.
     """
     so_can_them = max(1, int(so_luong))
     bo_nho = tai_bo_nho(duong_dan_bo_nho)
@@ -159,9 +173,9 @@ def nap_hang_doi_chu_de(
 
     da_co_ds: list[str] = []
     for item in bo_nho.get("chu_de_da_lam") or []:
-        da_co_ds.append(f"- {item.get('tieuDe', '')} ({item.get('slug', '')})")
+        da_co_ds.append(f"- [DA LAM] {item.get('tieuDe', '')} ({item.get('slug', '')})")
     for item in bo_nho.get("hang_doi_chu_de") or []:
-        da_co_ds.append(f"- {item.get('tieuDe', '')} ({item.get('slug', '')})")
+        da_co_ds.append(f"- [HANG DOI] {item.get('tieuDe', '')} ({item.get('slug', '')})")
     danh_sach_tranh = "\n".join(da_co_ds) if da_co_ds else "(Chua co chu de nao)"
 
     so_goi_y = so_can_them + 3
@@ -169,9 +183,9 @@ def nap_hang_doi_chu_de(
 Hay tim kiem tren mang va de xuat {so_goi_y} chu de cau chuyen LICH SU TOAN HOC CO THAT cuc ky hap dan de lam phim hoat hinh ke chuyen dai >10 phut (phong cach thien nhien + hai huoc di dom, KHONG danh dam bao luc).
 
 TIEU CHI BAT BUOC:
-1. Cau chuyen phai co THAT trong lich su Toan hoc: giai thoai thu vi, tranh luan hoc thuat gay can, nghich ly lam dao lon tu duy hoac nguon goc bat ngo cua khai niem Toan (vi du: Evariste Galois va ly thuyet nhom, Leonhard Euler & bai toan 7 cay cau Konigsberg, Srinivasa Ramanujan & cuon so tay bi an, Georg Cantor & cac cap do vo cuc, hanh trinh so 0 va so ao i, Archimedes & chiec vuong mien/phep tinh dien tich, Emmy Noether & dinh ly doi xung, Cardano vs Tartaglia va phuong trinh bac 3, Hypatia, Al-Khwarizmi, Ada Lovelace...).
+1. UU TIEN CHU DE CO TINH KE CHUYEN CAO & NHIEU GIAI THOAI DOI THUC: co nhan vat ca tinh, tinh huong doi thuong dở khóc dở cười, cuoc doi thoai kich tinh, tranh luan hoc thuat gay can hoac nghich ly lam dao lon tu duy, de dung boi canh hoat hinh sinh dong (vi du: Evariste Galois va dem trang ly thuyet nhom, Leonhard Euler & 7 cay cau Konigsberg, Srinivasa Ramanujan & con so 1729, Georg Cantor & cac cap do vo cuc, Cardano vs Tartaglia & phuong trinh bac 3, Archimedes & chiec vuong mien, Emmy Noether & dinh ly doi xung, Carl Friedrich Gauss & giai thoai tong 1..100, Alan Turing & co may Enigma, Hypatia, Al-Khwarizmi, Ada Lovelace, John Nash, Maryam Mirzakhani...).
 2. Goc khai thac phai gan gui, hai huoc di dom, co tinh huong doi thuong va lien he ro rang toi cong nghe / doi song hien dai.
-3. TUYET DOI KHONG trung lap voi danh sach chu de da lam hoac da co trong hang doi duoi day:
+3. TUYET DOI KHONG trung lap voi bat ky chu de nao trong danh sach DA LAM hoac HANG DOI duoi day:
 {danh_sach_tranh}
 
 Tra ve DUY NHAT JSON hop le dung cau truc:
@@ -283,6 +297,71 @@ def _chuan_hoa_tu_lieu_nghien_cuu(
         if str(x).strip()
     ]
 
+    # 1. timeline_su_kien[]: 5-8 moc nam & su kien that cua dung nhan vat/chu de tap nay
+    timeline_raw = raw.get("timeline_su_kien") or raw.get("timelineSuKien") or []
+    timeline_su_kien: list[dict[str, Any]] = []
+    if isinstance(timeline_raw, list):
+        for item in timeline_raw[:8]:
+            if isinstance(item, dict):
+                nam = str(item.get("nam") or "").strip()
+                sk = str(item.get("suKien") or item.get("moTa") or "").strip()
+                if nam or sk:
+                    muc_tl: dict[str, Any] = {"nam": nam[:30] or "...", "suKien": sk[:160] or "..."}
+                    if isinstance(item.get("noiBat"), bool):
+                        muc_tl["noiBat"] = item["noiBat"]
+                    timeline_su_kien.append(muc_tl)
+    if not timeline_su_kien and nien_dai:
+        for idx, item in enumerate(nien_dai[:8]):
+            timeline_su_kien.append(
+                {
+                    "nam": item["nam"],
+                    "suKien": item["suKien"],
+                    "noiBat": idx == 0 or idx == len(nien_dai[:8]) - 1,
+                }
+            )
+    if not nien_dai and timeline_su_kien:
+        nien_dai = [{"nam": m["nam"], "suKien": m["suKien"]} for m in timeline_su_kien]
+
+    # 2. tu_dien_phat_am{}: anh xa ten rieng, dia danh, thuat ngu nuoc ngoai -> phien am Edge TTS
+    tu_dien_phat_am = chuan_hoa_tu_dien_phat_am(
+        raw.get("tu_dien_phat_am") or raw.get("tuDienPhatAm") or {}
+    )
+
+    # 3. goi_y_boi_canh_va_dao_cu[]: goi y boi canh, do tuoi, tu the, dao cu qua tung giai doan cuoc doi
+    goi_y_raw = raw.get("goi_y_boi_canh_va_dao_cu") or raw.get("goiYBoiCanhVaDaoCu") or []
+    goi_y_boi_canh_va_dao_cu: list[dict[str, Any]] = []
+    if isinstance(goi_y_raw, list):
+        for item in goi_y_raw[:10]:
+            if not isinstance(item, dict):
+                continue
+            giai_doan = str(item.get("giaiDoan") or item.get("giai_doan") or "").strip()
+            boi_canh = chuan_hoa_enum(item.get("boiCanh") or item.get("boi_canh"), LOAI_BOI_CANH, "")
+            if not giai_doan and not boi_canh:
+                continue
+            do_tuoi = chuan_hoa_enum(item.get("doTuoi") or item.get("do_tuoi"), DO_TUOI_NHAN_VAT, "truong_thanh")
+            tu_the = chuan_hoa_enum(item.get("tuThe") or item.get("tu_the"), TU_THE_NHAN_VAT, "dung")
+            dao_cu_list: list[str] = []
+            for dc in (item.get("daoCu") or item.get("dao_cu") or []):
+                dc_clean = chuan_hoa_enum(dc, LOAI_DAO_CU, "")
+                if dc_clean and dc_clean not in dao_cu_list:
+                    dao_cu_list.append(dc_clean)
+            vat_the_list: list[str] = []
+            for vt in (item.get("vatTheXungQuanh") or item.get("vat_the_xung_quanh") or []):
+                vt_clean = chuan_hoa_enum(vt, LOAI_VAT_THE_XUNG_QUANH, "")
+                if vt_clean and vt_clean not in vat_the_list:
+                    vat_the_list.append(vt_clean)
+            goi_y_boi_canh_va_dao_cu.append(
+                {
+                    "giaiDoan": giai_doan[:100] or "Giai đoạn chính",
+                    "doTuoi": do_tuoi,
+                    "tuThe": tu_the,
+                    "boiCanh": boi_canh or "thu_vien_co_dien",
+                    "daoCu": dao_cu_list,
+                    "vatTheXungQuanh": vat_the_list,
+                    "ghiChu": str(item.get("ghiChu") or item.get("ghi_chu") or "").strip()[:160],
+                }
+            )
+
     nguon_url: list[str] = []
     da_co: set[str] = set()
 
@@ -309,6 +388,9 @@ def _chuan_hoa_tu_lieu_nghien_cuu(
         "ngayNghienCuu": datetime.date.today().isoformat(),
         "tomTat1Cau": str(raw.get("tomTat1Cau") or "").strip(),
         "nienDaiChuan": nien_dai,
+        "timeline_su_kien": timeline_su_kien,
+        "tu_dien_phat_am": tu_dien_phat_am,
+        "goi_y_boi_canh_va_dao_cu": goi_y_boi_canh_va_dao_cu,
         "nhanVatThat": nhan_vat,
         "giaiThoaiDoiThuong": giai_thoai,
         "kienThucToanCotLoi": kien_thuc_toan,
@@ -381,11 +463,18 @@ TU LIEU THAM KHAO TU WIKIPEDIA:
 
 YEU CAU BAT BUOC:
 1. Doi chieu nien dai chuan (nam sinh/mat, moc su kien chinh xac, KHONG bia dat).
-2. Liet ke nhan vat lich su co that va net tinh cach doi thuong thu vi cua ho.
-3. Chon 3 den 4 GIAI THOAI DOI THUONG / DI DOM CO THAT (hoac giai thoai duoc ghi nhan ro rang la giai thoai truyen mieng, ghi chu minh bach).
-4. Trinh bay 2 den 3 KIEN THUC / CHUNG MINH TOAN COT LOI kem cong thuc LaTeX chuan KaTeX (thoat \\ thanh \\\\ trong JSON, khong boc dau $).
-5. Neu 2 den 4 ung dung thuc te trong the gioi hien dai.
-6. Liet ke URL nguon tham khao uy tin da doi chieu.
+2. Xuat `timeline_su_kien` gom 5 den 8 moc nam & su kien lich su THAT cua DUNG nhan vat/chu de tap nay (theo thu tu thoi gian, co `noiBat: true` cho 1-2 moc buoc ngoat).
+3. Xuat `tu_dien_phat_am`: anh xa tat ca ten rieng, dia danh, truong dai hoc, thuat ngu Toan nuoc ngoai sang cach doc phien am tieng Viet tu nhien cho Edge TTS (vi du: `"Ramanujan": "Ra-ma-nu-gian"`, `"Hardy": "Ha-đi"`, `"Madras": "Ma-đơ-rát"`, `"Littlewood": "Lít-tơ-út"`, `"Cambridge": "Kem-brít"`, `"Namagiri": "Na-ma-ghi-ri"`, `"mock theta": "móc thê-ta"`).
+4. Xuat `goi_y_boi_canh_va_dao_cu` gom 4 den 7 giai doan cuoc doi / tinh tiet chinh, chi ro `doTuoi`, `tuThe`, `boiCanh`, `daoCu[]`, `vatTheXungQuanh[]` KHOP 1-1 voi cau chuyen. Chi duoc dung cac enum hop le sau:
+   - boiCanh: {", ".join(LOAI_BOI_CANH)}
+   - doTuoi: {", ".join(DO_TUOI_NHAN_VAT)}
+   - tuThe: {", ".join(TU_THE_NHAN_VAT)}
+   - daoCu: {", ".join(LOAI_DAO_CU)}
+   - vatTheXungQuanh: {", ".join(LOAI_VAT_THE_XUNG_QUANH)}
+5. Liet ke nhan vat lich su co that va net tinh cach doi thuong thu vi cua ho.
+6. Chon 3 den 4 GIAI THOAI DOI THUONG / DI DOM CO THAT (hoac giai thoai duoc ghi nhan ro rang la giai thoai truyen mieng, ghi chu minh bach).
+7. Trinh bay 2 den 3 KIEN THUC / CHUNG MINH TOAN COT LOI kem cong thuc LaTeX chuan KaTeX (thoat \\ thanh \\\\ trong JSON, khong boc dau $).
+8. Neu 2 den 4 ung dung thuc te trong the gioi hien dai va liet ke URL nguon tham khao uy tin da doi chieu.
 
 Tra ve DUY NHAT JSON hop le dung cau truc:
 {{
@@ -393,6 +482,30 @@ Tra ve DUY NHAT JSON hop le dung cau truc:
   "tomTat1Cau": "Tom tat tron ven cau chuyen trong 1 cau ngan gon.",
   "nienDaiChuan": [
     {{"nam": "1736", "suKien": "Leonhard Euler cong bo bai bao giai bai toan 7 cay cau Konigsberg."}}
+  ],
+  "timeline_su_kien": [
+    {{"nam": "1887", "suKien": "Srinivasa Ramanujan chao doi tai Erode, An Do.", "noiBat": false}},
+    {{"nam": "1913", "suKien": "Gui buc thu 9 trang chua hon 100 cong thuc toi giao su G. H. Hardy o Cambridge.", "noiBat": true}}
+  ],
+  "tu_dien_phat_am": {{
+    "Ramanujan": "Ra-ma-nu-gian",
+    "Hardy": "Ha-đi",
+    "Madras": "Ma-đơ-rát",
+    "Littlewood": "Lít-tơ-út",
+    "Cambridge": "Kem-brít",
+    "Namagiri": "Na-ma-ghi-ri",
+    "mock theta": "móc thê-ta"
+  }},
+  "goi_y_boi_canh_va_dao_cu": [
+    {{
+      "giaiDoan": "Chao doi va tuoi tho o An Do",
+      "doTuoi": "so_sinh",
+      "tuThe": "om_em_be",
+      "boiCanh": "nha_co_phong_sinh",
+      "daoCu": ["noi_em_be", "ban_hoc_den_dau"],
+      "vatTheXungQuanh": ["ngon_nen_den_dau"],
+      "ghiChu": "Canh mo dau tuoi tho voi noi em be va anh den am."
+    }}
   ],
   "nhanVatThat": [
     {{
@@ -460,7 +573,8 @@ Tra ve DUY NHAT JSON hop le dung cau truc:
     )
     print(
         f"[Nghien cuu] Da xuat {file_tu_lieu} "
-        f"({len(tu_lieu['nienDaiChuan'])} moc nien dai, {len(tu_lieu['giaiThoaiDoiThuong'])} giai thoai, "
+        f"({len(tu_lieu['timeline_su_kien'])} moc timeline, {len(tu_lieu['tu_dien_phat_am'])} tu phat am, "
+        f"{len(tu_lieu['goi_y_boi_canh_va_dao_cu'])} goi y boi canh, {len(tu_lieu['giaiThoaiDoiThuong'])} giai thoai, "
         f"{len(tu_lieu['kienThucToanCotLoi'])} kien thuc Toan, {len(tu_lieu['nguonThamKhao'])} nguon)."
     )
     return file_tu_lieu, tu_lieu
@@ -472,9 +586,11 @@ def tao_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--nap-hang-doi",
+        nargs="?",
+        const=SO_LUONG_NAP_MAC_DINH,
         type=int,
         default=0,
-        help="Tu san them N chu de moi tren mang va luu vao hang_doi_chu_de.",
+        help="Tu san them N chu de moi tren mang (mac dinh 6 khi truyen khong kem so) va luu vao hang_doi_chu_de.",
     )
     parser.add_argument(
         "--nghien-cuu",

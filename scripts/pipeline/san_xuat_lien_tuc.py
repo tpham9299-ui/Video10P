@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import json
 import sys
 import time
 from pathlib import Path
@@ -30,12 +31,17 @@ from scripts.pipeline.chuanbi_dai import (
     chuan_bi_audio_va_du_lieu_render,
 )
 from scripts.pipeline.gemini_client import GeminiClient
-from scripts.pipeline.render_dai import render_toan_bo_video
+from scripts.pipeline.render_dai import (
+    NGUONG_CHIA_CHUNK_GIAY,
+    render_toan_bo_video,
+    tinh_danh_sach_chunk_render,
+    tinh_pham_vi_frame_chuong,
+)
 from scripts.pipeline.san_tim_chu_de import nap_hang_doi_chu_de, nghien_cuu_chu_de
 from scripts.pipeline.tao_kich_ban_10p import bien_kich_3_tang, tao_slug
 
 NGUONG_TOI_THIEU_HANG_DOI = 3
-SO_LUONG_NAP_MAC_DINH = 5
+SO_LUONG_NAP_MAC_DINH = 6
 
 
 def _ghi_nhat_ky_loi(duong_dan_log: Path, thong_diep: str) -> None:
@@ -45,17 +51,110 @@ def _ghi_nhat_ky_loi(duong_dan_log: Path, thong_diep: str) -> None:
         fh.write(f"[{moc}] {thong_diep}\n")
 
 
+def _ghi_file_meta_chuan_bi(file_meta: Path | None, du_lieu_meta: dict[str, Any]) -> None:
+    if file_meta is None:
+        return
+    file_meta.parent.mkdir(parents=True, exist_ok=True)
+    file_meta.write_text(
+        json.dumps(du_lieu_meta, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def _lay_danh_sach_hoi_tu_render(file_render: Path, kich_ban: dict[str, Any]) -> list[int]:
+    try:
+        du_lieu = json.loads(file_render.read_text(encoding="utf-8"))
+        pham_vi = tinh_pham_vi_frame_chuong(du_lieu)
+        if pham_vi:
+            return [int(ch["soHoi"]) for ch in pham_vi]
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
+        pass
+    so_ch = len(kich_ban.get("chuong") or [])
+    return list(range(1, so_ch + 1)) if so_ch > 0 else []
+
+
+def _lay_danh_sach_chunk_tu_render(
+    file_render: Path,
+    kich_ban: dict[str, Any],
+    fps: int = MAC_DINH_FPS,
+    nguong_chia_chunk_giay: float = NGUONG_CHIA_CHUNK_GIAY,
+) -> list[dict[str, Any]]:
+    """Doc du_lieu_render.json va tinh danh sach chunk song song (hoi > 120s tu dong chia 2 manh)."""
+    du_lieu: dict[str, Any] = kich_ban
+    try:
+        loaded = json.loads(file_render.read_text(encoding="utf-8"))
+        if isinstance(loaded, dict) and loaded.get("chuong"):
+            du_lieu = loaded
+    except (OSError, json.JSONDecodeError, TypeError):
+        pass
+
+    chunks = tinh_danh_sach_chunk_render(
+        du_lieu,
+        fps=fps,
+        nguong_giay=nguong_chia_chunk_giay,
+    )
+    return [
+        {
+            "chunkId": str(ck["chunkId"]),
+            "soHoi": int(ck["soHoi"]),
+            "phan": int(ck["phan"]),
+            "tongPhan": int(ck["tongPhan"]),
+            "tuFrame": int(ck["tuFrame"]),
+            "endFrameInclusive": int(ck["endFrameInclusive"]),
+            "giay": float(ck["giay"]),
+        }
+        for ck in chunks
+    ]
+
+
+def hoan_tat_tap_tu_meta(
+    file_meta: Path | str,
+    duong_dan_bo_nho: Path | str | None = None,
+    xoa_khoi_hang_doi: bool = True,
+) -> dict[str, Any]:
+    """
+    Doc file metadata tu pha --chi-chuan-bi, ghi nhan tap da hoan thanh vao chu_de_da_lam
+    va xoa khoi hang_doi_chu_de trong bo_nho_hoc_hoi.json de ngay hom sau luon chon chu de moi.
+    """
+    path_meta = Path(file_meta)
+    if not path_meta.exists():
+        raise FileNotFoundError(f"Khong tim thay file metadata chuan bi: {path_meta}")
+    meta = json.loads(path_meta.read_text(encoding="utf-8"))
+    if not isinstance(meta, dict) or not meta.get("slug"):
+        raise ValueError(f"File metadata khong hop le: {path_meta}")
+
+    path_bo_nho = Path(duong_dan_bo_nho) if duong_dan_bo_nho is not None else DUONG_DAN_BO_NHO_MAC_DINH
+    bo_nho = tai_bo_nho(path_bo_nho)
+    ban_ghi = ghi_nhan_tap_hoan_thanh(
+        bo_nho,
+        slug=str(meta["slug"]),
+        tieu_de=str(meta.get("tieuDe") or meta["slug"]),
+        nhan_vat_chinh=str(meta.get("nhanVatChinh") or "Nhà Toán học"),
+        tom_tat_1_cau=str(meta.get("tomTat1Cau") or ""),
+        thoi_luong_giay=float(meta.get("thoiLuongGiay") or 0.0),
+        nguon_tham_khao=list(meta.get("nguonThamKhao") or []),
+        xoa_khoi_hang_doi=xoa_khoi_hang_doi,
+    )
+    luu_bo_nho(bo_nho, path_bo_nho)
+    return ban_ghi
+
+
 def san_xuat_mot_tap(
     chu_de_tuy_chon: str = "",
     slug_tuy_chon: str = "",
     chi_tao_kich_ban: bool = False,
+    chi_chuan_bi: bool = False,
+    file_meta_json: Path | None = None,
     muc_tieu_phut: float = 11.0,
     giong_ke: str = "di_dom_gan_gui",
     voice: str | None = None,
     rate: str = MAC_DINH_RATE,
     nhac_nen: Path | None = None,
+    tat_nhac_nen: bool = False,
     concurrency: int | None = None,
     fps: int = MAC_DINH_FPS,
+    nguong_chia_chunk_giay: float = NGUONG_CHIA_CHUNK_GIAY,
     bo_cache: bool = False,
     duong_dan_bo_nho: Path | str | None = None,
     thu_muc_du_lieu: Path | None = None,
@@ -73,6 +172,7 @@ def san_xuat_mot_tap(
     Chay tron ven 1 chu trinh san xuat tu chu:
     Kiem tra hang doi (<3 -> tu nap 5) -> Chon chu de diem cao nhat -> Nghien cuu web
     -> Bien kich 3 tang + tu kiem dinh -> TTS -> Render & YouTube bundle -> Cap nhat bo_nho_hoc_hoi.json.
+    Ho tro --chi-tao-kich-ban (dung truoc TTS) va --chi-chuan-bi (dung sau TTS + RMS de render song song).
     """
     path_bo_nho = Path(duong_dan_bo_nho) if duong_dan_bo_nho is not None else DUONG_DAN_BO_NHO_MAC_DINH
     bo_nho = tai_bo_nho(path_bo_nho)
@@ -86,9 +186,35 @@ def san_xuat_mot_tap(
     goc_khai_thac = ""
     tu_hang_doi = False
 
-    if chu_de_tuy_chon.strip():
+    if chu_de_tuy_chon.strip() or slug_tuy_chon.strip():
+        slug_raw = slug_tuy_chon.strip()
         chu_de_chinh = chu_de_tuy_chon.strip()
-        slug = tao_slug(slug_tuy_chon.strip() or chu_de_chinh)
+        if not chu_de_chinh and slug_raw:
+            slug_chuan_tim = tao_slug(slug_raw)
+            muc_hd = next(
+                (
+                    m
+                    for m in (bo_nho.get("hang_doi_chu_de") or [])
+                    if isinstance(m, dict) and tao_slug(str(m.get("slug") or "")) == slug_chuan_tim
+                ),
+                None,
+            )
+            if muc_hd and str(muc_hd.get("tieuDe") or "").strip():
+                chu_de_chinh = str(muc_hd["tieuDe"]).strip()
+            else:
+                thu_muc_slug_tim = (thu_muc_du_lieu or (GOC_DU_AN / "du_lieu")) / slug_chuan_tim
+                for ten_f in ("tu_lieu_nghien_cuu.json", "nhap_kich_ban.json"):
+                    pf = thu_muc_slug_tim / ten_f
+                    if pf.exists():
+                        try:
+                            d = json.loads(pf.read_text(encoding="utf-8"))
+                            if isinstance(d, dict) and str(d.get("tieuDe") or d.get("chuDe") or "").strip():
+                                chu_de_chinh = str(d.get("tieuDe") or d.get("chuDe")).strip()
+                                break
+                        except (OSError, json.JSONDecodeError):
+                            pass
+            chu_de_chinh = chu_de_chinh or slug_raw.replace("_", " ").strip()
+        slug = tao_slug(slug_raw or chu_de_chinh)
         # Them vao hang doi o trang thai dang_lam neu chua co
         them_chu_de_hang_doi(
             bo_nho,
@@ -138,7 +264,10 @@ def san_xuat_mot_tap(
     print("=" * 76)
 
     try:
+        t_tong_dau = time.perf_counter()
+
         # 1. Nghien cuu tu lieu tren web + Wikipedia
+        t0 = time.perf_counter()
         file_tu_lieu, tu_lieu = ham_nghien_cuu(
             slug=slug,
             chu_de=chu_de_chinh,
@@ -148,8 +277,11 @@ def san_xuat_mot_tap(
             client=client,
             bo_cache=bo_cache,
         )
+        t_nghien_cuu = round(time.perf_counter() - t0, 2)
+        print(f"[Thoi gian] 1. Nghien cuu web: {t_nghien_cuu:.2f}s")
 
         # 2. Bien kich 3 tang (>10 phut) + tu kiem dinh & tu hoc
+        t0 = time.perf_counter()
         file_nhap, file_md, kich_ban = ham_bien_kich(
             chu_de=chu_de_chinh,
             slug=slug,
@@ -162,47 +294,9 @@ def san_xuat_mot_tap(
             duong_dan_bo_nho=path_bo_nho,
             bat_tu_kiem_dinh=True,
         )
+        t_bien_kich = round(time.perf_counter() - t0, 2)
+        print(f"[Thoi gian] 2. Viet kich ban + tu kiem dinh: {t_bien_kich:.2f}s")
 
-        ket_qua: dict[str, Any] = {
-            "trangThai": "thanh_cong",
-            "slug": slug,
-            "tieuDe": str(kich_ban.get("tieuDe") or chu_de_chinh),
-            "tuLieu": str(file_tu_lieu),
-            "kichBan": str(file_nhap),
-            "docDuyet": str(file_md),
-            "chiTaoKichBan": chi_tao_kich_ban,
-        }
-
-        if chi_tao_kich_ban:
-            print(f"[TAM DUNG] Che do --chi-tao-kich-ban: da hoan tat kich ban tai {file_md}")
-            if tu_hang_doi:
-                bo_nho_ht = tai_bo_nho(path_bo_nho)
-                cap_nhat_trang_thai_hang_doi(bo_nho_ht, slug, "cho")
-                luu_bo_nho(bo_nho_ht, path_bo_nho)
-            return ket_qua
-
-        # 3. Tao giong doc TTS co cache SHA-256 & tinh frame 30fps
-        file_render, thong_ke_tts = ham_tts(
-            slug=slug,
-            duong_dan_nhap=file_nhap,
-            voice=voice,
-            rate=rate,
-            fps=fps,
-            bo_cache=bo_cache,
-            thu_muc_du_lieu=thu_muc_du_lieu,
-        )
-
-        # 4. Render tach hoi, ghep FFmpeg, xuat chapters_va_mo_ta.txt & luoi 18 khung hinh
-        san_pham = ham_render(
-            slug=slug,
-            duong_dan_props=file_render,
-            nhac_nen=nhac_nen,
-            bo_cache=bo_cache,
-            concurrency=concurrency,
-            fps=fps,
-        )
-
-        # 5. Cap nhat chu_de_da_lam & danh dau 'xong' trong bo_nho_hoc_hoi.json
         ds_nv = kich_ban.get("danhSachNhanVat") or []
         nhan_vat_chinh = (
             ", ".join(str(nv.get("ten") or "") for nv in ds_nv[:2] if isinstance(nv, dict) and nv.get("ten"))
@@ -212,14 +306,136 @@ def san_xuat_mot_tap(
             str(tu_lieu.get("tomTat1Cau") or "").strip()
             or str(kich_ban.get("chuDe") or chu_de_chinh).strip()
         )
-        thoi_luong_giay = float(thong_ke_tts.get("tongGiay") or 0.0)
         nguon_tk = list(tu_lieu.get("nguonThamKhao") or [])
+        tieu_de_chinh = str(kich_ban.get("tieuDe") or chu_de_chinh)
 
+        ket_qua: dict[str, Any] = {
+            "trangThai": "thanh_cong",
+            "slug": slug,
+            "tieuDe": tieu_de_chinh,
+            "tuLieu": str(file_tu_lieu),
+            "kichBan": str(file_nhap),
+            "docDuyet": str(file_md),
+            "chiTaoKichBan": chi_tao_kich_ban,
+            "chiChuanBi": chi_chuan_bi,
+            "thoiGianGiay": {
+                "nghienCuu": t_nghien_cuu,
+                "bienKich": t_bien_kich,
+            },
+        }
+
+        if chi_tao_kich_ban:
+            print(f"[TAM DUNG] Che do --chi-tao-kich-ban: da hoan tat kich ban tai {file_md}")
+            if tu_hang_doi:
+                bo_nho_ht = tai_bo_nho(path_bo_nho)
+                cap_nhat_trang_thai_hang_doi(bo_nho_ht, slug, "cho")
+                luu_bo_nho(bo_nho_ht, path_bo_nho)
+            _ghi_file_meta_chuan_bi(
+                file_meta_json,
+                {
+                    "trangThai": "chi_tao_kich_ban",
+                    "slug": slug,
+                    "tieuDe": tieu_de_chinh,
+                    "nhanVatChinh": nhan_vat_chinh,
+                    "tomTat1Cau": tom_tat_1_cau,
+                    "thoiLuongGiay": 0.0,
+                    "nguonThamKhao": nguon_tk,
+                    "danhSachHoi": [],
+                    "soHoi": 0,
+                    "danhSachChunk": [],
+                    "chiTietChunk": [],
+                    "soChunk": 0,
+                    "chiTaoKichBan": True,
+                },
+            )
+            return ket_qua
+
+        # 3. Tao giong doc TTS co cache SHA-256 & tinh frame 30fps + RMS
+        t0 = time.perf_counter()
+        file_render, thong_ke_tts = ham_tts(
+            slug=slug,
+            duong_dan_nhap=file_nhap,
+            voice=voice,
+            rate=rate,
+            fps=fps,
+            bo_cache=bo_cache,
+            thu_muc_du_lieu=thu_muc_du_lieu,
+        )
+        t_tts_rms = round(time.perf_counter() - t0, 2)
+        thoi_luong_giay = float(thong_ke_tts.get("tongGiay") or 0.0)
+        ket_qua["thoiGianGiay"]["ttsVaRms"] = t_tts_rms
+        ket_qua["thoiLuongGiay"] = thoi_luong_giay
+        ket_qua["fileRender"] = str(file_render)
+        print(f"[Thoi gian] 3. Tao TTS + tinh RMS: {t_tts_rms:.2f}s")
+
+        if chi_chuan_bi:
+            ds_hoi = _lay_danh_sach_hoi_tu_render(file_render, kich_ban)
+            chi_tiet_chunk = _lay_danh_sach_chunk_tu_render(
+                file_render,
+                kich_ban,
+                fps=fps,
+                nguong_chia_chunk_giay=nguong_chia_chunk_giay,
+            )
+            ds_chunk = [ck["chunkId"] for ck in chi_tiet_chunk]
+            ket_qua["danhSachHoi"] = ds_hoi
+            ket_qua["soHoi"] = len(ds_hoi)
+            ket_qua["danhSachChunk"] = ds_chunk
+            ket_qua["chiTietChunk"] = chi_tiet_chunk
+            ket_qua["soChunk"] = len(ds_chunk)
+            _ghi_file_meta_chuan_bi(
+                file_meta_json,
+                {
+                    "trangThai": "san_sang_render",
+                    "slug": slug,
+                    "tieuDe": tieu_de_chinh,
+                    "nhanVatChinh": nhan_vat_chinh,
+                    "tomTat1Cau": tom_tat_1_cau,
+                    "thoiLuongGiay": thoi_luong_giay,
+                    "nguonThamKhao": nguon_tk,
+                    "danhSachHoi": ds_hoi,
+                    "soHoi": len(ds_hoi),
+                    "danhSachChunk": ds_chunk,
+                    "chiTietChunk": chi_tiet_chunk,
+                    "soChunk": len(ds_chunk),
+                    "nguongChiaChunkGiay": float(nguong_chia_chunk_giay),
+                    "fileRender": str(file_render),
+                    "chiTaoKichBan": False,
+                },
+            )
+            print(
+                f"[CHUAN BI XONG] Che do --chi-chuan-bi: san sang render song song {len(ds_chunk)} chunk "
+                f"({ds_chunk}) tu {len(ds_hoi)} hoi cho slug='{slug}'."
+            )
+            return ket_qua
+
+        # 4. Render tach hoi, ghep FFmpeg, xuat chapters_va_mo_ta.txt, phu_de.srt & luoi 18 khung hinh
+        t0 = time.perf_counter()
+        san_pham = ham_render(
+            slug=slug,
+            duong_dan_props=file_render,
+            nhac_nen=nhac_nen,
+            tat_nhac_nen=tat_nhac_nen,
+            bo_cache=bo_cache,
+            concurrency=concurrency,
+            fps=fps,
+        )
+        if "phu_de_srt" not in san_pham and thong_ke_tts.get("fileSrt"):
+            san_pham = dict(san_pham)
+            san_pham["phu_de_srt"] = Path(str(thong_ke_tts["fileSrt"]))
+        t_render = round(time.perf_counter() - t0, 2)
+        ket_qua["thoiGianGiay"]["renderVaGhep"] = t_render
+        ket_qua["thoiGianGiay"]["tongCong"] = round(time.perf_counter() - t_tong_dau, 2)
+        print(
+            f"[Thoi gian] 4. Render + ghep FFmpeg + luoi QA: {t_render:.2f}s | "
+            f"Tong toan tap: {ket_qua['thoiGianGiay']['tongCong']:.2f}s"
+        )
+
+        # 5. Cap nhat chu_de_da_lam & danh dau 'xong' trong bo_nho_hoc_hoi.json
         bo_nho_sau = tai_bo_nho(path_bo_nho)
         ghi_nhan_tap_hoan_thanh(
             bo_nho_sau,
             slug=slug,
-            tieu_de=str(kich_ban.get("tieuDe") or chu_de_chinh),
+            tieu_de=tieu_de_chinh,
             nhan_vat_chinh=nhan_vat_chinh,
             tom_tat_1_cau=tom_tat_1_cau,
             thoi_luong_giay=thoi_luong_giay,
@@ -227,7 +443,6 @@ def san_xuat_mot_tap(
         )
         luu_bo_nho(bo_nho_sau, path_bo_nho)
 
-        ket_qua["thoiLuongGiay"] = thoi_luong_giay
         ket_qua["sanPham"] = {k: str(v) for k, v in san_pham.items()}
         print(
             f"[HOAN TAT TAP] {slug} ({thoi_luong_giay:.1f}s) | Da cap nhat bo_nho_hoc_hoi.json (trangThai='xong')."
@@ -254,13 +469,17 @@ def chay_san_xuat_lien_tuc(
     chu_de: str = "",
     slug: str = "",
     chi_tao_kich_ban: bool = False,
+    chi_chuan_bi: bool = False,
+    file_meta_json: Path | None = None,
     muc_tieu_phut: float = 11.0,
     giong_ke: str = "di_dom_gan_gui",
     voice: str | None = None,
     rate: str = MAC_DINH_RATE,
     nhac_nen: Path | None = None,
+    tat_nhac_nen: bool = False,
     concurrency: int | None = None,
     fps: int = MAC_DINH_FPS,
+    nguong_chia_chunk_giay: float = NGUONG_CHIA_CHUNK_GIAY,
     bo_cache: bool = False,
     duong_dan_bo_nho: Path | str | None = None,
     thu_muc_du_lieu: Path | None = None,
@@ -277,7 +496,7 @@ def chay_san_xuat_lien_tuc(
     San xuat lien tiep N tap (mac dinh 1). Neu 1 tap gap loi thi ghi log, bo qua slug loi trong phien
     va tiep tuc tap tiep theo sau --nghi-giay.
     """
-    tong_tap = 1 if chu_de.strip() else max(1, int(so_tap))
+    tong_tap = 1 if (chu_de.strip() or slug.strip() or chi_chuan_bi) else max(1, int(so_tap))
     ham_ngu = sleep_fn or time.sleep
     path_log = file_log or ((thu_muc_du_lieu or (GOC_DU_AN / "du_lieu")) / "nhat_ky_san_xuat.log")
     path_bo_nho = Path(duong_dan_bo_nho) if duong_dan_bo_nho is not None else DUONG_DAN_BO_NHO_MAC_DINH
@@ -288,7 +507,7 @@ def chay_san_xuat_lien_tuc(
     for chi_so in range(1, tong_tap + 1):
         print(f"\n>>> BAT DAU TAP {chi_so}/{tong_tap} <<<")
         slug_du_kien = ""
-        if not chu_de.strip():
+        if not chu_de.strip() and not slug.strip():
             bo_nho_hien_tai = tai_bo_nho(path_bo_nho)
             muc_truoc = chon_chu_de_tiep_theo(bo_nho_hien_tai, loai_tru_slugs=slugs_bi_loi)
             if muc_truoc:
@@ -301,13 +520,17 @@ def chay_san_xuat_lien_tuc(
                 chu_de_tuy_chon=chu_de if chi_so == 1 else "",
                 slug_tuy_chon=slug if chi_so == 1 else "",
                 chi_tao_kich_ban=chi_tao_kich_ban,
+                chi_chuan_bi=chi_chuan_bi,
+                file_meta_json=file_meta_json if chi_so == 1 else None,
                 muc_tieu_phut=muc_tieu_phut,
                 giong_ke=giong_ke,
                 voice=voice,
                 rate=rate,
                 nhac_nen=nhac_nen,
+                tat_nhac_nen=tat_nhac_nen,
                 concurrency=concurrency,
                 fps=fps,
+                nguong_chia_chunk_giay=nguong_chia_chunk_giay,
                 bo_cache=bo_cache,
                 duong_dan_bo_nho=path_bo_nho,
                 thu_muc_du_lieu=thu_muc_du_lieu,
@@ -375,6 +598,21 @@ def tao_parser() -> argparse.ArgumentParser:
         help="Chi chay den buoc nghien cuu web + bien kich 3 tang & tu kiem dinh (bo qua TTS & render).",
     )
     parser.add_argument(
+        "--chi-chuan-bi",
+        action="store_true",
+        help="Chay pha chuan bi (san chu de, nghien cuu, bien kich, TTS + RMS, xuat du_lieu_render.json) va dung truoc render de phuc vu chay song song theo hoi.",
+    )
+    parser.add_argument(
+        "--xuat-meta-json",
+        default="",
+        help="Ghi thong tin tap da chuan bi (slug, danhSachHoi...) ra file JSON cho GitHub Actions matrix.",
+    )
+    parser.add_argument(
+        "--hoan-tat-tu-meta",
+        default="",
+        help="Cap nhat bo_nho_hoc_hoi.json (trangThai='xong') tu file JSON metadata sau khi ghep xong video.",
+    )
+    parser.add_argument(
         "--muc-tieu-phut",
         type=float,
         default=11.0,
@@ -383,8 +621,15 @@ def tao_parser() -> argparse.ArgumentParser:
     parser.add_argument("--giong-ke", default="di_dom_gan_gui", help="Phong cach ke chuyen.")
     parser.add_argument("--giong", default="", help="Giong Edge TTS (mac dinh vi-VN-NamMinhNeural).")
     parser.add_argument("--toc-do", default=MAC_DINH_RATE, help="Toc do doc TTS (mac dinh +0%%).")
-    parser.add_argument("--nhac-nen", default="", help="File MP3 nhac nen (volume=0.08, fade-out 3s).")
+    parser.add_argument("--nhac-nen", default="", help="File MP3 nhac nen tuy chinh (mac dinh dung public/bgm/nhac_nen_nhe.mp3).")
+    parser.add_argument("--tat-nhac-nen", action="store_true", help="Tat nhac nen khi xuat video.")
     parser.add_argument("--concurrency", type=int, default=0, help="So luong song song cho Remotion.")
+    parser.add_argument(
+        "--nguong-chia-chunk",
+        type=float,
+        default=NGUONG_CHIA_CHUNK_GIAY,
+        help="Nguong giay toi da moi chunk song song (mac dinh 120s).",
+    )
     parser.add_argument("--fps", type=int, default=MAC_DINH_FPS, help="So khung hinh/giay (mac dinh 30).")
     parser.add_argument("--bo-cache", action="store_true", help="Bo qua cache o cac buoc duoc chay.")
     parser.add_argument("--bo-nho", default="", help="Duong dan tuy chinh toi bo_nho_hoc_hoi.json.")
@@ -393,21 +638,38 @@ def tao_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = tao_parser().parse_args(argv)
+    path_bo_nho = Path(args.bo_nho) if args.bo_nho else None
+
+    if args.hoan_tat_tu_meta.strip():
+        ban_ghi = hoan_tat_tap_tu_meta(
+            file_meta=Path(args.hoan_tat_tu_meta.strip()),
+            duong_dan_bo_nho=path_bo_nho,
+        )
+        print(
+            f"[HOAN TAT TU META] Da cap nhat bo_nho_hoc_hoi.json cho tap '{ban_ghi['slug']}' "
+            f"({ban_ghi['thoiLuongGiay']:.1f}s, trangThai='xong')."
+        )
+        return 0
+
     ket_qua = chay_san_xuat_lien_tuc(
         so_tap=args.so_tap,
         nghi_giay=args.nghi_giay,
         chu_de=args.chu_de,
         slug=args.slug,
         chi_tao_kich_ban=args.chi_tao_kich_ban,
+        chi_chuan_bi=args.chi_chuan_bi,
+        file_meta_json=Path(args.xuat_meta_json.strip()) if args.xuat_meta_json.strip() else None,
         muc_tieu_phut=args.muc_tieu_phut,
         giong_ke=args.giong_ke,
         voice=args.giong.strip() or None,
         rate=args.toc_do,
         nhac_nen=Path(args.nhac_nen) if args.nhac_nen else None,
+        tat_nhac_nen=args.tat_nhac_nen,
         concurrency=args.concurrency if args.concurrency > 0 else None,
         fps=args.fps,
+        nguong_chia_chunk_giay=args.nguong_chia_chunk,
         bo_cache=args.bo_cache,
-        duong_dan_bo_nho=Path(args.bo_nho) if args.bo_nho else None,
+        duong_dan_bo_nho=path_bo_nho,
     )
     co_thanh_cong = any(r.get("trangThai") == "thanh_cong" for r in ket_qua)
     return 0 if co_thanh_cong else 1

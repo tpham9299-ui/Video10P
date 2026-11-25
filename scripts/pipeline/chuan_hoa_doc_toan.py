@@ -3,7 +3,155 @@
 
 from __future__ import annotations
 
+import json
 import re
+from pathlib import Path
+from typing import Any
+
+# Tu dien phat am mac dinh cho cac nha Toan hoc, dia danh lich su & thuat ngu Toan tieng Anh pho bien
+TU_DIEN_PHAT_AM_MAC_DINH: dict[str, str] = {
+    "Srinivasa Ramanujan": "Xri-ni-va-xa Ra-ma-nu-gian",
+    "Ramanujan": "Ra-ma-nu-gian",
+    "Srinivasa": "Xri-ni-va-xa",
+    "G. H. Hardy": "Gi-Ét Ha-đi",
+    "Godfrey Harold Hardy": "Gót-phri Ha-rôn Ha-đi",
+    "Hardy": "Ha-đi",
+    "Littlewood": "Lít-tơ-út",
+    "Madras": "Ma-đơ-rát",
+    "Kumbakonam": "Kum-ba-cô-nam",
+    "Erode": "I-rốt",
+    "Cambridge": "Kem-brít",
+    "Trinity College": "Tri-ni-ti Co-lít",
+    "Namagiri": "Na-ma-ghi-ri",
+    "mock theta": "móc thê-ta",
+    "Pythagoras": "Pi-ta-go",
+    "Hippasus": "Híp-pa-xút",
+    "Euclid": "Ơ-clít",
+    "Archimedes": "Ác-si-mét",
+    "Leonhard Euler": "Lê-ô-na Ơ-le",
+    "Euler": "Ơ-le",
+    "Carl Friedrich Gauss": "Các Phri-đơ-rích Gau-xơ",
+    "Gauss": "Gau-xơ",
+    "Évariste Galois": "Ê-va-rít Ga-loa",
+    "Evariste Galois": "Ê-va-rít Ga-loa",
+    "Galois": "Ga-loa",
+    "Isaac Newton": "Ai-dắc Niu-tơn",
+    "Newton": "Niu-tơn",
+    "Leibniz": "Lai-bơ-nít",
+    "Fermat": "Phéc-ma",
+    "Riemann": "Ri-man",
+    "Georg Cantor": "Gê-oóc Can-to",
+    "Cantor": "Can-to",
+    "Emmy Noether": "Em-mi Nơ-tơ",
+    "Noether": "Nơ-tơ",
+    "Hilbert": "Hin-bét",
+    "Kurt Gödel": "Cuốc Gơ-đen",
+    "Gödel": "Gơ-đen",
+    "Godel": "Gơ-đen",
+    "Alan Turing": "A-lan Tua-ring",
+    "Turing": "Tua-ring",
+    "Fourier": "Phu-ri-ê",
+    "Laplace": "La-plát",
+    "Descartes": "Đề-các",
+    "Pascal": "Pát-xcan",
+    "Fibonacci": "Phi-bô-na-xi",
+    "Al-Khwarizmi": "An Khoa-rít-mi",
+    "Hypatia": "Hi-pa-ti-a",
+    "Ada Lovelace": "A-đa Lấp-lây",
+    "Königsberg": "Kơ-ních-béc",
+    "Konigsberg": "Kơ-ních-béc",
+    "Alexandria": "A-lếch-xan-đri-a",
+    "Samos": "Xa-mốt",
+    "Göttingen": "Gốt-tin-gen",
+    "Oxford": "Óc-phớt",
+    "Royal Society": "Roi-ồ Xô-xai-ơ-ti",
+    "partition": "pa-ti-sần",
+    "modular": "mô-đu-la",
+    "zeta": "dê-ta",
+    "theta": "thê-ta",
+    "calculus": "can-kiu-lớt",
+    "algorithm": "an-gô-ri-dầm",
+    "theorem": "thi-ơ-rầm",
+    "taxicab": "tắc-xi-cáp",
+}
+
+
+def chuan_hoa_tu_dien_phat_am(raw: Any) -> dict[str, str]:
+    """Lam sach tu dien phat am {tu_goc: phien_am_tieng_viet}."""
+    ket_qua: dict[str, str] = {}
+    if not isinstance(raw, dict):
+        return ket_qua
+    for k, v in raw.items():
+        khoa = re.sub(r"\s+", " ", str(k or "").strip())
+        gia_tri = re.sub(r"\s+", " ", str(v or "").strip())
+        if khoa and gia_tri:
+            ket_qua[khoa] = gia_tri
+    return ket_qua
+
+
+def tai_tu_dien_phat_am(
+    duong_dan_tu_lieu: Path | str | None = None,
+    tu_dien_bo_sung: dict[str, str] | None = None,
+    dung_mac_dinh: bool = True,
+) -> dict[str, str]:
+    """
+    Nap tu dien phat am hop nhat theo thu tu uu tien tang dan:
+    1. TU_DIEN_PHAT_AM_MAC_DINH (neu dung_mac_dinh=True)
+    2. truong `tu_dien_phat_am` (hoac `tuDienPhatAm`) trong tu_lieu_nghien_cuu.json (neu ton tai)
+    3. `tu_dien_bo_sung` truyen truc tiep
+    """
+    hop_nhat: dict[str, str] = {}
+    khoa_lower_map: dict[str, str] = {}
+
+    def _them_nguon(nguon: dict[str, str]) -> None:
+        for k, v in chuan_hoa_tu_dien_phat_am(nguon).items():
+            kl = k.casefold()
+            if kl in khoa_lower_map and khoa_lower_map[kl] != k:
+                hop_nhat.pop(khoa_lower_map[kl], None)
+            khoa_lower_map[kl] = k
+            hop_nhat[k] = v
+
+    if dung_mac_dinh:
+        _them_nguon(TU_DIEN_PHAT_AM_MAC_DINH)
+
+    if duong_dan_tu_lieu is not None:
+        p = Path(duong_dan_tu_lieu)
+        if p.exists() and p.is_file():
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                data = {}
+            if isinstance(data, dict):
+                raw_td = data.get("tu_dien_phat_am") or data.get("tuDienPhatAm")
+                if isinstance(raw_td, dict):
+                    _them_nguon(raw_td)
+
+    if tu_dien_bo_sung:
+        _them_nguon(tu_dien_bo_sung)
+
+    return hop_nhat
+
+
+def ap_dung_tu_dien_phat_am(van_ban: str, tu_dien: dict[str, str] | None) -> str:
+    """
+    Thay the ten rieng / dia danh / thuat ngu nuoc ngoai sang phien am tieng Viet cho Edge TTS.
+    Uu tien cum tu dai truoc va dung ranh gioi tu de tranh cat nham ben trong tu khac.
+    """
+    if not van_ban or not tu_dien:
+        return van_ban
+
+    sach_td = chuan_hoa_tu_dien_phat_am(tu_dien)
+    if not sach_td:
+        return van_ban
+
+    # Sap xep giam dan theo do dai cum tu de "Srinivasa Ramanujan" / "mock theta" khop truoc
+    cac_khoa = sorted(sach_td.keys(), key=len, reverse=True)
+    ban_do_lower = {k.casefold(): sach_td[k] for k in cac_khoa}
+    pattern = re.compile(
+        r"(?<!\w)(" + "|".join(re.escape(k) for k in cac_khoa) + r")(?!\w)",
+        flags=re.IGNORECASE | re.UNICODE,
+    )
+    return pattern.sub(lambda m: ban_do_lower.get(m.group(1).casefold(), m.group(1)), van_ban)
 
 BANG_CHI_SO_TREN: dict[str, str] = {
     "⁰": "0",
@@ -62,10 +210,16 @@ def _chuyen_phan_so(match: re.Match[str]) -> str:
     return f"{tu} phần {mau}"
 
 
-def chuan_hoa_doc_toan(van_ban: str) -> str:
+def chuan_hoa_doc_toan(
+    van_ban: str,
+    tu_dien_phat_am: dict[str, str] | None = None,
+    dung_tu_dien_mac_dinh: bool = True,
+) -> str:
     """
-    Chuyen ky hieu/cong thuc Toan trong loi thoai sang cach doc tieng Viet tu nhien
-    de Edge TTS doc troi chay (VD: √2, π, x^2, ∞, TCN, so thap phan, phan so...).
+    Chuyen ky hieu/cong thuc Toan va ten rieng/thuat ngu nuoc ngoai trong loi thoai
+    sang cach doc tieng Viet tu nhien de Edge TTS doc troi chay
+    (VD: √2, π, x^2, ∞, TCN, so thap phan, phan so, Ramanujan -> Ra-ma-nu-gian...).
+    Khong lam thay doi van ban goc dung cho phu de / man hinh.
     """
     if not van_ban:
         return ""
@@ -191,7 +345,15 @@ def chuan_hoa_doc_toan(van_ban: str) -> str:
     s = re.sub(r"(?<=\w)\s*\+\s*(?=\w)", " cộng ", s)
     s = re.sub(r"\bgcd\s*\(([^()]+)\)", r"ước chung lớn nhất của \1", s, flags=re.IGNORECASE)
 
-    # 13. Don dep khoang trang & dau cau thua
+    # 13. Ap dung tu dien phat am ten rieng / dia danh / thuat ngu nuoc ngoai (chi dung cho TTS)
+    if tu_dien_phat_am is not None or dung_tu_dien_mac_dinh:
+        tu_dien_ap_dung = tai_tu_dien_phat_am(
+            tu_dien_bo_sung=tu_dien_phat_am,
+            dung_mac_dinh=dung_tu_dien_mac_dinh,
+        )
+        s = ap_dung_tu_dien_phat_am(s, tu_dien_ap_dung)
+
+    # 14. Don dep khoang trang & dau cau thua
     s = s.replace("—", ", ")
     s = re.sub(r"\s+([,.;:!?])", r"\1", s)
     s = re.sub(r"\s{2,}", " ", s)

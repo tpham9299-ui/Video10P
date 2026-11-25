@@ -3,6 +3,7 @@ import { interpolate, useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
 import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
+import { giaiTrangThaiNhanVatTrongCanh } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
 import { MayQuayDong } from '../vfx/MayQuayDong';
 import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
@@ -25,6 +26,7 @@ export const CanhMoDau: React.FC<Props> = ({
 }) => {
   const frame = useCurrentFrame();
   const thoiLuong = Math.max(1, canh.denFrame - canh.tuFrame);
+  const danhSachNhanVat = giaiTrangThaiNhanVatTrongCanh(canh, frame, thoiLuong);
   const doMoTieuDe = interpolate(frame, [4, 20], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
@@ -38,11 +40,19 @@ export const CanhMoDau: React.FC<Props> = ({
     <div style={{ position: 'absolute', inset: 0 }}>
       <MayQuayDong
         camera={canh.camera}
+        mayQuay={canh.mayQuay}
+        luotThoai={canh.luotThoai}
+        daoCu={canh.daoCu}
         chuyenCanh={canh.chuyenCanh}
         nhanVat={canh.nhanVat}
         thoiLuongCanh={thoiLuong}
       >
-        <BoiCanhHoatHinh loai={canh.boiCanh} thoiTiet={canh.thoiTiet} />
+        <BoiCanhHoatHinh
+          loai={canh.boiCanh}
+          thoiTiet={canh.thoiTiet}
+          vatTheXungQuanh={canh.vatTheXungQuanh}
+          bienSoXe={canh.bienSoXe}
+        />
 
         <div
           style={{
@@ -121,7 +131,7 @@ export const CanhMoDau: React.FC<Props> = ({
           {canh.daoCu?.map((dc, idx) => (
             <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
           ))}
-          {canh.nhanVat.map((nv, idx) => {
+          {danhSachNhanVat.map((nv, idx) => {
             const tt = banDoNhanVat[nv.id];
             if (!tt) return null;
             return (
@@ -131,6 +141,7 @@ export const CanhMoDau: React.FC<Props> = ({
                 trangThai={nv}
                 tiLe={1.2}
                 thoiLuongCanh={thoiLuong}
+                bienDoAmThanh={canh.bienDoAmThanh}
               />
             );
           })}

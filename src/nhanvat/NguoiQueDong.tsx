@@ -1,11 +1,13 @@
 import React from 'react';
 import { useCurrentFrame, useVideoConfig } from 'remotion';
 import type {
+  DoTuoiNhanVat,
   LoaiBieuCam,
   LoaiPhuKien,
   LoaiVatCamTay,
   NhanVatTrongCanh,
   ThongTinNhanVat,
+  TuTheNhanVat,
 } from '../kieu_dai';
 import {
   tinhKhungXuongCoBan,
@@ -19,12 +21,24 @@ import {
   springTatDinh,
 } from '../xuong/duong_cong';
 import { bamChuoiTatDinh, bamTatDinh } from '../vfx/tat_dinh';
+import { tinhLipSyncChoFrame } from './lip_sync';
+import { tinhThongSoHopTen } from './ten_nhan_vat';
+import {
+  giaiBieuCamTheoMoc,
+  tinhHuongNhinTuongTac,
+  type TrangThaiNhanVatDaGiai,
+} from './dien_xuat';
 
 type NguoiQueDongProps = {
   thongTin: ThongTinNhanVat;
-  trangThai: NhanVatTrongCanh;
+  trangThai: NhanVatTrongCanh | TrangThaiNhanVatDaGiai;
   tiLe?: number;
   thoiLuongCanh?: number;
+  bienDoAmThanh?: readonly number[];
+  /** Ep nhin thang vao ong kinh (canh tuong_tac_khan_gia) */
+  nhinThangOngKinh?: boolean;
+  /** Danh sach nhan vat cung canh (tuy chon, de tu tinh tuongTacVoi khi goi truc tiep) */
+  danhSachNhanVatTrongCanh?: readonly NhanVatTrongCanh[];
 };
 
 // Chu ky chop mat khong deu tu nhien (co xen nhip chop doi 34 frame)
@@ -47,41 +61,7 @@ function tinhMucChopMat(frame: number, seedId: number): number {
   return 0;
 }
 
-/** Tinh cuong do lip-sync theo am tiet: 3 song sin lech tan so (0.42, 0.73, 1.17) + khoang ngat lay hoi */
-function tinhCuongDoLipSync(frame: number, seedId: number): {
-  cuongDo: number;
-  khauHinh: 0 | 1 | 2 | 3;
-} {
-  // Khoang ngat lay hoi dinh ky: moi 74 frame nghi lay hoi 8 frame
-  const phaHoi = ((frame + (seedId % 37)) % 74 + 74) % 74;
-  if (phaHoi >= 66) {
-    return { cuongDo: 0, khauHinh: 0 };
-  }
-
-  // Lam mem bien do ngay truoc/sau khi lay hoi
-  const baoHoi =
-    phaHoi < 3 ? phaHoi / 3 : phaHoi > 63 ? (66 - phaHoi) / 3 : 1;
-
-  const song =
-    0.46 * Math.sin(frame * 0.42 + (seedId % 19) * 0.31) +
-    0.34 * Math.sin(frame * 0.73 + (seedId % 23) * 0.47 + 1.2) +
-    0.2 * Math.sin(frame * 1.17 + (seedId % 29) * 0.23 + 2.5);
-
-  const cuongDo = kepGiaTri(((song + 1) * 0.5) * baoHoi, 0, 1);
-
-  if (cuongDo < 0.22) {
-    return { cuongDo, khauHinh: 0 }; // Ngam
-  }
-  if (cuongDo < 0.48) {
-    return { cuongDo, khauHinh: 1 }; // Mo nho
-  }
-  if (cuongDo < 0.72) {
-    return { cuongDo, khauHinh: 2 }; // Tron chu O
-  }
-  return { cuongDo, khauHinh: 3 }; // Mo rong cuoi
-}
-
-/** Ve khuon mat hoat hinh voi lip-sync 4 khau hinh, anh mat liec nhe, chop mat tu nhien & long may nhun */
+/** Ve khuon mat hoat hinh voi lip-sync 4 khau hinh (uu tien bien do RMS that, fallback tat dinh), anh mat liec nhe / nhin thang ong kinh, chop mat tu nhien & long may nhun */
 const veBieuCam = (
   bieuCam: LoaiBieuCam,
   dir: number,
@@ -91,14 +71,19 @@ const veBieuCam = (
   seedId: number,
   huongNhinX: number,
   huongNhinY: number,
+  bienDoAmThanh?: readonly number[],
+  nhinThangOngKinh = false,
+  laSoSinh = false,
 ) => {
-  const matTraiX = 3 * dir;
-  const matPhaiX = 12.5 * dir;
-  const matY = -4;
-  const miengX = 7.5 * dir;
-  const miengY = 8.2;
+  const matTraiX = nhinThangOngKinh ? -7.5 : 3 * dir;
+  const matPhaiX = nhinThangOngKinh ? 7.5 : 12.5 * dir;
+  const matY = laSoSinh ? -3 : -4;
+  const miengX = nhinThangOngKinh ? 0 : 7.5 * dir;
+  const miengY = laSoSinh ? 8.6 : 8.2;
 
-  const lip = dangNoi ? tinhCuongDoLipSync(frame, seedId) : { cuongDo: 0, khauHinh: 0 as const };
+  const lip = dangNoi
+    ? tinhLipSyncChoFrame(frame, seedId, bienDoAmThanh)
+    : { cuongDo: 0, khauHinh: 0 as const, nguon: 'du_phong' as const };
 
   const mucChop =
     bieuCam === 'can_loi_mat_do' || bieuCam === 'ngac_nhien'
@@ -106,11 +91,15 @@ const veBieuCam = (
       : tinhMucChopMat(frame, seedId);
   const dangNhamMat = mucChop >= 0.75;
 
-  // Con nguoi liec nhe theo huong nhin / bang + dao mat vi mo tat dinh
-  const liecViMoX = Math.sin(frame * 0.055 + seedId * 0.17) * 0.65;
-  const liecViMoY = Math.cos(frame * 0.043 + seedId * 0.29) * 0.35;
-  const nguoiX = kepGiaTri((huongNhinX + liecViMoX) * dir, -2.1, 2.1);
-  const nguoiY = kepGiaTri(huongNhinY + liecViMoY, -1.6, 1.6);
+  // Con nguoi liec nhe theo huong nhin / bang + dao mat vi mo tat dinh (khi nhin thang ong kinh thi con nguoi o giua)
+  const liecViMoX = Math.sin(frame * 0.055 + seedId * 0.17) * (nhinThangOngKinh ? 0.28 : 0.65);
+  const liecViMoY = Math.cos(frame * 0.043 + seedId * 0.29) * (nhinThangOngKinh ? 0.2 : 0.35);
+  const nguoiX = nhinThangOngKinh
+    ? kepGiaTri(liecViMoX, -0.8, 0.8)
+    : kepGiaTri((huongNhinX + liecViMoX) * dir, -2.1, 2.1);
+  const nguoiY = nhinThangOngKinh
+    ? kepGiaTri(liecViMoY, -0.6, 0.6)
+    : kepGiaTri(huongNhinY + liecViMoY, -1.6, 1.6);
 
   // Long may nhun theo nhip noi va nhip tho
   const nhunMay = dangNoi
@@ -143,8 +132,8 @@ const veBieuCam = (
         );
 
       case 1: {
-        // Mo nho
-        const ry = noiSuy(2.2, 3.4, (lip.cuongDo - 0.22) / 0.26);
+        // Mo nho / he nhe
+        const ry = noiSuy(2.2, 3.5, kepGiaTri((lip.cuongDo - 0.08) / 0.24, 0, 1));
         return (
           <ellipse
             cx={miengX}
@@ -159,8 +148,8 @@ const veBieuCam = (
       }
 
       case 2: {
-        // Tron chu O
-        const ty = (lip.cuongDo - 0.48) / 0.24;
+        // Mo vua / tron chu O
+        const ty = kepGiaTri((lip.cuongDo - 0.32) / 0.3, 0, 1);
         const rx = noiSuy(3.9, 4.7, ty);
         const ry = noiSuy(4.5, 5.6, ty);
         return (
@@ -188,7 +177,7 @@ const veBieuCam = (
       case 3:
       default: {
         // Mo rong cuoi (D-shape song dong)
-        const doMoRong = noiSuy(6.2, 8.2, (lip.cuongDo - 0.72) / 0.28);
+        const doMoRong = noiSuy(6.2, 8.2, kepGiaTri((lip.cuongDo - 0.62) / 0.38, 0, 1));
         return laNghiem ? (
           <g>
             <ellipse
@@ -229,11 +218,25 @@ const veBieuCam = (
 
   return (
     <g>
-      {/* Ma hong duyen dang cho bieu cam vui tuoi / tu man */}
-      {(bieuCam === 'vui_tuoi' || bieuCam === 'tu_man') && (
+      {/* Ma hong duyen dang cho bieu cam vui tuoi / tu man / em be so sinh */}
+      {(laSoSinh || bieuCam === 'vui_tuoi' || bieuCam === 'tu_man') && (
         <>
-          <ellipse cx={matTraiX - 4 * dir} cy={matY + 8} rx={4.2} ry={2.4} fill="#FB7185" fillOpacity={0.38} />
-          <ellipse cx={matPhaiX + 4 * dir} cy={matY + 8} rx={4.2} ry={2.4} fill="#FB7185" fillOpacity={0.38} />
+          <ellipse
+            cx={nhinThangOngKinh ? matTraiX - 5.2 : matTraiX - 4 * dir}
+            cy={matY + 8}
+            rx={laSoSinh ? 5.2 : 4.2}
+            ry={laSoSinh ? 3.2 : 2.4}
+            fill="#FB7185"
+            fillOpacity={laSoSinh ? 0.58 : 0.38}
+          />
+          <ellipse
+            cx={nhinThangOngKinh ? matPhaiX + 5.2 : matPhaiX + 4 * dir}
+            cy={matY + 8}
+            rx={laSoSinh ? 5.2 : 4.2}
+            ry={laSoSinh ? 3.2 : 2.4}
+            fill="#FB7185"
+            fillOpacity={laSoSinh ? 0.58 : 0.38}
+          />
         </>
       )}
 
@@ -676,18 +679,521 @@ const veVetBuiDuoiGot = (frame: number, dir: number, seedId: number) => {
   );
 };
 
+/** Ve chi tiet toc / kinh / rau theo doTuoi tren dau nhan vat (v2.0) */
+const veChiTietDauTheoDoTuoi = (
+  doTuoi: DoTuoiNhanVat,
+  dir: number,
+  nhinThangOngKinh: boolean,
+  phuKien: LoaiPhuKien,
+  mauChuDao: string,
+) => {
+  if (doTuoi === 'thieu_nien') {
+    // Chom toc nang dong tuoi thieu nien
+    return (
+      <g>
+        <path
+          d={`M ${-14 * dir} -20 Q ${-4 * dir} -34 ${5 * dir} -24 Q ${12 * dir} -34 ${18 * dir} -20 Q ${8 * dir} -24 0 -22 Q ${-8 * dir} -24 ${-14 * dir} -20 Z`}
+          fill="#1E293B"
+          stroke="#0F172A"
+          strokeWidth={1.6}
+          strokeLinejoin="round"
+        />
+      </g>
+    );
+  }
+
+  if (doTuoi === 'gia') {
+    const matTraiX = nhinThangOngKinh ? -7.5 : 3 * dir;
+    const matPhaiX = nhinThangOngKinh ? 7.5 : 12.5 * dir;
+    const miengX = nhinThangOngKinh ? 0 : 7.5 * dir;
+    return (
+      <g>
+        {/* Mai toc bac hai ben thai duong va dinh dau */}
+        <path
+          d="M -24 -6 Q -27 -24 -12 -27 Q 0 -30 12 -27 Q 27 -24 24 -6 Q 18 -18 0 -20 Q -18 -18 -24 -6 Z"
+          fill="#E2E8F0"
+          stroke="#64748B"
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+        <circle cx={-21} cy={-4} r={5.5} fill="#F1F5F9" stroke="#64748B" strokeWidth={1.6} />
+        <circle cx={21} cy={-4} r={5.5} fill="#F1F5F9" stroke="#64748B" strokeWidth={1.6} />
+        {/* Chom rau bac hien hau o cam */}
+        <path
+          d={`M ${miengX - 7} 15 Q ${miengX} 26 ${miengX + 7} 15 Q ${miengX} 19 ${miengX - 7} 15 Z`}
+          fill="#F1F5F9"
+          stroke="#64748B"
+          strokeWidth={1.6}
+          strokeLinejoin="round"
+        />
+        {/* Kinh lao tron (tu dong ve neu nhan vat chua deo kinh_tron) */}
+        {phuKien !== 'kinh_tron' && (
+          <g>
+            <circle
+              cx={matTraiX}
+              cy={-4}
+              r={5.8}
+              fill="#E0F2FE"
+              fillOpacity={0.32}
+              stroke="#475569"
+              strokeWidth={2}
+            />
+            <circle
+              cx={matPhaiX}
+              cy={-4}
+              r={5.8}
+              fill="#E0F2FE"
+              fillOpacity={0.32}
+              stroke="#475569"
+              strokeWidth={2}
+            />
+            <line
+              x1={matTraiX + (nhinThangOngKinh ? 5.8 : 4.5 * dir)}
+              y1={-4}
+              x2={matPhaiX - (nhinThangOngKinh ? 5.8 : 4.5 * dir)}
+              y2={-4}
+              stroke="#475569"
+              strokeWidth={2}
+            />
+          </g>
+        )}
+        {/* Cham nhan nho tren vong co/ao */}
+        <circle cx={0} cy={27} r={2.2} fill={mauChuDao} />
+      </g>
+    );
+  }
+
+  return null;
+};
+
+/** Ve em be so sinh nam trong noi go / ta quan co ma hong (v2.0) */
+const veEmBeSoSinh = (
+  bieuCam: LoaiBieuCam,
+  dir: number,
+  mauNet: string,
+  mauChuDao: string,
+  mauDa: string,
+  dangNoi: boolean,
+  frame: number,
+  seedId: number,
+  nhinThangOngKinh: boolean,
+  bienDoAmThanh?: readonly number[],
+) => {
+  const lacNoi = Math.sin(frame * 0.09 + seedId * 0.1) * 3.4;
+  const vayTay = Math.sin(frame * 0.24) * 5;
+  return (
+    <g transform={`translate(0, -18) rotate(${lacNoi.toFixed(2)}, 0, 18)`}>
+      {/* Khung noi go em ai */}
+      <path
+        d="M -66 12 Q 0 34 66 12"
+        fill="none"
+        stroke="#92400E"
+        strokeWidth={7}
+        strokeLinecap="round"
+      />
+      <rect
+        x={-54}
+        y={-34}
+        width={108}
+        height={44}
+        rx={16}
+        fill="#FEF3C7"
+        stroke="#78350F"
+        strokeWidth={4}
+      />
+      {/* Goi mem trong noi */}
+      <ellipse
+        cx={-18 * dir}
+        cy={-26}
+        rx={26}
+        ry={13}
+        fill="#FFFFFF"
+        stroke="#CBD5E1"
+        strokeWidth={2.2}
+      />
+      {/* Than ta quan em be */}
+      <path
+        d={`M ${-34 * dir} -24 Q ${4 * dir} -36 ${38 * dir} -16 Q ${32 * dir} 4 ${-10 * dir} 2 Q ${-36 * dir} -4 ${-34 * dir} -24 Z`}
+        fill={mauChuDao}
+        fillOpacity={0.26}
+        stroke={mauChuDao}
+        strokeWidth={3.2}
+      />
+      <path
+        d={`M ${-16 * dir} -26 Q ${8 * dir} -10 ${24 * dir} -22`}
+        fill="none"
+        stroke={mauChuDao}
+        strokeWidth={2.6}
+        strokeLinecap="round"
+      />
+      {/* Hai ban tay ti hon vay nhe */}
+      <circle cx={-4 * dir} cy={-28 + vayTay * 0.5} r={6} fill={mauDa} stroke={mauNet} strokeWidth={2.5} />
+      <circle cx={14 * dir} cy={-24 - vayTay * 0.5} r={6} fill={mauDa} stroke={mauNet} strokeWidth={2.5} />
+      {/* Dau em be tron trinh ma hong + chom toc xoan */}
+      <g transform={`translate(${(-20 * dir).toFixed(1)}, -40)`}>
+        <circle cx={0} cy={0} r={24} fill={mauDa} stroke={mauNet} strokeWidth={5} />
+        <path
+          d="M -3 -24 Q 4 -36 10 -27 Q 4 -24 2 -23"
+          fill="none"
+          stroke={mauNet}
+          strokeWidth={2.8}
+          strokeLinecap="round"
+        />
+        {veBieuCam(
+          bieuCam,
+          dir,
+          mauNet,
+          dangNoi,
+          frame,
+          seedId,
+          0,
+          0,
+          bienDoAmThanh,
+          nhinThangOngKinh || true,
+          true,
+        )}
+      </g>
+      {/* Thanh lan can phia truoc noi */}
+      {[-34, -17, 0, 17, 34].map((sx) => (
+        <line
+          key={`nan-${sx}`}
+          x1={sx}
+          y1={-28}
+          x2={sx}
+          y2={6}
+          stroke="#B45309"
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+      ))}
+      <line x1={-56} y1={-28} x2={56} y2={-28} stroke="#78350F" strokeWidth={5} strokeLinecap="round" />
+    </g>
+  );
+};
+
+/** Ve do vat nen phia sau cho tuThe (ghe ngoi ban / dau giuong + goi nam giuong) */
+const veNenTuThePhiaSau = (
+  tuThe: TuTheNhanVat,
+  dir: number,
+  mauChuDao: string,
+) => {
+  if (tuThe === 'ngoi_ban') {
+    return (
+      <g>
+        {/* Ghe go phia sau */}
+        <rect
+          x={dir > 0 ? -42 : 12}
+          y={-114}
+          width={30}
+          height={64}
+          rx={6}
+          fill="#B45309"
+          stroke="#451A03"
+          strokeWidth={3}
+        />
+        <rect
+          x={dir > 0 ? -38 : -16}
+          y={-56}
+          width={54}
+          height={12}
+          rx={5}
+          fill="#D97706"
+          stroke="#451A03"
+          strokeWidth={3}
+        />
+        <line x1={dir > 0 ? -32 : 32} y1={-44} x2={dir > 0 ? -32 : 32} y2={0} stroke="#451A03" strokeWidth={5} strokeLinecap="round" />
+        <line x1={dir > 0 ? 8 : -8} y1={-44} x2={dir > 0 ? 8 : -8} y2={0} stroke="#451A03" strokeWidth={5} strokeLinecap="round" />
+      </g>
+    );
+  }
+
+  if (tuThe === 'nam_giuong') {
+    return (
+      <g>
+        {/* Khung giuong go + dau giuong */}
+        <rect
+          x={dir > 0 ? -64 : -92}
+          y={-56}
+          width={156}
+          height={42}
+          rx={10}
+          fill="#92400E"
+          stroke="#451A03"
+          strokeWidth={3.5}
+        />
+        <rect
+          x={dir > 0 ? -66 : 44}
+          y={-146}
+          width={22}
+          height={146}
+          rx={8}
+          fill="#78350F"
+          stroke="#451A03"
+          strokeWidth={3.5}
+        />
+        <rect
+          x={dir > 0 ? 78 : -94}
+          y={-76}
+          width={16}
+          height={76}
+          rx={6}
+          fill="#78350F"
+          stroke="#451A03"
+          strokeWidth={3.5}
+        />
+        {/* Nem trang em ai */}
+        <rect
+          x={dir > 0 ? -50 : -80}
+          y={-64}
+          width={130}
+          height={20}
+          rx={9}
+          fill="#FFFDF7"
+          stroke="#CBD5E1"
+          strokeWidth={2.5}
+        />
+        {/* Goi trang phong sau lung va dau */}
+        <ellipse
+          cx={-26 * dir}
+          cy={-114}
+          rx={24}
+          ry={32}
+          fill="#FFFFFF"
+          stroke="#94A3B8"
+          strokeWidth={3}
+          transform={`rotate(${(-14 * dir).toFixed(1)}, ${(-26 * dir).toFixed(1)}, -114)`}
+        />
+        <circle cx={-26 * dir} cy={-114} r={3} fill={mauChuDao} fillOpacity={0.3} />
+      </g>
+    );
+  }
+
+  return null;
+};
+
+/** Ve lop phia truoc cua tuThe (ban viet bai / chan giuong / em be om / ao khoac mua dong) */
+const veLopTuThePhiaTruoc = (
+  tuThe: TuTheNhanVat,
+  dir: number,
+  mauNet: string,
+  mauChuDao: string,
+  mauDa: string,
+  frame: number,
+  hong: Diem2D,
+  diemUonThan: Diem2D,
+  co: Diem2D,
+  banTayTrai: Diem2D,
+  banTayPhai: Diem2D,
+) => {
+  if (tuThe === 'ngoi_ban') {
+    const xBan = dir > 0 ? 6 : -106;
+    const xVo = dir > 0 ? 22 : -76;
+    return (
+      <g>
+        {/* Mat ban go & chan ban */}
+        <rect
+          x={xBan}
+          y={-74}
+          width={100}
+          height={15}
+          rx={5}
+          fill="#B45309"
+          stroke="#451A03"
+          strokeWidth={3.2}
+        />
+        <line x1={xBan + 12} y1={-59} x2={xBan + 12} y2={0} stroke="#451A03" strokeWidth={6} strokeLinecap="round" />
+        <line x1={xBan + 88} y1={-59} x2={xBan + 88} y2={0} stroke="#451A03" strokeWidth={6} strokeLinecap="round" />
+        {/* Quyen vo mo & lo muc viet bai */}
+        <rect x={xVo} y={-84} width={54} height={11} rx={3} fill="#FFFBEB" stroke="#1E293B" strokeWidth={2.2} />
+        <line x1={xVo + 27} y1={-84} x2={xVo + 27} y2={-73} stroke="#94A3B8" strokeWidth={2} />
+        <rect x={xVo + (dir > 0 ? 58 : -16)} y={-90} width={12} height={16} rx={3} fill="#1E293B" />
+        <path
+          d={`M ${xVo + (dir > 0 ? 64 : -10)} -90 L ${xVo + (dir > 0 ? 74 : -20)} -108`}
+          stroke="#F8FAFC"
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+      </g>
+    );
+  }
+
+  if (tuThe === 'nam_giuong') {
+    const xDauChan = dir > 0 ? -16 : -84;
+    return (
+      <g>
+        {/* Chan bong am ap phu len than duoi & chan */}
+        <path
+          d={`M ${xDauChan} -78 Q ${xDauChan + 50} -92 ${xDauChan + 100} -74 L ${xDauChan + 100} -40 L ${xDauChan} -40 Z`}
+          fill={mauChuDao}
+          stroke="#1E293B"
+          strokeWidth={3.4}
+          strokeLinejoin="round"
+        />
+        {/* Mep chan gap trang sach se */}
+        <path
+          d={`M ${xDauChan} -78 Q ${xDauChan + 18} -84 ${xDauChan + 26} -76 L ${xDauChan + 22} -64 Q ${xDauChan + 12} -70 ${xDauChan} -64 Z`}
+          fill="#FFFDF7"
+          stroke="#1E293B"
+          strokeWidth={2.4}
+          strokeLinejoin="round"
+        />
+        <path
+          d={`M ${xDauChan + 36} -66 Q ${xDauChan + 62} -72 ${xDauChan + 88} -62`}
+          fill="none"
+          stroke="#FFFFFF"
+          strokeOpacity={0.45}
+          strokeWidth={3}
+          strokeLinecap="round"
+        />
+      </g>
+    );
+  }
+
+  if (tuThe === 'om_em_be') {
+    const cx = (banTayTrai.x + banTayPhai.x) * 0.5 + 4 * dir;
+    const cy = (banTayTrai.y + banTayPhai.y) * 0.5 - 2;
+    const ru = Math.sin(frame * 0.12) * 3;
+    return (
+      <g transform={`translate(${cx.toFixed(1)}, ${cy.toFixed(1)}) rotate(${(ru - 12 * dir).toFixed(1)})`}>
+        {/* Bo ta quan em be */}
+        <ellipse cx={0} cy={6} rx={24} ry={13} fill="#FEF08A" stroke="#1E293B" strokeWidth={2.6} />
+        <path d="M -16 4 Q 0 13 16 4" fill="none" stroke="#F59E0B" strokeWidth={2.2} strokeLinecap="round" />
+        {/* Dau em be nho xinh voi ma hong */}
+        <circle cx={-12 * dir} cy={-2} r={11.5} fill={mauDa} stroke={mauNet} strokeWidth={2.6} />
+        <ellipse cx={-16 * dir} cy={1} rx={2.5} ry={1.5} fill="#FB7185" fillOpacity={0.6} />
+        <ellipse cx={-8 * dir} cy={1} rx={2.5} ry={1.5} fill="#FB7185" fillOpacity={0.6} />
+        <path d={`M ${-15 * dir} -3 Q ${-13 * dir} -1 ${-11 * dir} -3`} fill="none" stroke={mauNet} strokeWidth={1.6} strokeLinecap="round" />
+        <path d={`M ${-9 * dir} -3 Q ${-7 * dir} -1 ${-5 * dir} -3`} fill="none" stroke={mauNet} strokeWidth={1.6} strokeLinecap="round" />
+      </g>
+    );
+  }
+
+  if (tuThe === 'mac_ao_khoac') {
+    // Ao khoac mua dong bam theo cot song hong -> diemUonThan -> co
+    const xCo = co.x;
+    const yCo = co.y + 4;
+    const xHong = hong.x;
+    const yHong = hong.y + 18;
+    const xGiua = diemUonThan.x;
+    const yGiua = diemUonThan.y + 8;
+    return (
+      <g>
+        <path
+          d={`M ${(xCo - 14).toFixed(1)} ${yCo.toFixed(1)} Q ${(xGiua - 21).toFixed(1)} ${yGiua.toFixed(1)} ${(xHong - 22).toFixed(1)} ${yHong.toFixed(1)} L ${(xHong + 22).toFixed(1)} ${yHong.toFixed(1)} Q ${(xGiua + 21).toFixed(1)} ${yGiua.toFixed(1)} ${(xCo + 14).toFixed(1)} ${yCo.toFixed(1)} Z`}
+          fill={mauChuDao}
+          stroke="#1E293B"
+          strokeWidth={3.2}
+          strokeLinejoin="round"
+        />
+        {/* Co ao long am ap */}
+        <rect
+          x={xCo - 17}
+          y={yCo - 6}
+          width={34}
+          height={12}
+          rx={6}
+          fill="#F8FAFC"
+          stroke="#1E293B"
+          strokeWidth={2.4}
+        />
+        {/* Hang cuc ao & ve ao */}
+        <line
+          x1={xCo + 2 * dir}
+          y1={yCo + 6}
+          x2={xHong + 2 * dir}
+          y2={yHong - 2}
+          stroke="#0F172A"
+          strokeOpacity={0.45}
+          strokeWidth={2.2}
+        />
+        {[0.28, 0.54, 0.78].map((t) => (
+          <circle
+            key={`cuc-${t}`}
+            cx={noiSuy(xCo, xHong, t) + 6 * dir}
+            cy={noiSuy(yCo + 6, yHong, t)}
+            r={2.8}
+            fill="#FEF08A"
+            stroke="#1E293B"
+            strokeWidth={1.3}
+          />
+        ))}
+      </g>
+    );
+  }
+
+  return null;
+};
+
+/** Chia noi dung bong bong thoai thanh toi da 2 dong gon dep */
+function chiaDongBongBong(noiDung: string): string[] {
+  const sach = noiDung.trim();
+  if (sach.length <= 34) {
+    return [sach];
+  }
+  const tu = sach.split(/\s+/);
+  let dong1 = '';
+  let dong2 = '';
+  for (const w of tu) {
+    if ((dong1 + ' ' + w).trim().length <= 34 && dong2.length === 0) {
+      dong1 = (dong1 + ' ' + w).trim();
+    } else {
+      dong2 = (dong2 + ' ' + w).trim();
+    }
+  }
+  if (!dong2) return [dong1];
+  return [dong1, dong2.length > 38 ? `${dong2.slice(0, 35)}…` : dong2];
+}
+
 export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
   thongTin,
   trangThai,
   tiLe = 1,
   thoiLuongCanh,
+  bienDoAmThanh,
+  nhinThangOngKinh: nhinThangProp,
+  danhSachNhanVatTrongCanh,
 }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
   const tongFrame = Math.max(1, thoiLuongCanh ?? durationInFrames);
 
-  const dir = trangThai.huong === 'trai' ? -1 : 1;
+  const daGiai = trangThai as Partial<TrangThaiNhanVatDaGiai>;
+  const doTuoi: DoTuoiNhanVat =
+    trangThai.doTuoi ?? thongTin.doTuoi ?? 'truong_thanh';
+  const tuThe: TuTheNhanVat = trangThai.tuThe ?? 'dung';
+
+  // Giai huong mat & anh mat tuong tac (ho tro ca khi goi qua giaiTrangThaiNhanVatTrongCanh lan goi truc tiep)
+  const huongTuongTac =
+    typeof daGiai.nhinThangOngKinh === 'boolean'
+      ? {
+          huongHieuLuc: trangThai.huong,
+          nhinThangOngKinh: daGiai.nhinThangOngKinh,
+          lechNhinX: daGiai.lechNhinX ?? 0,
+          lechNhinY: daGiai.lechNhinY ?? 0,
+        }
+      : tinhHuongNhinTuongTac(
+          trangThai,
+          danhSachNhanVatTrongCanh ?? [trangThai],
+          undefined,
+        );
+
+  const nhinThangOngKinh = Boolean(
+    nhinThangProp ?? huongTuongTac.nhinThangOngKinh,
+  );
+  const huongHieuLuc = huongTuongTac.huongHieuLuc;
+  const dir = huongHieuLuc === 'trai' ? -1 : 1;
   const seedId = bamChuoiTatDinh(thongTin.id);
+
+  // Giai bieu cam theo moc frame (bieuCamTheoMoc[])
+  const bieuCamHieuLuc =
+    typeof daGiai.frameBatDauThoai === 'number'
+      ? trangThai.bieuCam
+      : giaiBieuCamTheoMoc(
+          trangThai.bieuCam,
+          trangThai.bieuCamTheoMoc,
+          frame,
+          tongFrame,
+        ).bieuCam;
 
   // Tinh vi tri ngang muot & van toc di chuyen cho chuyen dong thu cap phu kien
   let xHienTai = trangThai.x;
@@ -700,9 +1206,11 @@ export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
     vanTocDiChuyenX = xHienTai - xTruoc;
   }
 
-  const xuong = tinhKhungXuongCoBan(trangThai.hanhDong, frame, trangThai.huong, {
+  const xuong = tinhKhungXuongCoBan(trangThai.hanhDong, frame, huongHieuLuc, {
     dangNoi: Boolean(trangThai.dangNoi),
     vanTocDiChuyenX,
+    doTuoi,
+    tuThe,
   });
 
   const xTong = xHienTai + xuong.dichNgangNoiBo;
@@ -727,144 +1235,252 @@ export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
   // Co gian dau nhe theo squash & stretch de tang cam giac hoat hinh dan hoi
   const dauScaleX = 1 + (xuong.squashX - 1) * 0.42;
   const dauScaleY = 1 + (xuong.squashY - 1) * 0.42;
+  const banKinhDau = doTuoi === 'thieu_nien' ? 24.5 : 25.5;
+  const doDayNet = doTuoi === 'thieu_nien' ? 7.6 : 8.5;
 
-  // Bong bong thoai bat ra bang lo xo springTatDinh
-  const doDaiChu = trangThai.bongBongThoai?.length ?? 0;
-  const rongBongBong = Math.max(220, Math.min(440, doDaiChu * 11 + 56));
-  const loXoThoai = springTatDinh(frame - 2, 11, 210);
-  const tiLeThoai = kepGiaTri(loXoThoai, 0, 1.25);
+  // Bong bong thoai bat ra bang lo xo springTatDinh (reset moi khi doi luot thoai)
+  const frameBatDauThoai = daGiai.frameBatDauThoai ?? 0;
+  const dongThoai = trangThai.bongBongThoai
+    ? chiaDongBongBong(trangThai.bongBongThoai)
+    : [];
+  const doDaiDongLonNhat = dongThoai.reduce((m, s) => Math.max(m, s.length), 0);
+  const rongBongBong = Math.max(220, Math.min(460, doDaiDongLonNhat * 11.2 + 56));
+  const caoBongBong = dongThoai.length > 1 ? 76 : 56;
+  const loXoThoai = springTatDinh(frame - frameBatDauThoai - 1, 11, 210);
+  const tiLeThoai = kepGiaTri(loXoThoai, 0, 1.22);
   const nhunThoaiY = Math.sin(frame * 0.1) * 2.2;
+
+  // Hop nhan ten nhan vat tu co gian theo do dai chuoi (khong bao gio cat chu)
+  const hopTen = tinhThongSoHopTen(thongTin.ten);
+
+  const huongNhinTongX = xuong.huongNhinX + huongTuongTac.lechNhinX;
+  const huongNhinTongY = xuong.huongNhinY + huongTuongTac.lechNhinY;
+  const viTriBongBongDauY = doTuoi === 'so_sinh' ? -102 : xuong.dau.y - 88;
+  const viTriBongBongDauX = doTuoi === 'so_sinh' ? 0 : xuong.dau.x + 22 * dir;
 
   return (
     <g transform={`translate(${xTong.toFixed(1)}, ${trangThai.y}) scale(${tiLeTong})`}>
       {/* Bong do elip duoi chan (tu co nho & nhat dan khi nhay cao, khong blur) */}
       <ellipse
-        cx={xuong.hong.x}
+        cx={doTuoi === 'so_sinh' ? 0 : xuong.hong.x}
         cy={4}
-        rx={38 * heSoBong}
+        rx={(doTuoi === 'so_sinh' ? 56 : tuThe === 'nam_giuong' ? 74 : 38) * heSoBong}
         ry={9 * heSoBong}
         fill="#0F172A"
         fillOpacity={doMoBong}
       />
 
-      {/* Vet bui nho duoi got chan khi chay voi va / bat nhay dap dat */}
-      {xuong.coVetBui && veVetBuiDuoiGot(frame, dir, seedId)}
-
-      {/* Phu kien sau lung (ao choang / khan choang) co do tre quan tinh */}
-      {(thongTin.phuKien === 'ao_choang' || thongTin.phuKien === 'khan_choang') &&
-        vePhuKien(
-          thongTin.phuKien,
-          xuong.dau.x,
-          xuong.dau.y,
-          xuong.co.x,
-          xuong.co.y,
-          dir,
-          mauChuDao,
-          frame,
-          xuong.doTrePhuKien,
-          xuong.vanTocThan,
-        )}
-
-      {/* Vien trang mong phia sau giup nhan vat noi bat sach se tren moi boi canh */}
-      <g stroke="#FFFFFF" strokeOpacity={0.48} strokeWidth={13} strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <path d={dThan} />
-        <path d={dChanTrai} />
-        <path d={dChanPhai} />
-        <path d={dTayTrai} />
-        <path d={dTayPhai} />
-      </g>
-
-      {/* Than & tu chi nguoi que cong mem mai bang <path> */}
-      <g stroke={mauNet} strokeWidth={8.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <path d={dChanTrai} />
-        <path d={dTayTrai} />
-        <path d={dThan} />
-        <path d={dChanPhai} />
-        <path d={dTayPhai} />
-      </g>
-
-      {/* Dai nhan mau chu dao o co */}
-      <circle cx={xuong.co.x} cy={xuong.co.y + 4} r={5.5} fill={mauChuDao} stroke={mauNet} strokeWidth={2} />
-
-      {/* Dau nhan vat xoay nhe theo gocDau + co gian dan hoi */}
-      <g
-        transform={`translate(${xuong.dau.x.toFixed(1)}, ${xuong.dau.y.toFixed(1)}) rotate(${xuong.gocDau.toFixed(1)}) scale(${dauScaleX.toFixed(3)}, ${dauScaleY.toFixed(3)})`}
-      >
-        <circle cx={0} cy={0} r={25.5} fill={mauDa} stroke={mauNet} strokeWidth={6} />
-        {veBieuCam(
-          trangThai.bieuCam,
+      {doTuoi === 'so_sinh' ? (
+        veEmBeSoSinh(
+          bieuCamHieuLuc,
           dir,
           mauNet,
+          mauChuDao,
+          mauDa,
           Boolean(trangThai.dangNoi),
           frame,
           seedId,
-          xuong.huongNhinX,
-          xuong.huongNhinY,
-        )}
+          nhinThangOngKinh,
+          trangThai.bienDoAmThanh ?? bienDoAmThanh,
+        )
+      ) : (
+        <>
+          {/* Vet bui nho duoi got chan khi chay voi va / bat nhay dap dat */}
+          {xuong.coVetBui && veVetBuiDuoiGot(frame, dir, seedId)}
 
-        {/* Phu kien tren dau */}
-        {thongTin.phuKien !== 'ao_choang' &&
-          thongTin.phuKien !== 'khan_choang' &&
-          vePhuKien(
-            thongTin.phuKien,
-            0,
-            0,
-            0,
-            28,
-            dir,
-            mauChuDao,
-            frame,
-            xuong.doTrePhuKien,
-            xuong.vanTocThan,
+          {/* Do vat nen phia sau cho tuThe (ghe ngoi ban / giuong + goi) */}
+          {veNenTuThePhiaSau(tuThe, dir, mauChuDao)}
+
+          {/* Phu kien sau lung (ao choang / khan choang) co do tre quan tinh */}
+          {(thongTin.phuKien === 'ao_choang' || thongTin.phuKien === 'khan_choang') &&
+            vePhuKien(
+              thongTin.phuKien,
+              xuong.dau.x,
+              xuong.dau.y,
+              xuong.co.x,
+              xuong.co.y,
+              dir,
+              mauChuDao,
+              frame,
+              xuong.doTrePhuKien,
+              xuong.vanTocThan,
+            )}
+
+          {/* Vien trang mong phia sau giup nhan vat noi bat sach se tren moi boi canh */}
+          <g stroke="#FFFFFF" strokeOpacity={0.48} strokeWidth={doDayNet + 4.5} strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <path d={dThan} />
+            <path d={dChanTrai} />
+            <path d={dChanPhai} />
+            <path d={dTayTrai} />
+            <path d={dTayPhai} />
+          </g>
+
+          {/* Than & tu chi nguoi que cong mem mai bang <path> */}
+          <g stroke={mauNet} strokeWidth={doDayNet} strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <path d={dChanTrai} />
+            <path d={dTayTrai} />
+            <path d={dThan} />
+            <path d={dChanPhai} />
+            <path d={dTayPhai} />
+          </g>
+
+          {/* Ao khoac mua dong ve om than truoc khi ve co/dau */}
+          {tuThe === 'mac_ao_khoac' &&
+            veLopTuThePhiaTruoc(
+              tuThe,
+              dir,
+              mauNet,
+              mauChuDao,
+              mauDa,
+              frame,
+              xuong.hong,
+              xuong.diemUonThan,
+              xuong.co,
+              xuong.banTayTrai,
+              xuong.banTayPhai,
+            )}
+
+          {/* Gay go cho bien the tuoi gia (khi khong cam vat khac) */}
+          {doTuoi === 'gia' && (!trangThai.vatCamTay || trangThai.vatCamTay === 'khong') && (
+            <g>
+              <path
+                d={`M ${(xuong.banTayPhai.x - 4 * dir).toFixed(1)} ${(xuong.banTayPhai.y - 6).toFixed(1)} Q ${(xuong.banTayPhai.x + 8 * dir).toFixed(1)} ${(xuong.banTayPhai.y - 16).toFixed(1)} ${(xuong.banTayPhai.x + 12 * dir).toFixed(1)} ${(xuong.banTayPhai.y - 2).toFixed(1)} L ${(xuong.banTayPhai.x + 14 * dir).toFixed(1)} 0`}
+                fill="none"
+                stroke="#78350F"
+                strokeWidth={5.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </g>
           )}
-      </g>
 
-      {/* Vat cam tay */}
-      {veVatCamTay(
-        trangThai.vatCamTay,
-        xuong.diemCamVat.x,
-        xuong.diemCamVat.y,
-        dir,
-        frame,
-        xuong.gocCangTayPhai,
+          {/* Dai nhan mau chu dao o co (them khan quang gon cho thieu_nien) */}
+          {doTuoi === 'thieu_nien' ? (
+            <polygon
+              points={`${xuong.co.x - 9},${xuong.co.y + 1} ${xuong.co.x + 9},${xuong.co.y + 1} ${xuong.co.x + 2 * dir},${xuong.co.y + 15}`}
+              fill={mauChuDao}
+              stroke={mauNet}
+              strokeWidth={2}
+              strokeLinejoin="round"
+            />
+          ) : (
+            <circle cx={xuong.co.x} cy={xuong.co.y + 4} r={5.5} fill={mauChuDao} stroke={mauNet} strokeWidth={2} />
+          )}
+
+          {/* Dau nhan vat xoay nhe theo gocDau + co gian dan hoi */}
+          <g
+            transform={`translate(${xuong.dau.x.toFixed(1)}, ${xuong.dau.y.toFixed(1)}) rotate(${xuong.gocDau.toFixed(1)}) scale(${dauScaleX.toFixed(3)}, ${dauScaleY.toFixed(3)})`}
+          >
+            <circle cx={0} cy={0} r={banKinhDau} fill={mauDa} stroke={mauNet} strokeWidth={6} />
+            {veBieuCam(
+              bieuCamHieuLuc,
+              dir,
+              mauNet,
+              Boolean(trangThai.dangNoi),
+              frame,
+              seedId,
+              huongNhinTongX,
+              huongNhinTongY,
+              trangThai.bienDoAmThanh ?? bienDoAmThanh,
+              nhinThangOngKinh,
+              false,
+            )}
+            {veChiTietDauTheoDoTuoi(doTuoi, dir, nhinThangOngKinh, thongTin.phuKien, mauChuDao)}
+
+            {/* Phu kien tren dau */}
+            {thongTin.phuKien !== 'ao_choang' &&
+              thongTin.phuKien !== 'khan_choang' &&
+              vePhuKien(
+                thongTin.phuKien,
+                0,
+                0,
+                0,
+                28,
+                dir,
+                mauChuDao,
+                frame,
+                xuong.doTrePhuKien,
+                xuong.vanTocThan,
+              )}
+          </g>
+
+          {/* Vat cam tay (tu dong ve phong bi thu dep mat neu dang trao_thu ma chua chon vatCamTay) */}
+          {trangThai.hanhDong === 'trao_thu' &&
+          (!trangThai.vatCamTay || trangThai.vatCamTay === 'khong') ? (
+            <g
+              transform={`translate(${(xuong.diemCamVat.x + 6 * dir).toFixed(1)}, ${(xuong.diemCamVat.y - 4).toFixed(1)}) scale(${dir}, 1) rotate(-8)`}
+            >
+              <rect x={-4} y={-14} width={30} height={21} rx={3} fill="#FEF3C7" stroke="#92400E" strokeWidth={2.4} />
+              <path d="M -4 -14 L 11 -2 L 26 -14" fill="none" stroke="#92400E" strokeWidth={2.2} strokeLinejoin="round" />
+              <circle cx={11} cy={-2} r={3} fill="#DC2626" />
+            </g>
+          ) : (
+            veVatCamTay(
+              trangThai.vatCamTay,
+              xuong.diemCamVat.x,
+              xuong.diemCamVat.y,
+              dir,
+              frame,
+              xuong.gocCangTayPhai,
+            )
+          )}
+
+          {/* Lop truoc cua tuThe (ban viet, chan giuong, em be om) */}
+          {tuThe !== 'mac_ao_khoac' &&
+            veLopTuThePhiaTruoc(
+              tuThe,
+              dir,
+              mauNet,
+              mauChuDao,
+              mauDa,
+              frame,
+              xuong.hong,
+              xuong.diemUonThan,
+              xuong.co,
+              xuong.banTayTrai,
+              xuong.banTayPhai,
+            )}
+        </>
       )}
 
-      {/* The ten nhan vat gon dep duoi chan */}
-      <g transform="translate(0, 34)">
-        <rect
-          x={-76}
-          y={-17}
-          width={152}
-          height={28}
-          rx={14}
-          fill="#FFFDF7"
-          fillOpacity={0.94}
-          stroke={mauChuDao}
-          strokeWidth={2.6}
-        />
-        <text
-          x={0}
-          y={2}
-          textAnchor="middle"
-          fill="#0F172A"
-          fontSize={16}
-          fontWeight={800}
-          fontFamily="Segoe UI, Arial, sans-serif"
-        >
-          {thongTin.ten}
-        </text>
-      </g>
+      {/* The ten nhan vat tu co gian theo do dai chuoi, khong bao gio bi cat chu */}
+      {hopTen.text.length > 0 && (
+        <g transform="translate(0, 34)">
+          <rect
+            x={-hopTen.width / 2}
+            y={-17}
+            width={hopTen.width}
+            height={hopTen.height}
+            rx={14}
+            fill="#FFFDF7"
+            fillOpacity={0.94}
+            stroke={mauChuDao}
+            strokeWidth={2.6}
+          />
+          <text
+            x={0}
+            y={2}
+            textAnchor="middle"
+            fill="#0F172A"
+            fontSize={hopTen.fontSize}
+            fontWeight={800}
+            fontFamily="Segoe UI, Arial, sans-serif"
+          >
+            {hopTen.text}
+          </text>
+        </g>
+      )}
 
       {/* Bong bong thoai hoat hinh bat ra bang lo xo springTatDinh */}
-      {trangThai.bongBongThoai && tiLeThoai > 0.01 && (
+      {dongThoai.length > 0 && tiLeThoai > 0.01 && (
         <g
-          transform={`translate(${(xuong.dau.x + 22 * dir).toFixed(1)}, ${(xuong.dau.y - 84 + nhunThoaiY).toFixed(1)}) scale(${tiLeThoai.toFixed(3)})`}
+          transform={`translate(${viTriBongBongDauX.toFixed(1)}, ${(viTriBongBongDauY + nhunThoaiY).toFixed(1)}) scale(${tiLeThoai.toFixed(3)})`}
         >
           <rect
             x={-rongBongBong / 2}
-            y={-32}
+            y={-caoBongBong + 24}
             width={rongBongBong}
-            height={56}
+            height={caoBongBong}
             rx={18}
             fill="#FFFFFF"
             stroke="#1E293B"
@@ -872,17 +1488,20 @@ export const NguoiQueDong: React.FC<NguoiQueDongProps> = ({
           />
           <polygon points="-10,24 10,24 -3,39" fill="#FFFFFF" stroke="#1E293B" strokeWidth={2.6} strokeLinejoin="round" />
           <line x1={-8} y1={24} x2={8} y2={24} stroke="#FFFFFF" strokeWidth={4} />
-          <text
-            x={0}
-            y={4}
-            textAnchor="middle"
-            fill="#0F172A"
-            fontSize={18}
-            fontWeight={700}
-            fontFamily="Segoe UI, Arial, sans-serif"
-          >
-            {trangThai.bongBongThoai}
-          </text>
+          {dongThoai.map((dong, idx) => (
+            <text
+              key={`dong-thoai-${idx}`}
+              x={0}
+              y={dongThoai.length > 1 ? -14 + idx * 24 : 4}
+              textAnchor="middle"
+              fill="#0F172A"
+              fontSize={18}
+              fontWeight={700}
+              fontFamily="Segoe UI, Arial, sans-serif"
+            >
+              {dong}
+            </text>
+          ))}
         </g>
       )}
     </g>

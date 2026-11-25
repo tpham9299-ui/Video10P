@@ -1,6 +1,6 @@
 {
   "name": "video-dai-nguoi-que-toan-hoc",
-  "version": "0.5.0",
+  "version": "2.0.0",
   "private": true,
   "description": "He thong AI tu chu san xuat phim hoat hinh 2D ke chuyen lich su Toan hoc >10 phut (Remotion + Python)",
   "scripts": {

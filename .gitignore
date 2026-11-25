@@ -1,8 +1,32 @@
-node_modules/
-out/
+# Moi truong & bi mat (KHONG bao gio commit API key)
 .env
+.env.*
+!.env.example
+
+# Node.js & Remotion cache
+node_modules/
+.remotion/
+
+# Video / audio dau ra nang & file tam
+out/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.tmp
 public/audio/**/*.mp3
 public/audio/*.mp3
-__pycache__/
-*.pyc
 
+# Cache noi bo pipeline Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+du_lieu/*/cache_chuong/
+du_lieu/*/cache_audio.json
+du_lieu/nhat_ky_san_xuat.log
+
+# He dieu hanh
+.DS_Store
+Thumbs.db

@@ -1,0 +1,662 @@
+{
+  "tieuDe": "Srinivasa Ramanujan & Con Số Taxi 1729",
+  "chuDe": "Hành trình từ căn nhà nhỏ ở Ấn Độ đến Cambridge và đẳng thức lập phương bất ngờ 1729",
+  "batSfx": true,
+  "batPhuDe": true,
+  "bangMau": {
+    "nenChinh": "#0EA5E9",
+    "nenPhu": "#FEF3C7",
+    "luoi": "#CBD5E1",
+    "chuChinh": "#FFFFFF",
+    "chuPhu": "#FEF08A",
+    "nhanManh": "#FACC15",
+    "canhBao": "#FB923C"
+  },
+  "danhSachNhanVat": [
+    {
+      "id": "ramanujan",
+      "ten": "Srinivasa Ramanujan",
+      "mauThan": "#1E293B",
+      "mauChuDao": "#2563EB",
+      "mauDa": "#FFFDF7",
+      "phuKien": "ao_choang",
+      "doTuoi": "truong_thanh"
+    },
+    {
+      "id": "hardy",
+      "ten": "G. H. Hardy",
+      "mauThan": "#1E293B",
+      "mauChuDao": "#EA580C",
+      "mauDa": "#FFFDF7",
+      "phuKien": "kinh_tron",
+      "doTuoi": "gia"
+    }
+  ],
+  "goiYThumbnail": [
+    {
+      "bien_the": 1,
+      "tieuDeLon": "CON SỐ 1729!",
+      "nhanPhu": "THIÊN TÀI TỰ HỌC",
+      "congThucLatex": "1729 = 1^3 + 12^3 = 9^3 + 10^3",
+      "daoCuNoiBat": "bien_so_xe",
+      "boiCanh": "duong_pho_xe_co",
+      "thoiTiet": "nang_dep",
+      "nhanVat": {
+        "id": "ramanujan",
+        "ten": "Srinivasa Ramanujan",
+        "mauThan": "#1E293B",
+        "mauChuDao": "#2563EB",
+        "mauDa": "#FFFDF7",
+        "phuKien": "ao_choang"
+      },
+      "bieuCam": "ngac_nhien",
+      "hanhDong": "giat_minh_bat_day",
+      "vatCamTay": "cuon_giay",
+      "mauNhan": "#FACC15"
+    },
+    {
+      "bien_the": 2,
+      "tieuDeLon": "BỨC THƯ 9 TRANG",
+      "nhanPhu": "CHẤN ĐỘNG CAMBRIDGE",
+      "congThucLatex": "\\frac{1}{\\pi} = \\frac{2\\sqrt{2}}{9801}\\sum_{k=0}^{\\infty} \\dots",
+      "daoCuNoiBat": "phong_bi_thu_tay",
+      "boiCanh": "san_truong_co_dien",
+      "thoiTiet": "hoang_hon",
+      "nhanVat": {
+        "id": "hardy",
+        "ten": "G. H. Hardy",
+        "mauThan": "#1E293B",
+        "mauChuDao": "#EA580C",
+        "mauDa": "#FFFDF7",
+        "phuKien": "kinh_tron"
+      },
+      "bieuCam": "hoang_mang",
+      "hanhDong": "chi_bang_giang_bai",
+      "vatCamTay": "kinh_lup",
+      "mauNhan": "#38BDF8"
+    },
+    {
+      "bien_the": 3,
+      "tieuDeLon": "GIẢI MÃ TAXICAB",
+      "nhanPhu": "TOÁN HỌC DỄ HIỂU",
+      "congThucLatex": "a^3 + b^3 = c^3 + d^3",
+      "daoCuNoiBat": "qua_dia_cau",
+      "boiCanh": "giang_duong_dai_hoc",
+      "thoiTiet": "khong",
+      "nhanVat": {
+        "id": "ramanujan",
+        "ten": "Srinivasa Ramanujan",
+        "mauThan": "#1E293B",
+        "mauChuDao": "#2563EB",
+        "mauDa": "#FFFDF7",
+        "phuKien": "ao_choang"
+      },
+      "bieuCam": "tinh_quai",
+      "hanhDong": "quay_nhin_khan_gia",
+      "vatCamTay": "que_chi_bang",
+      "mauNhan": "#FACC15"
+    }
+  ],
+  "chuong": [
+    {
+      "id": "chuong_1",
+      "tenChuong": "1. Khởi đầu ở Ấn Độ & Chuyến tàu tới Cambridge",
+      "canh": [
+        {
+          "id": "canh_001",
+          "boCuc": "mo_dau",
+          "loaiCanh": "chuyen_canh_lich_su",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "nha_co_phong_sinh",
+          "thoiTiet": "nang_dep",
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tuFrame": 0,
+          "denFrame": 90,
+          "namMoc": "ERODE, ẤN ĐỘ • 1887",
+          "tieuDeNho": "Srinivasa Ramanujan chào đời",
+          "loiThoai": "Năm 1887, trong một căn nhà mái ấm ở miền Nam Ấn Độ, cậu bé sắp làm đảo lộn Toán học thế giới vừa chào đời.",
+          "camera": {
+            "kieu": "zoom_cham",
+            "zoom": 1.05
+          },
+          "mayQuay": {
+            "gocQuay": "trung_canh"
+          },
+          "vatTheXungQuanh": [
+            {
+              "loai": "ngon_nen_den_dau",
+              "x": 420,
+              "y": 650
+            }
+          ],
+          "daoCu": [
+            {
+              "loai": "noi_em_be",
+              "x": 1280,
+              "y": 760
+            }
+          ],
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 860,
+              "y": 810,
+              "huong": "phai",
+              "doTuoi": "so_sinh",
+              "tuThe": "om_em_be",
+              "hanhDong": "dung_tho",
+              "bieuCam": "vui_tuoi",
+              "bieuCamTheoMoc": [
+                {
+                  "tienDo": 0.0,
+                  "bieuCam": "binh_thuong"
+                },
+                {
+                  "tienDo": 0.55,
+                  "bieuCam": "vui_tuoi"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "canh_002",
+          "boCuc": "ke_chuyen",
+          "loaiCanh": "ke_chuyen",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "cang_bien_tau_thuy",
+          "thoiTiet": "nang_dep",
+          "chuyenCanh": "quet_ngang",
+          "tuFrame": 90,
+          "denFrame": 190,
+          "namMoc": "CẢNG MADRAS • 1914",
+          "tieuDeNho": "Bức thư 9 trang & chuyến tàu vượt biển",
+          "loiThoai": "Sau bức thư 9 trang gây chấn động Cambridge, Ramanujan khoác áo dài bước lên tàu thủy vượt đại dương sang Anh.",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "mayQuay": {
+            "gocQuay": "pan_ngang"
+          },
+          "vatTheXungQuanh": [
+            {
+              "loai": "chim_hai_au",
+              "soLuong": 4
+            },
+            {
+              "loai": "ca_gon_song",
+              "soLuong": 3
+            }
+          ],
+          "daoCu": [
+            {
+              "loai": "tau_thuy",
+              "x": 1460,
+              "y": 640
+            },
+            {
+              "loai": "phong_bi_thu_tay",
+              "x": 520,
+              "y": 620
+            }
+          ],
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 840,
+              "y": 810,
+              "huong": "phai",
+              "doTuoi": "truong_thanh",
+              "tuThe": "mac_ao_khoac",
+              "hanhDong": "trao_thu",
+              "vatCamTay": "cuon_giay",
+              "bieuCam": "vui_tuoi",
+              "dangNoi": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chuong_2",
+      "tenChuong": "2. Bệnh viện Putney & Câu đố số Taxi 1729",
+      "canh": [
+        {
+          "id": "canh_003",
+          "boCuc": "doi_thoai",
+          "loaiCanh": "doi_thoai",
+          "vaiNoi": "nhan_vat",
+          "boiCanh": "phong_benh_vien",
+          "thoiTiet": "tuyet_roi",
+          "chuyenCanh": "mo_dan",
+          "tuFrame": 190,
+          "denFrame": 340,
+          "namMoc": "BỆNH VIỆN PUTNEY • 1918",
+          "tieuDeNho": "Cuộc trò chuyện về biển số taxi 1729",
+          "loiThoai": "Hardy thở dài: Chiếc taxi số 1729 nghe thật tẻ nhạt! Ramanujan bật cười: Không đâu giáo sư, 1729 là con số vô cùng kỳ diệu!",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "mayQuay": {
+            "gocQuay": "focus_trai",
+            "tuDongFocusNguoiNoi": true
+          },
+          "vatTheXungQuanh": [
+            {
+              "loai": "tuyet_cua_so",
+              "soLuong": 14
+            },
+            {
+              "loai": "hoi_khoi",
+              "x": 1100,
+              "y": 670
+            }
+          ],
+          "daoCu": [
+            {
+              "loai": "giuong_benh",
+              "x": 1300,
+              "y": 770
+            },
+            {
+              "loai": "tach_tra_nong",
+              "x": 1060,
+              "y": 720
+            }
+          ],
+          "luotThoai": [
+            {
+              "nhanVatId": "hardy",
+              "noiDung": "Chiếc taxi tôi vừa đi mang biển số 1729, nghe thật tẻ nhạt!",
+              "bieuCam": "tram_tu",
+              "dongTac": "quay_nhin_doi_thoai",
+              "batDauFrame": 0,
+              "ketThucFrame": 68,
+              "bienDoAmThanh": [0.4, 0.7, 0.8, 0.6, 0.5, 0.75, 0.65, 0.4]
+            },
+            {
+              "nhanVatId": "ramanujan",
+              "noiDung": "Không đâu Hardy! Đó là số nhỏ nhất bằng tổng hai lập phương theo hai cách khác nhau!",
+              "bieuCam": "vui_tuoi",
+              "dongTac": "giat_minh_bat_day",
+              "batDauFrame": 74,
+              "ketThucFrame": 144,
+              "bienDoAmThanh": [0.6, 0.85, 0.9, 0.75, 0.8, 0.7, 0.5, 0.3]
+            }
+          ],
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 640,
+              "y": 810,
+              "huong": "phai",
+              "doTuoi": "gia",
+              "tuThe": "ngoi_ban",
+              "hanhDong": "quay_nhin_doi_thoai",
+              "bieuCam": "tram_tu",
+              "tuongTacVoi": "ramanujan",
+              "dangNoi": true
+            },
+            {
+              "id": "ramanujan",
+              "x": 1280,
+              "y": 810,
+              "huong": "trai",
+              "doTuoi": "truong_thanh",
+              "tuThe": "nam_giuong",
+              "hanhDong": "giat_minh_bat_day",
+              "bieuCam": "ngac_nhien",
+              "tuongTacVoi": "hardy",
+              "bieuCamTheoMoc": [
+                {
+                  "tienDo": 0.0,
+                  "bieuCam": "tram_tu"
+                },
+                {
+                  "tienDo": 0.5,
+                  "bieuCam": "vui_tuoi"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "canh_004",
+          "boCuc": "ke_chuyen",
+          "loaiCanh": "ke_chuyen",
+          "vaiNoi": "binh_luan_hai",
+          "boiCanh": "duong_pho_xe_co",
+          "thoiTiet": "nang_dep",
+          "chuyenCanh": "quet_ngang",
+          "tuFrame": 340,
+          "denFrame": 440,
+          "bienSoXe": "1729",
+          "tieuDeNho": "Biển số taxi huyền thoại 1729",
+          "loiThoai": "Chỉ trong nửa giây, chiếc taxi cổ biển số 1729 ngoài phố London bỗng trở thành con số nổi tiếng nhất giới Toán học!",
+          "camera": {
+            "kieu": "zoom_hai_huoc",
+            "zoom": 1.2
+          },
+          "mayQuay": {
+            "gocQuay": "zoom_dao_cu",
+            "diemTieuCu": {
+              "x": 1420,
+              "y": 540
+            }
+          },
+          "vatTheXungQuanh": [
+            {
+              "loai": "xe_taxi_co",
+              "x": 420,
+              "y": 755,
+              "tocDo": 3.0,
+              "bienSoXe": "1729"
+            }
+          ],
+          "daoCu": [
+            {
+              "loai": "bien_so_xe",
+              "x": 1420,
+              "y": 540,
+              "bienSoXe": "1729"
+            }
+          ],
+          "loiBinhHaiHuoc": {
+            "noiDung": "Tài xế taxi không ngờ biển số xe mình sắp vào sách giáo khoa!",
+            "viTri": "goc_phai",
+            "tuFrame": 12
+          },
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 760,
+              "y": 810,
+              "huong": "phai",
+              "doTuoi": "gia",
+              "tuThe": "mac_ao_khoac",
+              "hanhDong": "giat_minh_nhay_dung",
+              "bieuCam": "ngac_nhien"
+            }
+          ]
+        },
+        {
+          "id": "canh_005",
+          "boCuc": "ke_chuyen",
+          "loaiCanh": "tuong_tac_khan_gia",
+          "vaiNoi": "nhan_vat",
+          "boiCanh": "san_truong_co_dien",
+          "thoiTiet": "hoang_hon",
+          "chuyenCanh": "mo_dan",
+          "tuFrame": 440,
+          "denFrame": 590,
+          "tieuDeNho": "Thử thách 3 giây cho khán giả!",
+          "loiThoai": "Đố bạn trong 3 giây: ngoài 1 lập phương cộng 12 lập phương, cặp số nào nữa có tổng lập phương đúng bằng 1729?",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "mayQuay": {
+            "gocQuay": "can_mat"
+          },
+          "vatTheXungQuanh": [
+            {
+              "loai": "chim_san_truong",
+              "soLuong": 3
+            },
+            {
+              "loai": "la_vang_gio",
+              "soLuong": 6
+            }
+          ],
+          "cauHoiTuongTac": {
+            "cauHoi": "Cặp lập phương thứ hai có tổng bằng 1729 là gì?",
+            "thoiGianDemNguocGiay": 3,
+            "batDauDemNguocFrame": 18,
+            "luaChon": [
+              "A. 8³ + 11³",
+              "B. 9³ + 10³",
+              "C. 7³ + 12³"
+            ],
+            "dapAn": "B. 9³ + 10³ = 729 + 1000 = 1729",
+            "giaiThichNgan": "Vì 1³ + 12³ = 1 + 1728 = 1729 và 9³ + 10³ = 729 + 1000 = 1729!",
+            "hienDapAnTuFrame": 108
+          },
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960,
+              "y": 810,
+              "huong": "phai",
+              "doTuoi": "truong_thanh",
+              "tuThe": "dung",
+              "hanhDong": "quay_nhin_khan_gia",
+              "tuongTacVoi": "khan_gia",
+              "bieuCam": "tinh_quai",
+              "dangNoi": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chuong_3",
+      "tenChuong": "3. Giải mã trên bảng giảng đường & Di sản",
+      "canh": [
+        {
+          "id": "canh_006",
+          "boCuc": "giai_thich_toan",
+          "loaiCanh": "giang_toan",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "giang_duong_dai_hoc",
+          "thoiTiet": "khong",
+          "chuyenCanh": "mo_dan",
+          "tuFrame": 590,
+          "denFrame": 720,
+          "namMoc": "SỐ TAXICAB Ta(2)",
+          "tieuDeNho": "Cấu trúc đối xứng của 1729",
+          "loiThoai": "Trên bảng giảng đường Cambridge, hai cách phân tích 1729 thành tổng hai lập phương hiện lên sắc nét và đầy bất ngờ.",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "mayQuay": {
+            "gocQuay": "trung_canh"
+          },
+          "congThucLatex": [
+            {
+              "nhan": "Cách 1",
+              "latex": "1^3 + 12^3 = 1 + 1728 = 1729",
+              "tuFrame": 0
+            },
+            {
+              "nhan": "Cách 2",
+              "latex": "9^3 + 10^3 = 729 + 1000 = 1729",
+              "tuFrame": 35
+            },
+            {
+              "nhan": "Số Taxicab nhỏ nhất bậc 2",
+              "latex": "\\mathrm{Ta}(2) = 1729",
+              "tuFrame": 70,
+              "noiBat": true
+            }
+          ],
+          "minhHoaToan": {
+            "loai": "tung_buoc",
+            "tieuDe": "Hai nghiệm nguyên trên đường cong x³ + y³ = 1729",
+            "mauNhanManh": "#FACC15",
+            "khungToaDo": {
+              "xMin": 0,
+              "xMax": 14,
+              "yMin": 0,
+              "yMax": 14,
+              "hienLuoi": true,
+              "nhanX": "a",
+              "nhanY": "b",
+              "mauTruc": "#94A3B8"
+            },
+            "buocVe": [
+              {
+                "loai": "truc_toa_do",
+                "xMin": 0,
+                "xMax": 14,
+                "yMin": 0,
+                "yMax": 14,
+                "hienLuoi": true,
+                "nhanX": "a",
+                "nhanY": "b"
+              },
+              {
+                "loai": "diem",
+                "x": 1,
+                "y": 12,
+                "nhan": "(1, 12)",
+                "mau": "#38BDF8"
+              },
+              {
+                "loai": "diem",
+                "x": 9,
+                "y": 10,
+                "nhan": "(9, 10)",
+                "mau": "#FACC15"
+              },
+              {
+                "loai": "doan_thang",
+                "x1": 1,
+                "y1": 12,
+                "x2": 9,
+                "y2": 10,
+                "nhan": "Cùng tổng 1729",
+                "mau": "#34D399",
+                "netDut": true
+              }
+            ],
+            "chuThichCuoi": "1729 mở đầu ngành nghiên cứu đường cong elliptic và số Taxicab."
+          },
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255,
+              "y": 808,
+              "huong": "phai",
+              "doTuoi": "truong_thanh",
+              "tuThe": "dung",
+              "hanhDong": "chi_bang_giang_bai",
+              "vatCamTay": "que_chi_bang",
+              "bieuCam": "vui_tuoi",
+              "dangNoi": true
+            }
+          ]
+        },
+        {
+          "id": "canh_007",
+          "boCuc": "dong_thoi_gian",
+          "loaiCanh": "chuyen_canh_lich_su",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "phong_thi_nghiem_co",
+          "thoiTiet": "khong",
+          "chuyenCanh": "quet_ngang",
+          "tuFrame": 720,
+          "denFrame": 815,
+          "namMoc": "1887 → 1920",
+          "tieuDeNho": "Những cột mốc bất tử của Ramanujan",
+          "loiThoai": "Chỉ trong 32 năm cuộc đời ngắn ngủi, Ramanujan đã để lại gần 3.900 đẳng thức vẫn đang soi sáng vật lý hiện đại.",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "mayQuay": {
+            "gocQuay": "chia_doi_man_hinh"
+          },
+          "vatTheXungQuanh": [
+            {
+              "loai": "dong_ho_qua_lac",
+              "x": 1680,
+              "y": 420
+            }
+          ],
+          "mocThoiGian": [
+            {
+              "nam": "1887",
+              "moTa": "Chào đời tại Erode, Ấn Độ"
+            },
+            {
+              "nam": "1913",
+              "moTa": "Gửi bức thư 9 trang tới G. H. Hardy",
+              "noiBat": true
+            },
+            {
+              "nam": "1918",
+              "moTa": "Viện sĩ Royal Society & số taxi 1729",
+              "noiBat": true
+            },
+            {
+              "nam": "1920",
+              "moTa": "Hàm mock theta ứng dụng vào lỗ đen"
+            }
+          ],
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 640,
+              "y": 810,
+              "huong": "phai",
+              "doTuoi": "truong_thanh",
+              "tuThe": "ngoi_ban",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "tram_tu"
+            },
+            {
+              "id": "hardy",
+              "x": 1280,
+              "y": 810,
+              "huong": "trai",
+              "doTuoi": "gia",
+              "tuThe": "dung",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi"
+            }
+          ]
+        },
+        {
+          "id": "canh_008",
+          "boCuc": "ket_thuc",
+          "loaiCanh": "ke_chuyen",
+          "vaiNoi": "nguoi_dan",
+          "boiCanh": "khong_gian_vu_tru_toan",
+          "thoiTiet": "ban_dem",
+          "chuyenCanh": "mo_dan",
+          "tuFrame": 815,
+          "denFrame": 900,
+          "tieuDeNho": "Mọi con số đều ẩn chứa câu chuyện kỳ diệu!",
+          "loiThoai": "Cảm ơn bạn đã đồng hành cùng hành trình kỳ diệu của Ramanujan! Hẹn gặp lại bạn ở câu chuyện Toán học tiếp theo!",
+          "camera": {
+            "kieu": "zoom_cham",
+            "zoom": 1.05
+          },
+          "mayQuay": {
+            "gocQuay": "toan_canh"
+          },
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 790,
+              "y": 812,
+              "huong": "phai",
+              "doTuoi": "truong_thanh",
+              "tuThe": "dung",
+              "hanhDong": "bat_tay",
+              "bieuCam": "vui_tuoi"
+            },
+            {
+              "id": "hardy",
+              "x": 1130,
+              "y": 812,
+              "huong": "trai",
+              "doTuoi": "gia",
+              "tuThe": "dung",
+              "hanhDong": "bat_tay",
+              "bieuCam": "vui_tuoi"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

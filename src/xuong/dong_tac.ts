@@ -152,6 +152,48 @@ export const BANG_DONG_TAC: Record<LoaiHanhDong, ThongTinDongTac> = {
     doDaiGoiY: 75,
     moTa: 'Giật nhẹ lấy đà rồi gục quỵ xuống sàn đàn hồi kịch tính.',
   },
+  trao_thu: {
+    ma: 'trao_thu',
+    tenHienThi: 'Trao thư / cuộn giấy',
+    nhom: 'dien_xuat',
+    doDaiGoiY: 66,
+    moTa: 'Cúi người lịch sự đưa hai tay trao bức thư hoặc tài liệu cho đối phương.',
+  },
+  chi_bang_giang_bai: {
+    ma: 'chi_bang_giang_bai',
+    tenHienThi: 'Chỉ bảng giảng bài',
+    nhom: 'dien_xuat',
+    doDaiGoiY: 90,
+    moTa: 'Đứng cạnh bảng giảng bài sôi nổi, tay chỉ công thức nhịp nhàng và liếc nhìn người nghe.',
+  },
+  quay_nhin_doi_thoai: {
+    ma: 'quay_nhin_doi_thoai',
+    tenHienThi: 'Quay nhìn đối thoại',
+    nhom: 'dien_xuat',
+    doDaiGoiY: 72,
+    moTa: 'Nghiêng người lắng nghe và trò chuyện tự nhiên, ánh mắt tập trung về phía người đối diện.',
+  },
+  bat_tay: {
+    ma: 'bat_tay',
+    tenHienThi: 'Bắt tay thân thiện',
+    nhom: 'dien_xuat',
+    doDaiGoiY: 60,
+    moTa: 'Đưa tay phải về phía trước bắt tay nhịp nhàng đầy trân trọng.',
+  },
+  giat_minh_bat_day: {
+    ma: 'giat_minh_bat_day',
+    tenHienThi: 'Giật mình bật dậy',
+    nhom: 'hai_huoc',
+    doDaiGoiY: 54,
+    moTa: 'Ép lấy đà ngắn rồi bật tung người lên đầy kinh ngạc trước khi ổn định lại.',
+  },
+  quay_nhin_khan_gia: {
+    ma: 'quay_nhin_khan_gia',
+    tenHienThi: 'Quay nhìn khán giả',
+    nhom: 'dien_xuat',
+    doDaiGoiY: 75,
+    moTa: 'Xoay thẳng về phía ống kính, giơ tay chào và trò chuyện trực tiếp với khán giả.',
+  },
 };
 
 /** Tu the dung trung tinh lam moc vao-the muot (8-12 frame) */
@@ -763,89 +805,90 @@ export function tinhGocKhopDongTac(
     }
 
     case 'ho_het_sung_suong': {
-      // Lay da (0..6) -> nhay cang lien hoi voi squash & stretch va vay tay an mung
+      // Lay da (0..5) -> nhay cang an mung lien mach (5..18) -> dap dat nhun lo xo (18..26)
+      // Giu gocThan va gocDau thang truc, vui tuoi, tuyet doi khong ngua/lat nguoc dau khi bat nhay
       const c = ((f % 26) + 26) % 26;
       if (c < 5) {
         const t = easeInOutCubic(c / 5);
-        const { squashX, squashY } = baoToanCoGian(noiSuy(1, 0.85, t));
+        const { squashX, squashY } = baoToanCoGian(noiSuy(1, 0.86, t));
         ketQua = {
           ...trungTinh,
-          offsetY: t * 12,
+          offsetY: t * 10,
           squashX,
           squashY,
-          gocThan: 6 * t,
-          doCongThan: -4 * t,
-          gocDau: -6,
-          nhunVai: -2 * t,
-          vaiPhaiGoc: noiSuy(132, 108, t),
-          khuyuPhaiGoc: noiSuy(24, 48, t),
-          vaiTraiGoc: noiSuy(-132, -108, t),
-          khuyuTraiGoc: noiSuy(-24, -48, t),
-          duiPhaiGoc: 24 * t + 10,
-          goiPhaiGoc: -38 * t - 10,
+          gocThan: 4.5 * t,
+          doCongThan: -3.5 * t,
+          gocDau: noiSuy(-4, -2, t),
+          nhunVai: -1.8 * t,
+          vaiPhaiGoc: noiSuy(132, 114, t),
+          khuyuPhaiGoc: noiSuy(18, 36, t),
+          vaiTraiGoc: noiSuy(-132, -114, t),
+          khuyuTraiGoc: noiSuy(-18, -36, t),
+          duiPhaiGoc: 22 * t + 10,
+          goiPhaiGoc: -34 * t - 10,
           duiTraiGoc: -16,
-          goiTraiGoc: -34 * t - 8,
+          goiTraiGoc: -30 * t - 8,
           nhayY: 0,
           khoaMatDat: true,
           coVetBui: false,
           huongNhinX: 0.6,
-          huongNhinY: -1.0,
+          huongNhinY: -0.7,
         };
       } else if (c < 18) {
         const t = (c - 5) / 13;
         const arc = Math.sin(t * Math.PI);
-        const nhayY = -arc * 40;
-        const { squashX, squashY } = baoToanCoGian(1 + arc * 0.14);
-        const vay = Math.sin(f * 0.55) * 14;
+        const nhayY = -arc * 38;
+        const { squashX, squashY } = baoToanCoGian(1 + arc * 0.13);
+        const vay = Math.sin(f * 0.5) * 10;
         ketQua = {
           ...trungTinh,
           offsetY: nhayY,
           squashX,
           squashY,
-          gocThan: -6 * arc,
-          doCongThan: 9 * arc,
-          gocDau: -12 - arc * 5,
-          nhunVai: 4.5,
-          vaiPhaiGoc: 148 + vay * 0.6,
-          khuyuPhaiGoc: 16 + vay,
-          vaiTraiGoc: -148 - vay * 0.6,
-          khuyuTraiGoc: -16 - vay,
-          duiPhaiGoc: 18 + arc * 12,
-          goiPhaiGoc: -18 - arc * 16,
-          duiTraiGoc: -18 - arc * 12,
-          goiTraiGoc: -18 - arc * 14,
+          gocThan: -3.5 * arc,
+          doCongThan: 6.5 * arc,
+          gocDau: -6 - arc * 4,
+          nhunVai: 3.5,
+          vaiPhaiGoc: 138 + vay * 0.5,
+          khuyuPhaiGoc: 14 + vay * 0.7,
+          vaiTraiGoc: -138 - vay * 0.5,
+          khuyuTraiGoc: -14 - vay * 0.7,
+          duiPhaiGoc: 16 + arc * 12,
+          goiPhaiGoc: -16 - arc * 15,
+          duiTraiGoc: -16 - arc * 12,
+          goiTraiGoc: -16 - arc * 13,
           nhayY,
           khoaMatDat: false,
           coVetBui: false,
           huongNhinX: 0.6,
-          huongNhinY: -1.2,
+          huongNhinY: -0.9,
         };
       } else {
         const sp = springTatDinh(c - 18, 10, 220);
         const nen = 1 - sp;
-        const { squashX, squashY } = baoToanCoGian(1 - nen * 0.14);
+        const { squashX, squashY } = baoToanCoGian(1 - nen * 0.12);
         ketQua = {
           ...trungTinh,
-          offsetY: nen * 10,
+          offsetY: nen * 9,
           squashX,
           squashY,
-          gocThan: nen * 5,
-          doCongThan: 4 - nen * 8,
-          gocDau: -9,
-          nhunVai: 2,
-          vaiPhaiGoc: 138,
-          khuyuPhaiGoc: 22,
-          vaiTraiGoc: -138,
-          khuyuTraiGoc: -22,
-          duiPhaiGoc: 14 + nen * 10,
-          goiPhaiGoc: -14 - nen * 20,
+          gocThan: nen * 4,
+          doCongThan: 3 - nen * 6,
+          gocDau: -5 + nen * 3,
+          nhunVai: 1.8,
+          vaiPhaiGoc: 134,
+          khuyuPhaiGoc: 18,
+          vaiTraiGoc: -134,
+          khuyuTraiGoc: -18,
+          duiPhaiGoc: 14 + nen * 9,
+          goiPhaiGoc: -14 - nen * 18,
           duiTraiGoc: -14 - nen * 6,
-          goiTraiGoc: -12 - nen * 18,
+          goiTraiGoc: -12 - nen * 16,
           nhayY: 0,
           khoaMatDat: true,
           coVetBui: false,
           huongNhinX: 0.6,
-          huongNhinY: -0.9,
+          huongNhinY: -0.7,
         };
       }
       break;
@@ -940,6 +983,228 @@ export function tinhGocKhopDongTac(
       break;
     }
 
+    case 'trao_thu': {
+      // Lay da nhe -> dua hai tay ve truoc trao thu/cuon giay lich su
+      const sp = springTatDinh(fDuong, 12, 185);
+      const nhipTrao = Math.sin(f * 0.14);
+      const mucTieu: ThongSoTuTheFK = {
+        offsetX: 8,
+        offsetY: 2 + tho * 1.1,
+        ...baoToanCoGian(1.0 + tho * 0.016),
+        gocThan: 10 + nhipTrao * 1.6,
+        doCongThan: -4.5,
+        gocDau: 5 + nhipTrao * 2.2,
+        nhunVai: 1.5,
+        vaiPhaiGoc: 64 + nhipTrao * 5,
+        khuyuPhaiGoc: 28 + Math.cos(f * 0.14) * 4,
+        vaiTraiGoc: 52 + nhipTrao * 4,
+        khuyuTraiGoc: 34 + Math.cos(f * 0.14) * 3,
+        duiPhaiGoc: 16,
+        goiPhaiGoc: -15,
+        duiTraiGoc: -13,
+        goiTraiGoc: -11,
+        nhayY: 0,
+        dichNgangNoiBo: 0,
+        khoaMatDat: true,
+        coVetBui: false,
+        huongNhinX: 1.6,
+        huongNhinY: 0.2,
+      };
+      ketQua = tronTuTheFK(trungTinh, mucTieu, kepGiaTri(sp, 0, 1.08));
+      break;
+    }
+
+    case 'chi_bang_giang_bai': {
+      // Giang bai soi noi: tay phai chi len cao theo nhip, tay trai mo rong dien giai, mat luoc giua bang & nguoi nghe
+      const vao = easeOutBack(kepGiaTri(fDuong / 12, 0, 1), 1.3);
+      const nhipChi = Math.sin(f * 0.21) * 11 + Math.cos(f * 0.42) * 3.5;
+      const liec = Math.sin(f * 0.085);
+      const mucTieu: ThongSoTuTheFK = {
+        offsetX: 5,
+        offsetY: Math.sin(f * 0.21) * 1.8,
+        ...baoToanCoGian(1.02 + Math.sin(f * 0.21) * 0.022),
+        gocThan: 6 + Math.sin(f * 0.21) * 2.2,
+        doCongThan: 5.2,
+        gocDau: -4 + liec * 4.5,
+        nhunVai: 2.2 + Math.max(0, Math.sin(f * 0.21)) * 2.0,
+        vaiPhaiGoc: 108 + nhipChi,
+        khuyuPhaiGoc: 24 + Math.sin(f * 0.21 - 0.5) * 8,
+        vaiTraiGoc: 32 + Math.cos(f * 0.17) * 9,
+        khuyuTraiGoc: 52 + Math.sin(f * 0.17) * 8,
+        duiPhaiGoc: 15,
+        goiPhaiGoc: -14,
+        duiTraiGoc: -14,
+        goiTraiGoc: -11,
+        nhayY: 0,
+        dichNgangNoiBo: 0,
+        khoaMatDat: true,
+        coVetBui: false,
+        huongNhinX: 1.3 + liec * 0.6,
+        huongNhinY: -0.9 + Math.sin(f * 0.21) * 0.4,
+      };
+      ketQua = tronTuTheFK(trungTinh, mucTieu, kepGiaTri(vao, 0, 1.08));
+      break;
+    }
+
+    case 'quay_nhin_doi_thoai': {
+      // Tu the doi thoai tu nhien: nghieng nhe ve doi phuong, gat nhe & cu chi tay mem mai
+      const nhipTroChuyen = Math.sin(f * 0.17);
+      const mucTieu: ThongSoTuTheFK = {
+        offsetX: 3,
+        offsetY: tho * 1.3,
+        ...baoToanCoGian(1.0 + tho * 0.018),
+        gocThan: 5 + nhipTroChuyen * 2.0,
+        doCongThan: 3.2,
+        gocDau: 2 + Math.sin(f * 0.19) * 4.5,
+        nhunVai: 1.2 + Math.max(0, nhipTroChuyen) * 1.4,
+        vaiPhaiGoc: 42 + nhipTroChuyen * 10,
+        khuyuPhaiGoc: 48 + Math.cos(f * 0.17) * 9,
+        vaiTraiGoc: 20 - nhipTroChuyen * 6,
+        khuyuTraiGoc: 44 + Math.sin(f * 0.15) * 6,
+        duiPhaiGoc: 13,
+        goiPhaiGoc: -12,
+        duiTraiGoc: -12,
+        goiTraiGoc: -10,
+        nhayY: 0,
+        dichNgangNoiBo: 0,
+        khoaMatDat: true,
+        coVetBui: false,
+        huongNhinX: 1.8,
+        huongNhinY: -0.1,
+      };
+      ketQua = tronTuTheFK(trungTinh, mucTieu, vaoThe10);
+      break;
+    }
+
+    case 'bat_tay': {
+      // Dua tay phai ve truoc bat tay nhip nhang (lac len xuong 2-3 nhip/giay)
+      const sp = springTatDinh(fDuong, 11, 195);
+      const lacTay = fDuong >= 6 ? Math.sin((f - 6) * 0.38) : 0;
+      const mucTieu: ThongSoTuTheFK = {
+        offsetX: 9,
+        offsetY: 1.5 + Math.abs(lacTay) * 1.6,
+        ...baoToanCoGian(1.0 - Math.abs(lacTay) * 0.02),
+        gocThan: 9 + lacTay * 2.2,
+        doCongThan: -2.5,
+        gocDau: 3 + lacTay * 3.5,
+        nhunVai: 1.8 + lacTay * 1.5,
+        vaiPhaiGoc: 68 + lacTay * 11,
+        khuyuPhaiGoc: 22 - lacTay * 7,
+        vaiTraiGoc: -18,
+        khuyuTraiGoc: 24,
+        duiPhaiGoc: 17,
+        goiPhaiGoc: -15,
+        duiTraiGoc: -14,
+        goiTraiGoc: -11,
+        nhayY: 0,
+        dichNgangNoiBo: 0,
+        khoaMatDat: true,
+        coVetBui: false,
+        huongNhinX: 1.7,
+        huongNhinY: 0,
+      };
+      ketQua = tronTuTheFK(trungTinh, mucTieu, kepGiaTri(sp, 0, 1.08));
+      break;
+    }
+
+    case 'giat_minh_bat_day': {
+      // Lay da ngan (0..6) -> bat day manh bang springTatDinh (6..22) -> tho doc tinh tao
+      if (fDuong < 6) {
+        const t = easeInOutCubic(fDuong / 6);
+        const { squashX, squashY } = baoToanCoGian(noiSuy(1, 0.82, t));
+        ketQua = {
+          ...trungTinh,
+          offsetY: t * 18,
+          squashX,
+          squashY,
+          gocThan: t * 11,
+          doCongThan: -10 * t,
+          gocDau: 4 * t,
+          nhunVai: -3 * t,
+          vaiPhaiGoc: noiSuy(16, -22, t),
+          khuyuPhaiGoc: noiSuy(20, 62, t),
+          vaiTraiGoc: noiSuy(-16, -26, t),
+          khuyuTraiGoc: noiSuy(18, 56, t),
+          duiPhaiGoc: noiSuy(12, 32, t),
+          goiPhaiGoc: noiSuy(-12, -52, t),
+          duiTraiGoc: noiSuy(-11, 18, t),
+          goiTraiGoc: noiSuy(-8, -46, t),
+          nhayY: 0,
+          khoaMatDat: true,
+          coVetBui: false,
+          huongNhinX: 0.4,
+          huongNhinY: -0.4,
+        };
+      } else {
+        const fBat = fDuong - 6;
+        const sp = springTatDinh(fBat, 9, 225);
+        const batNhay = fBat < 14 ? -Math.sin((fBat / 14) * Math.PI) * 28 : 0;
+        const sy =
+          fBat < 8
+            ? noiSuy(0.86, 1.18, fBat / 8)
+            : noiSuy(1.18, 1.02 + Math.sin(f * 0.24) * 0.02, kepGiaTri((fBat - 8) / 14, 0, 1));
+        const { squashX, squashY } = baoToanCoGian(sy);
+        const rung = Math.sin(f * 0.34) * Math.exp(-fBat / 24);
+        ketQua = {
+          ...trungTinh,
+          offsetX: -4 * kepGiaTri(sp, 0, 1),
+          offsetY: batNhay + tho * 1.4,
+          squashX,
+          squashY,
+          gocThan: -7 * kepGiaTri(sp, 0, 1.1) + rung * 3,
+          doCongThan: 8 * kepGiaTri(sp, 0, 1),
+          gocDau: -8 * kepGiaTri(sp, 0, 1) + rung * 3,
+          nhunVai: 5.5 * kepGiaTri(sp, 0, 1),
+          vaiPhaiGoc: noiSuy(-10, 118, kepGiaTri(sp, 0, 1.12)) + rung * 10,
+          khuyuPhaiGoc: noiSuy(54, 32, kepGiaTri(sp, 0, 1)),
+          vaiTraiGoc: noiSuy(-18, -112, kepGiaTri(sp, 0, 1.12)) - rung * 10,
+          khuyuTraiGoc: noiSuy(48, 28, kepGiaTri(sp, 0, 1)),
+          duiPhaiGoc: 18,
+          goiPhaiGoc: -16,
+          duiTraiGoc: -18,
+          goiTraiGoc: -14,
+          nhayY: batNhay,
+          dichNgangNoiBo: 0,
+          khoaMatDat: batNhay >= -2,
+          coVetBui: fBat < 7,
+          huongNhinX: 0.9,
+          huongNhinY: -0.5,
+        };
+      }
+      break;
+    }
+
+    case 'quay_nhin_khan_gia': {
+      // Xoay thang ve phia ong kinh, tay phai vay chao / gioi thieu tuong tac voi khan gia
+      const vao = easeOutBack(kepGiaTri(fDuong / 12, 0, 1), 1.35);
+      const vay = Math.sin(f * 0.28) * 14;
+      const mucTieu: ThongSoTuTheFK = {
+        offsetX: 0,
+        offsetY: Math.sin(f * 0.14) * 1.5,
+        ...baoToanCoGian(1.02 + Math.sin(f * 0.14) * 0.018),
+        gocThan: -2 + Math.sin(f * 0.14) * 1.4,
+        doCongThan: 4,
+        gocDau: Math.sin(f * 0.16) * 3.5,
+        nhunVai: 1.8,
+        vaiPhaiGoc: 124 + vay * 0.6,
+        khuyuPhaiGoc: 36 + vay * 0.8,
+        vaiTraiGoc: 24 + Math.cos(f * 0.16) * 5,
+        khuyuTraiGoc: 48 + Math.sin(f * 0.16) * 5,
+        duiPhaiGoc: 13,
+        goiPhaiGoc: -12,
+        duiTraiGoc: -13,
+        goiTraiGoc: -11,
+        nhayY: 0,
+        dichNgangNoiBo: 0,
+        khoaMatDat: true,
+        coVetBui: false,
+        huongNhinX: 0,
+        huongNhinY: 0,
+      };
+      ketQua = tronTuTheFK(trungTinh, mucTieu, kepGiaTri(vao, 0, 1.08));
+      break;
+    }
+
     case 'dung_tho':
     default:
       ketQua = trungTinh;
@@ -949,7 +1214,7 @@ export function tinhGocKhopDongTac(
   // Lop cu chi khi dang noi (dangNoi = true): cong them nhip vung tay, gat nhe dau, nhun vai
   if (dangNoi) {
     const heSoNoi =
-      hanhDong === 'sup_do_tuyet_vong'
+      hanhDong === 'sup_do_tuyet_vong' || hanhDong === 'ho_het_sung_suong'
         ? 0.25
         : hanhDong === 'giat_minh_nhay_dung' && !ketQua.khoaMatDat
           ? 0.2
@@ -966,12 +1231,30 @@ export function tinhGocKhopDongTac(
     ketQua.gocThan += Math.sin(f * 0.18) * 1.6 * heSoNoi;
     ketQua.doCongThan += Math.sin(f * 0.24) * 1.8 * heSoNoi;
 
-    // Vung tay bieu cam nhe khi ke chuyen (tranh pha tu the khoanh tay / chap sau lung)
-    if (hanhDong !== 'khoanh_tay_tu_man' && hanhDong !== 'di_qua_di_lai') {
+    // Vung tay bieu cam nhe khi ke chuyen (tranh pha tu the khoanh tay / chap sau lung / an mung)
+    if (
+      hanhDong !== 'khoanh_tay_tu_man' &&
+      hanhDong !== 'di_qua_di_lai' &&
+      hanhDong !== 'ho_het_sung_suong' &&
+      hanhDong !== 'bat_tay' &&
+      hanhDong !== 'trao_thu'
+    ) {
       ketQua.vaiPhaiGoc += nhipTay * 11 * heSoNoi;
       ketQua.khuyuPhaiGoc += Math.sin(f * 0.22 - 0.5) * 12 * heSoNoi;
       ketQua.vaiTraiGoc += Math.cos(f * 0.2) * 5.5 * heSoNoi;
     }
+  }
+
+  // Kep cung goc xoay dau an toan (dac biet chat hon voi dong tac nhay an mung / nhay dung / giat minh)
+  if (
+    hanhDong === 'ho_het_sung_suong' ||
+    hanhDong === 'giat_minh_nhay_dung' ||
+    hanhDong === 'giat_minh_bat_day'
+  ) {
+    ketQua.gocDau = kepGiaTri(ketQua.gocDau, -12, 12);
+    ketQua.gocThan = kepGiaTri(ketQua.gocThan, -10, 14);
+  } else {
+    ketQua.gocDau = kepGiaTri(ketQua.gocDau, -18, 22);
   }
 
   return ketQua;

@@ -1,16 +1,35 @@
 import React from 'react';
 import { useCurrentFrame } from 'remotion';
-import type { LoaiBoiCanh, LoaiThoiTiet } from '../kieu_dai';
+import type {
+  LoaiBoiCanh,
+  LoaiThoiTiet,
+  VatTheXungQuanh,
+} from '../kieu_dai';
 import { bamTatDinh } from '../vfx/tat_dinh';
 import { useCameraParallax } from '../vfx/MayQuayDong';
 import { kepGiaTri } from '../xuong/duong_cong';
+import {
+  CangBienTauThuy,
+  DuongPhoXeCo,
+  GiangDuongDaiHoc,
+  KhongGianVuTruToan,
+  LangQueAnDoADong,
+  NhaCoPhongSinh,
+  PhongBenhVien,
+  PhongThiNghiemCo,
+  PhongTroBepLua,
+  SanTruongCoDien,
+} from './BoiCanhMoi';
+import { SinhVatVaMoiTruong } from './SinhVatVaMoiTruong';
 
 type BoiCanhHoatHinhProps = {
   loai: LoaiBoiCanh;
   thoiTiet?: LoaiThoiTiet;
+  vatTheXungQuanh?: readonly VatTheXungQuanh[];
+  bienSoXe?: string;
 };
 
-type ParallaxOffset = {
+export type ParallaxOffset = {
   // Dich chuyen tuong doi ben trong MayQuayDong (da di chuyen 1.0x):
   // Lop 1 (troi 0.2x) bu tru -0.8 * pan; Lop 2 (nui/den/nha 0.5x) bu tru -0.5 * pan; Lop 3 (cay/san 1.0x) = 0
   lop1X: number;
@@ -35,7 +54,7 @@ function tinhParallax(panX: number, panY: number): ParallaxOffset {
 }
 
 /** Cum may trang bong benh troi tat dinh theo frame */
-const CumMay: React.FC<{
+export const CumMay: React.FC<{
   xGoc: number;
   y: number;
   tiLe: number;
@@ -57,7 +76,7 @@ const CumMay: React.FC<{
 };
 
 /** Canh chim bay xa vo canh mem 2 doan tat dinh */
-const ChimBay: React.FC<{
+export const ChimBay: React.FC<{
   xGoc: number;
   yGoc: number;
   tocDo: number;
@@ -85,7 +104,7 @@ const ChimBay: React.FC<{
 };
 
 /** Dai song nuoc cuon lien mach bang duong cong sin muot */
-const DaiSongCuon: React.FC<{
+export const DaiSongCuon: React.FC<{
   y: number;
   bienDo: number;
   buocSong: number;
@@ -121,6 +140,39 @@ const DaiSongCuon: React.FC<{
     />
   );
 };
+
+/** Nen tinh (React.memo) cho BoBienHyLap: giam re-render SVG nang tren CI */
+const BoBienHyLapDenTinh = React.memo(() => (
+  <g>
+    {/* Vach da trang ben trai + hang cot Doric */}
+    <path d="M -220 360 Q 170 340 360 390 Q 520 430 610 560 L -220 580 Z" fill="#F1F5F9" />
+    <path d="M -220 420 Q 190 400 350 450 L 490 580 L -220 580 Z" fill="#E2E8F0" />
+    {/* Mai den & 4 cot da co dai tren doi */}
+    <g transform="translate(88, 226)">
+      <polygon points="-14,48 164,-12 342,48" fill="#F8FAFC" stroke="#CBD5E1" strokeWidth={4} strokeLinejoin="round" />
+      <rect x={-4} y={48} width={336} height={18} fill="#E2E8F0" stroke="#CBD5E1" strokeWidth={2} />
+      {[24, 108, 192, 276].map((cx) => (
+        <g key={`cot-${cx}`}>
+          <rect x={cx - 6} y={66} width={36} height={10} rx={2} fill="#F1F5F9" stroke="#CBD5E1" strokeWidth={2} />
+          <rect x={cx} y={76} width={24} height={148} fill="#F8FAFC" stroke="#CBD5E1" strokeWidth={2} />
+          <line x1={cx + 8} y1={78} x2={cx + 8} y2={222} stroke="#E2E8F0" strokeWidth={2} />
+          <line x1={cx + 16} y1={78} x2={cx + 16} y2={222} stroke="#E2E8F0" strokeWidth={2} />
+        </g>
+      ))}
+      <rect x={-12} y={224} width={352} height={18} fill="#E2E8F0" />
+    </g>
+  </g>
+));
+
+const BoBienHyLapSanTinh = React.memo(() => (
+  <g>
+    <path d="M -180 710 Q 520 676 1080 698 Q 1560 716 2100 688 L 2100 1180 L -180 1180 Z" fill="url(#hyLapSan)" />
+    <path d="M -180 738 Q 640 710 1280 732 Q 1620 742 2100 722" fill="none" stroke="#D6B98C" strokeWidth={5} />
+    {[180, 460, 780, 1120, 1460, 1740].map((gx, i) => (
+      <ellipse key={`da-${i}`} cx={gx} cy={835 + (i % 2) * 34} rx={58} ry={13} fill="#D6B98C" fillOpacity={0.38} />
+    ))}
+  </g>
+));
 
 /** 1. Bo bien Hy Lap co dai: mat troi ben trai (~30% be ngang), parallax 3 lop, song cuon & tan o-liu lech pha */
 const BoBienHyLap: React.FC<{
@@ -224,33 +276,12 @@ const BoBienHyLap: React.FC<{
           <path d="M -1 -48 Q -24 -20 -18 4 L -1 4 Z" fill="#FEF3C7" stroke="#E2E8F0" strokeWidth={1.5} />
         </g>
 
-        {/* Vach da trang ben trai + hang cot Doric */}
-        <path d="M -220 360 Q 170 340 360 390 Q 520 430 610 560 L -220 580 Z" fill="#F1F5F9" />
-        <path d="M -220 420 Q 190 400 350 450 L 490 580 L -220 580 Z" fill="#E2E8F0" />
-
-        {/* Mai den & 4 cot da co dai tren doi */}
-        <g transform="translate(88, 226)">
-          <polygon points="-14,48 164,-12 342,48" fill="#F8FAFC" stroke="#CBD5E1" strokeWidth={4} strokeLinejoin="round" />
-          <rect x={-4} y={48} width={336} height={18} fill="#E2E8F0" stroke="#CBD5E1" strokeWidth={2} />
-          {[24, 108, 192, 276].map((cx) => (
-            <g key={`cot-${cx}`}>
-              <rect x={cx - 6} y={66} width={36} height={10} rx={2} fill="#F1F5F9" stroke="#CBD5E1" strokeWidth={2} />
-              <rect x={cx} y={76} width={24} height={148} fill="#F8FAFC" stroke="#CBD5E1" strokeWidth={2} />
-              <line x1={cx + 8} y1={78} x2={cx + 8} y2={222} stroke="#E2E8F0" strokeWidth={2} />
-              <line x1={cx + 16} y1={78} x2={cx + 16} y2={222} stroke="#E2E8F0" strokeWidth={2} />
-            </g>
-          ))}
-          <rect x={-12} y={224} width={352} height={18} fill="#E2E8F0" />
-        </g>
+        <BoBienHyLapDenTinh />
       </g>
 
       {/* LOP 3 (Parallax 1.0x): San da vang am tien canh & cay o-liu tan la dung dua lech pha */}
       <g transform={`translate(${px.lop3X.toFixed(1)}, ${px.lop3Y.toFixed(1)})`}>
-        <path d="M -180 710 Q 520 676 1080 698 Q 1560 716 2100 688 L 2100 1180 L -180 1180 Z" fill="url(#hyLapSan)" />
-        <path d="M -180 738 Q 640 710 1280 732 Q 1620 742 2100 722" fill="none" stroke="#D6B98C" strokeWidth={5} />
-        {[180, 460, 780, 1120, 1460, 1740].map((gx, i) => (
-          <ellipse key={`da-${i}`} cx={gx} cy={835 + (i % 2) * 34} rx={58} ry={13} fill="#D6B98C" fillOpacity={0.38} />
-        ))}
+        <BoBienHyLapSanTinh />
 
         {/* Bui co xanh ven bo da lac nhe */}
         <g>
@@ -616,14 +647,9 @@ const RungNuiThienNhien: React.FC<{ frame: number; px: ParallaxOffset }> = ({
   );
 };
 
-/** 5. Thu vien co dien: parallax 3 lop (troi ngoai cua so 0.2x, gia sach 0.5x, san & ban go 1.0x) */
-const ThuVienCoDien: React.FC<{ frame: number; px: ParallaxOffset }> = ({
-  frame,
-  px,
-}) => {
-  const ngonNen = Math.sin(frame * 0.28) * 3;
+/** Nen tinh (React.memo) cho ThuVienCoDien: ke sach nhieu chi tiet khong re-render moi frame */
+const KeSachThuVienCoDienTinh = React.memo(() => {
   const mauSach = ['#DC2626', '#2563EB', '#15803D', '#D97706', '#7C3AED', '#0F766E'];
-
   const veKeSach = (x0: number) => (
     <g key={`ke-${x0}`}>
       <rect x={x0} y={90} width={420} height={630} rx={8} fill="#451A03" stroke="#78350F" strokeWidth={6} />
@@ -657,6 +683,20 @@ const ThuVienCoDien: React.FC<{ frame: number; px: ParallaxOffset }> = ({
       })}
     </g>
   );
+  return (
+    <g>
+      {veKeSach(120)}
+      {veKeSach(1380)}
+    </g>
+  );
+});
+
+/** 5. Thu vien co dien: parallax 3 lop (troi ngoai cua so 0.2x, gia sach 0.5x, san & ban go 1.0x) */
+const ThuVienCoDien: React.FC<{ frame: number; px: ParallaxOffset }> = ({
+  frame,
+  px,
+}) => {
+  const ngonNen = Math.sin(frame * 0.28) * 3;
 
   return (
     <g>
@@ -688,8 +728,7 @@ const ThuVienCoDien: React.FC<{ frame: number; px: ParallaxOffset }> = ({
           <line x1={8} y1={390} x2={532} y2={390} stroke="#92400E" strokeWidth={10} />
         </g>
 
-        {veKeSach(120)}
-        {veKeSach(1380)}
+        <KeSachThuVienCoDienTinh />
       </g>
 
       {/* LOP 3 (1.0x): San go & ban lam viec */}
@@ -730,6 +769,38 @@ const ThuVienCoDien: React.FC<{ frame: number; px: ParallaxOffset }> = ({
   );
 };
 
+/** Nen tinh (React.memo) cho LopHocBangXanh & ThuVienTrungCo & QuangTruongHyLap */
+const LopHocBangXanhNenTinh = React.memo(() => (
+  <g>
+    <rect x={-200} y={-100} width={2320} height={860} fill="url(#lopTuong)" />
+    <rect x={-200} y={645} width={2320} height={100} fill="#E7D3B1" />
+    <rect x={-200} y={638} width={2320} height={14} fill="#C29B61" />
+    <polygon points="0,40 240,40 520,745 0,745" fill="#FEF08A" fillOpacity={0.18} />
+    <rect x={545} y={76} width={1320} height={588} rx={16} fill="#14532D" stroke="#92400E" strokeWidth={16} />
+    <rect x={562} y={93} width={1286} height={554} rx={8} fill="#114226" />
+    <rect x={530} y={658} width={1350} height={22} rx={6} fill="#B45309" stroke="#78350F" strokeWidth={3} />
+    <rect x={630} y={646} width={44} height={12} rx={4} fill="#F8FAFC" />
+    <rect x={686} y={646} width={36} height={12} rx={4} fill="#FEF08A" />
+    <rect x={734} y={646} width={36} height={12} rx={4} fill="#7DD3FC" />
+    <rect x={1690} y={636} width={78} height={22} rx={5} fill="#78350F" />
+    <rect x={1696} y={630} width={66} height={10} rx={3} fill="#D97706" />
+    <g transform="translate(155, 165)">
+      <circle cx={0} cy={0} r={54} fill="#FFFFFF" stroke="#92400E" strokeWidth={7} />
+      {[0, 3, 6, 9].map((h) => {
+        const g = (h / 12) * Math.PI * 2 - Math.PI / 2;
+        return <circle key={`gio-${h}`} cx={Math.cos(g) * 40} cy={Math.sin(g) * 40} r={3.5} fill="#334155" />;
+      })}
+      <line x1={0} y1={0} x2={0} y2={-28} stroke="#1E293B" strokeWidth={4} strokeLinecap="round" />
+      <line x1={0} y1={0} x2={22} y2={8} stroke="#DC2626" strokeWidth={3} strokeLinecap="round" />
+      <circle cx={0} cy={0} r={4.5} fill="#1E293B" />
+    </g>
+    <g transform="translate(340, 128) rotate(8)" opacity={0.85}>
+      <polygon points="0,0 130,0 0,92" fill="#FDE68A" stroke="#B45309" strokeWidth={4} strokeLinejoin="round" />
+      <polygon points="18,16 82,16 18,62" fill="#FEFCE8" stroke="#B45309" strokeWidth={2.5} strokeLinejoin="round" />
+    </g>
+  </g>
+));
+
 /** 6. Lop hoc bang xanh: sang sua am ap, bang xanh lon vien go, toi uu doc cong thuc Toan */
 const LopHocBangXanh: React.FC<{ frame: number; px: ParallaxOffset }> = ({
   frame,
@@ -750,38 +821,9 @@ const LopHocBangXanh: React.FC<{ frame: number; px: ParallaxOffset }> = ({
       </defs>
 
       <g transform={`translate(${(px.lop2X * 0.4).toFixed(1)}, ${(px.lop2Y * 0.35).toFixed(1)})`}>
-        <rect x={-200} y={-100} width={2320} height={860} fill="url(#lopTuong)" />
-        <rect x={-200} y={645} width={2320} height={100} fill="#E7D3B1" />
-        <rect x={-200} y={638} width={2320} height={14} fill="#C29B61" />
-
-        <polygon points="0,40 240,40 520,745 0,745" fill="#FEF08A" fillOpacity={0.18} />
+        <LopHocBangXanhNenTinh />
         <circle cx={190 + buiNang} cy={220} r={4} fill="#FFFFFF" fillOpacity={0.65} />
         <circle cx={270 - buiNang} cy={350} r={3} fill="#FFFFFF" fillOpacity={0.55} />
-
-        <rect x={545} y={76} width={1320} height={588} rx={16} fill="#14532D" stroke="#92400E" strokeWidth={16} />
-        <rect x={562} y={93} width={1286} height={554} rx={8} fill="#114226" />
-        <rect x={530} y={658} width={1350} height={22} rx={6} fill="#B45309" stroke="#78350F" strokeWidth={3} />
-        <rect x={630} y={646} width={44} height={12} rx={4} fill="#F8FAFC" />
-        <rect x={686} y={646} width={36} height={12} rx={4} fill="#FEF08A" />
-        <rect x={734} y={646} width={36} height={12} rx={4} fill="#7DD3FC" />
-        <rect x={1690} y={636} width={78} height={22} rx={5} fill="#78350F" />
-        <rect x={1696} y={630} width={66} height={10} rx={3} fill="#D97706" />
-
-        <g transform="translate(155, 165)">
-          <circle cx={0} cy={0} r={54} fill="#FFFFFF" stroke="#92400E" strokeWidth={7} />
-          {[0, 3, 6, 9].map((h) => {
-            const g = (h / 12) * Math.PI * 2 - Math.PI / 2;
-            return <circle key={`gio-${h}`} cx={Math.cos(g) * 40} cy={Math.sin(g) * 40} r={3.5} fill="#334155" />;
-          })}
-          <line x1={0} y1={0} x2={0} y2={-28} stroke="#1E293B" strokeWidth={4} strokeLinecap="round" />
-          <line x1={0} y1={0} x2={22} y2={8} stroke="#DC2626" strokeWidth={3} strokeLinecap="round" />
-          <circle cx={0} cy={0} r={4.5} fill="#1E293B" />
-        </g>
-
-        <g transform="translate(340, 128) rotate(8)" opacity={0.85}>
-          <polygon points="0,0 130,0 0,92" fill="#FDE68A" stroke="#B45309" strokeWidth={4} strokeLinejoin="round" />
-          <polygon points="18,16 82,16 18,62" fill="#FEFCE8" stroke="#B45309" strokeWidth={2.5} strokeLinejoin="round" />
-        </g>
       </g>
 
       <rect x={-180} y={745} width={2280} height={420} fill="url(#lopSan)" />
@@ -943,6 +985,387 @@ const PhongNenHaiHuoc: React.FC<{ frame: number; px: ParallaxOffset }> = ({
   );
 };
 
+/** 9. Quang truong & Den Hy Lap co dai (Agora / Acropolis): parallax 3 lop (0.2x / 0.5x / 1.0x) */
+const QuangTruongHyLap: React.FC<{ frame: number; px: ParallaxOffset }> = ({
+  frame,
+  px,
+}) => {
+  const duaLa = Math.sin(frame * 0.065) * 4.5;
+  return (
+    <g>
+      <defs>
+        <linearGradient id="agoraTroi" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0284C7" />
+          <stop offset="55%" stopColor="#7DD3FC" />
+          <stop offset="100%" stopColor="#FEF3C7" />
+        </linearGradient>
+        <linearGradient id="agoraSan" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#F5E6CA" />
+          <stop offset="100%" stopColor="#D6BE96" />
+        </linearGradient>
+      </defs>
+
+      {/* LOP 1 (0.2x): Troi xanh Dia Trung Hai, mat troi trai, may & chim */}
+      <g transform={`translate(${px.lop1X.toFixed(1)}, ${px.lop1Y.toFixed(1)})`}>
+        <rect x={-260} y={-120} width={2440} height={740} fill="url(#agoraTroi)" />
+        <g transform="translate(520, 175)">
+          <circle cx={0} cy={0} r={130 + Math.sin(frame * 0.05) * 4} fill="#FEF08A" fillOpacity={0.16} />
+          <circle cx={0} cy={0} r={82} fill="#FEF9C3" fillOpacity={0.28} />
+          <circle cx={0} cy={0} r={52} fill="#FFFBEB" />
+        </g>
+        <CumMay xGoc={140} y={135} tiLe={1.25} tocDo={0.35} frame={frame} />
+        <CumMay xGoc={960} y={96} tiLe={1.08} tocDo={0.25} frame={frame} />
+        <ChimBay xGoc={380} yGoc={215} tocDo={1.3} tiLe={0.88} frame={frame} pha={0.6} mau="#0C4A6E" />
+        <ChimBay xGoc={435} yGoc={190} tocDo={1.22} tiLe={0.75} frame={frame} pha={1.9} mau="#0C4A6E" />
+      </g>
+
+      {/* LOP 2 (0.5x): Doi Acropolis, den Parthenon hung vi & hang cay bach */}
+      <g transform={`translate(${px.lop2X.toFixed(1)}, ${px.lop2Y.toFixed(1)})`}>
+        <path d="M -220 560 Q 320 420 760 470 Q 1240 510 1620 430 Q 1860 390 2140 470 L 2140 760 L -220 760 Z" fill="#CBD5E1" />
+        <path d="M -220 605 Q 480 510 1040 555 Q 1520 590 2140 520 L 2140 780 L -220 780 Z" fill="#94A3B8" fillOpacity={0.55} />
+
+        {/* Den Parthenon trung tam lech phai */}
+        <g transform="translate(860, 235)">
+          <polygon points="-24,62 290,-18 604,62" fill="#F8FAFC" stroke="#94A3B8" strokeWidth={5} strokeLinejoin="round" />
+          <polygon points="36,52 290,4 544,52" fill="#E2E8F0" />
+          <rect x={-12} y={62} width={604} height={24} fill="#E2E8F0" stroke="#94A3B8" strokeWidth={3} />
+          {[22, 114, 206, 298, 390, 482].map((cx) => (
+            <g key={`ag-cot-${cx}`}>
+              <rect x={cx - 8} y={86} width={44} height={12} rx={2} fill="#F1F5F9" stroke="#94A3B8" strokeWidth={2} />
+              <rect x={cx} y={98} width={28} height={206} fill="#FFFDF7" stroke="#CBD5E1" strokeWidth={2.5} />
+              <line x1={cx + 9} y1={100} x2={cx + 9} y2={302} stroke="#E2E8F0" strokeWidth={2} />
+              <line x1={cx + 19} y1={100} x2={cx + 19} y2={302} stroke="#E2E8F0" strokeWidth={2} />
+            </g>
+          ))}
+          <rect x={-26} y={304} width={632} height={18} fill="#E2E8F0" stroke="#94A3B8" strokeWidth={2} />
+          <rect x={-42} y={322} width={664} height={20} fill="#CBD5E1" stroke="#94A3B8" strokeWidth={2} />
+        </g>
+
+        {/* Hang cay bach Dia Trung Hai */}
+        {[170, 255, 620, 1610, 1715].map((tx, idx) => (
+          <g key={`bach-${idx}`} transform={`translate(${tx}, 580)`}>
+            <rect x={-6} y={-20} width={12} height={36} fill="#78350F" />
+            <ellipse cx={duaLa * 0.25} cy={-95} rx={24} ry={82} fill={idx % 2 === 0 ? '#15803D' : '#166534'} />
+          </g>
+        ))}
+      </g>
+
+      {/* LOP 3 (1.0x): Quang truong lat da cam thach, hang cot tien canh trai & chau cay o-liu */}
+      <g transform={`translate(${px.lop3X.toFixed(1)}, ${px.lop3Y.toFixed(1)})`}>
+        <rect x={-180} y={678} width={2280} height={480} fill="url(#agoraSan)" />
+        <rect x={-180} y={670} width={2280} height={18} fill="#FFFBEB" stroke="#C2A378" strokeWidth={3} />
+        {[745, 825, 915, 1010].map((ly) => (
+          <line key={`ag-l-${ly}`} x1={-180} y1={ly} x2={2100} y2={ly} stroke="#C2A378" strokeOpacity={0.5} strokeWidth={2.5} />
+        ))}
+        {[-60, 220, 520, 820, 1120, 1420, 1720, 1980].map((gx, i) => (
+          <line key={`ag-v-${i}`} x1={gx} y1={688} x2={gx - 120 + i * 32} y2={1120} stroke="#C2A378" strokeOpacity={0.35} strokeWidth={2.5} />
+        ))}
+
+        {/* Cot da tien canh trai */}
+        <g transform="translate(82, 220)">
+          <rect x={-14} y={0} width={92} height={24} rx={4} fill="#F1F5F9" stroke="#94A3B8" strokeWidth={3} />
+          <rect x={0} y={24} width={64} height={476} fill="#FFFDF7" stroke="#CBD5E1" strokeWidth={3} />
+          <line x1={20} y1={28} x2={20} y2={494} stroke="#E2E8F0" strokeWidth={3} />
+          <line x1={44} y1={28} x2={44} y2={494} stroke="#E2E8F0" strokeWidth={3} />
+          <rect x={-16} y={498} width={96} height={28} rx={4} fill="#E2E8F0" stroke="#94A3B8" strokeWidth={3} />
+        </g>
+
+        {/* Chau gom co & nhanh o-liu ben phai */}
+        <g transform="translate(1785, 720)">
+          <path d="M -38 0 L 38 0 L 52 -58 L -52 -58 Z" fill="#C2410C" stroke="#7C2D12" strokeWidth={3.5} />
+          <rect x={-58} y={-70} width={116} height={14} rx={5} fill="#EA580C" stroke="#7C2D12" strokeWidth={3} />
+          <g transform={`translate(${duaLa.toFixed(1)}, 0)`}>
+            <ellipse cx={-28} cy={-112} rx={46} ry={34} fill="#4D7C0F" />
+            <ellipse cx={26} cy={-118} rx={48} ry={36} fill="#65A30D" />
+            <ellipse cx={0} cy={-148} rx={44} ry={32} fill="#84CC16" />
+          </g>
+        </g>
+      </g>
+    </g>
+  );
+};
+
+/** 10. Thu vien Trung Co (Scriptorium / Gothic): parallax 3 lop (troi cua so kinh mau 0.2x, vom da & gia cuon giay 0.5x, san da & buc doc sach 1.0x) */
+const ThuVienTrungCo: React.FC<{ frame: number; px: ParallaxOffset }> = ({
+  frame,
+  px,
+}) => {
+  const rungNen = Math.sin(frame * 0.26) * 2.5;
+  return (
+    <g>
+      <defs>
+        <linearGradient id="tcTuong" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#334155" />
+          <stop offset="100%" stopColor="#1E293B" />
+        </linearGradient>
+        <linearGradient id="tcKinh" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#38BDF8" />
+          <stop offset="50%" stopColor="#A855F7" />
+          <stop offset="100%" stopColor="#F59E0B" />
+        </linearGradient>
+      </defs>
+
+      {/* LOP 1 (0.2x): Bau troi & tia sang sau cua so kinh mau Gothic */}
+      <g transform={`translate(${px.lop1X.toFixed(1)}, ${px.lop1Y.toFixed(1)})`}>
+        <rect x={-260} y={-120} width={2440} height={880} fill="url(#tcTuong)" />
+        {[680, 960, 1240].map((wx, wi) => (
+          <g key={`tc-win-${wi}`} transform={`translate(${wx}, 115)`}>
+            <path d="M -85 430 L -85 120 Q -85 20 0 -20 Q 85 20 85 120 L 85 430 Z" fill="url(#tcKinh)" fillOpacity={0.82} stroke="#0F172A" strokeWidth={10} />
+            <circle cx={0} cy={78} r={34} fill="#FEF08A" fillOpacity={0.55} stroke="#1E293B" strokeWidth={5} />
+            <line x1={0} y1={-10} x2={0} y2={430} stroke="#1E293B" strokeWidth={6} />
+            <line x1={-82} y1={190} x2={82} y2={190} stroke="#1E293B" strokeWidth={6} />
+            <line x1={-82} y1={310} x2={82} y2={310} stroke="#1E293B" strokeWidth={6} />
+          </g>
+        ))}
+      </g>
+
+      {/* LOP 2 (0.5x): Vom da Gothic, ke cuon giay da & den chum nen sat */}
+      <g transform={`translate(${px.lop2X.toFixed(1)}, ${px.lop2Y.toFixed(1)})`}>
+        {/* 2 ke cuon giay da ben trai va phai */}
+        {[90, 1460].map((kx) => (
+          <g key={`tc-ke-${kx}`}>
+            <rect x={kx} y={130} width={360} height={585} rx={8} fill="#3F1D0B" stroke="#78350F" strokeWidth={7} />
+            {[0, 1, 2, 3].map((tang) => {
+              const ty = 158 + tang * 135;
+              return (
+                <g key={`tc-t-${kx}-${tang}`}>
+                  <rect x={kx + 18} y={ty} width={324} height={106} fill="#231006" />
+                  {Array.from({ length: 8 }).map((_, si) => {
+                    const laCuon = bamTatDinh(kx + tang * 19 + si * 11) > 0.45;
+                    const sx = kx + 28 + si * 39;
+                    return laCuon ? (
+                      <g key={`sc-${si}`} transform={`translate(${sx + 14}, ${ty + 54})`}>
+                        <rect x={-12} y={-36} width={24} height={74} rx={6} fill="#FEF3C7" stroke="#B45309" strokeWidth={2} />
+                        <line x1={-12} y1={0} x2={12} y2={0} stroke="#DC2626" strokeWidth={4} />
+                      </g>
+                    ) : (
+                      <rect
+                        key={`bk-${si}`}
+                        x={sx}
+                        y={ty + 18}
+                        width={28}
+                        height={88}
+                        rx={3}
+                        fill={si % 2 === 0 ? '#7C2D12' : '#1E3A8A'}
+                        stroke="#F59E0B"
+                        strokeWidth={1.6}
+                      />
+                    );
+                  })}
+                  <rect x={kx + 10} y={ty + 106} width={340} height={12} fill="#78350F" />
+                </g>
+              );
+            })}
+          </g>
+        ))}
+
+        {/* Den chum sat ren treo giua tran nha */}
+        <g transform="translate(960, 118)">
+          <line x1={0} y1={-140} x2={0} y2={48} stroke="#0F172A" strokeWidth={8} />
+          <ellipse cx={0} cy={52} rx={155} ry={18} fill="none" stroke="#1E293B" strokeWidth={10} />
+          {[-130, -45, 45, 130].map((nx, ni) => (
+            <g key={`tc-nen-${ni}`} transform={`translate(${nx}, 42)`}>
+              <rect x={-7} y={-24} width={14} height={28} rx={3} fill="#FEF3C7" />
+              <circle cx={0} cy={-38} r={28 + rungNen * 1.2} fill="#FACC15" fillOpacity={0.18} />
+              <path d={`M 0 ${(-50 + rungNen).toFixed(1)} Q 8 -36 0 -26 Q -8 -36 0 ${(-50 + rungNen).toFixed(1)} Z`} fill="#F97316" />
+              <circle cx={0} cy={-36} r={4} fill="#FEF08A" />
+            </g>
+          ))}
+        </g>
+      </g>
+
+      {/* LOP 3 (1.0x): San da xam & buc go doc ban thao */}
+      <g transform={`translate(${px.lop3X.toFixed(1)}, ${px.lop3Y.toFixed(1)})`}>
+        <rect x={-180} y={712} width={2280} height={450} fill="#475569" />
+        <rect x={-180} y={706} width={2280} height={14} fill="#64748B" />
+        {[780, 860, 950, 1040].map((sy) => (
+          <line key={`tc-s-${sy}`} x1={-180} y1={sy} x2={2100} y2={sy} stroke="#334155" strokeWidth={3} />
+        ))}
+        {/* Buc go Scriptorium ben phai */}
+        <g transform="translate(1590, 742)">
+          <rect x={-16} y={-140} width={32} height={140} fill="#78350F" stroke="#451A03" strokeWidth={3} />
+          <rect x={-64} y={-12} width={128} height={18} rx={4} fill="#451A03" />
+          <polygon points="-78,-154 78,-188 86,-168 -70,-134" fill="#B45309" stroke="#451A03" strokeWidth={4} />
+          <polygon points="-58,-156 58,-182 64,-168 -52,-142" fill="#FEF3C7" stroke="#D97706" strokeWidth={2} />
+        </g>
+      </g>
+    </g>
+  );
+};
+
+/** 11. Dai thien van Phuc Hung: parallax 3 lop (sao troi 0.2x, vom dong & tinh cau xoay 0.5x, san da & kinh thien van lon 1.0x) */
+const DaiThienVanPhucHung: React.FC<{ frame: number; px: ParallaxOffset }> = ({
+  frame,
+  px,
+}) => {
+  const gocTinhCau = (frame * 0.65) % 360;
+  return (
+    <g>
+      <defs>
+        <linearGradient id="dtvTroi" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#020617" />
+          <stop offset="60%" stopColor="#1E1B4B" />
+          <stop offset="100%" stopColor="#312E81" />
+        </linearGradient>
+        <linearGradient id="dtvVom" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#451A03" />
+          <stop offset="100%" stopColor="#291205" />
+        </linearGradient>
+      </defs>
+
+      {/* LOP 1 (0.2x): Bau troi sao lap lanh & trang khuyet qua khe mai vom */}
+      <g transform={`translate(${px.lop1X.toFixed(1)}, ${px.lop1Y.toFixed(1)})`}>
+        <rect x={-260} y={-120} width={2440} height={920} fill="url(#dtvTroi)" />
+        {Array.from({ length: 42 }).map((_, i) => {
+          const sx = 220 + bamTatDinh(i * 23 + 5) * 1480;
+          const sy = 45 + bamTatDinh(i * 37 + 11) * 520;
+          const r = 1.6 + bamTatDinh(i * 13 + 3) * 2.8;
+          const op = 0.4 + 0.6 * Math.abs(Math.sin(frame * 0.09 + i * 1.1));
+          return <circle key={`dtv-s-${i}`} cx={sx} cy={sy} r={r} fill="#FEF9C3" fillOpacity={op} />;
+        })}
+        <g transform="translate(620, 175)">
+          <circle cx={0} cy={0} r={78} fill="#FEF08A" fillOpacity={0.14} />
+          <path d="M 18 -44 A 48 48 0 1 0 18 44 A 36 36 0 1 1 18 -44 Z" fill="#FEF08A" />
+        </g>
+      </g>
+
+      {/* LOP 2 (0.5x): Khung mai vom dai thien van, ban do tinh cau & qua cau hon thien xoay */}
+      <g transform={`translate(${px.lop2X.toFixed(1)}, ${px.lop2Y.toFixed(1)})`}>
+        {/* Tuong mai vom trai va phai mo khe o giua */}
+        <path d="M -260 -120 L 660 -120 Q 430 140 360 720 L -260 720 Z" fill="url(#dtvVom)" stroke="#B45309" strokeWidth={10} />
+        <path d="M 2180 -120 L 1260 -120 Q 1490 140 1560 720 L 2180 720 Z" fill="url(#dtvVom)" stroke="#B45309" strokeWidth={10} />
+
+        {/* Ban do sao Phuc Hung treo tuong trai */}
+        <g transform="translate(175, 360)">
+          <rect x={-110} y={-135} width={220} height={270} rx={8} fill="#FEF3C7" stroke="#92400E" strokeWidth={8} />
+          <circle cx={0} cy={0} r={74} fill="none" stroke="#B45309" strokeWidth={3} />
+          <circle cx={0} cy={0} r={44} fill="none" stroke="#D97706" strokeWidth={2} strokeDasharray="5 4" />
+          <line x1={-78} y1={0} x2={78} y2={0} stroke="#92400E" strokeWidth={2} />
+          <line x1={0} y1={-78} x2={0} y2={78} stroke="#92400E" strokeWidth={2} />
+        </g>
+
+        {/* Qua cau hon thien (Armillary Sphere) xoay nhe ben phai */}
+        <g transform="translate(1720, 420)">
+          <rect x={-48} y={110} width={96} height={18} rx={5} fill="#92400E" />
+          <line x1={0} y1={80} x2={0} y2={112} stroke="#D97706" strokeWidth={10} />
+          <g transform={`rotate(${gocTinhCau.toFixed(1)})`}>
+            <circle cx={0} cy={0} r={78} fill="none" stroke="#FACC15" strokeWidth={6} />
+            <ellipse cx={0} cy={0} rx={78} ry={28} fill="none" stroke="#F59E0B" strokeWidth={4} />
+            <ellipse cx={0} cy={0} rx={28} ry={78} fill="none" stroke="#FEF08A" strokeWidth={4} />
+            <circle cx={0} cy={0} r={14} fill="#38BDF8" stroke="#FEF08A" strokeWidth={3} />
+          </g>
+        </g>
+      </g>
+
+      {/* LOP 3 (1.0x): San da dai thien van, lan can da & kinh thien van dong lon */}
+      <g transform={`translate(${px.lop3X.toFixed(1)}, ${px.lop3Y.toFixed(1)})`}>
+        <rect x={-180} y={700} width={2280} height={460} fill="#1E293B" />
+        <rect x={-180} y={692} width={2280} height={18} fill="#475569" stroke="#94A3B8" strokeWidth={2} />
+        {/* Kinh thien van Phuc Hung co lon o tien canh phai */}
+        <g transform="translate(1545, 705)">
+          <line x1={0} y1={-125} x2={-78} y2={35} stroke="#78350F" strokeWidth={14} strokeLinecap="round" />
+          <line x1={0} y1={-125} x2={68} y2={35} stroke="#78350F" strokeWidth={14} strokeLinecap="round" />
+          <g transform="translate(0, -140) rotate(-32)">
+            <rect x={-130} y={-22} width={220} height={44} rx={8} fill="#D97706" stroke="#78350F" strokeWidth={5} />
+            <rect x={85} y={-30} width={58} height={60} rx={8} fill="#F59E0B" stroke="#78350F" strokeWidth={5} />
+            <ellipse cx={144} cy={0} rx={8} ry={28} fill="#7DD3FC" stroke="#1E3A8A" strokeWidth={3} />
+            <rect x={-20} y={-24} width={18} height={48} fill="#FEF08A" />
+          </g>
+          <circle cx={0} cy={-125} r={18} fill="#FACC15" stroke="#78350F" strokeWidth={5} />
+        </g>
+      </g>
+    </g>
+  );
+};
+
+/** 12. Giang duong / phong thi nghiem hien dai: parallax 3 lop (thanh pho ngoai cua kinh 0.2x, tuong & man hinh do thi 0.5x, san go & buc giang 1.0x) */
+const GiangDuongHienDai: React.FC<{ frame: number; px: ParallaxOffset }> = ({
+  frame,
+  px,
+}) => {
+  // Song sin nhe tren man hinh hien thi toan hoc
+  const diemSong = Array.from({ length: 28 })
+    .map((_, i) => {
+      const x = 670 + i * 21;
+      const y = 315 + Math.sin(i * 0.45 + frame * 0.08) * 48;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+
+  return (
+    <g>
+      <defs>
+        <linearGradient id="gdTroi" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#38BDF8" />
+          <stop offset="100%" stopColor="#E0F2FE" />
+        </linearGradient>
+        <linearGradient id="gdTuong" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#F8FAFC" />
+          <stop offset="100%" stopColor="#E2E8F0" />
+        </linearGradient>
+      </defs>
+
+      {/* LOP 1 (0.2x): Bau troi & duong chan troi thanh pho ngoai cua kinh lon */}
+      <g transform={`translate(${px.lop1X.toFixed(1)}, ${px.lop1Y.toFixed(1)})`}>
+        <rect x={-260} y={-120} width={2440} height={820} fill="url(#gdTroi)" />
+        <CumMay xGoc={140} y={135} tiLe={0.95} tocDo={0.28} frame={frame} />
+        <CumMay xGoc={1480} y={160} tiLe={1.05} tocDo={0.32} frame={frame} />
+        {[
+          [40, 290, 95],
+          [145, 220, 110],
+          [265, 260, 85],
+          [1540, 230, 105],
+          [1660, 190, 120],
+          [1795, 270, 95],
+        ].map(([bx, by, bw], bi) => (
+          <rect key={`gd-b-${bi}`} x={bx} y={by} width={bw} height={420} fill="#94A3B8" fillOpacity={0.55} />
+        ))}
+      </g>
+
+      {/* LOP 2 (0.5x): Tuong op go tieu am, khung kinh hai ben & man hinh/bang kinh hien dai giua */}
+      <g transform={`translate(${px.lop2X.toFixed(1)}, ${px.lop2Y.toFixed(1)})`}>
+        {/* Tuong trung tam va khung cua so kinh 2 ben */}
+        <rect x={410} y={-60} width={1100} height={780} fill="url(#gdTuong)" stroke="#CBD5E1" strokeWidth={6} />
+        {/* Khung nhom cua kinh trai & phai */}
+        <line x1={180} y1={-60} x2={180} y2={720} stroke="#CBD5E1" strokeWidth={10} />
+        <line x1={1740} y1={-60} x2={1740} y2={720} stroke="#CBD5E1" strokeWidth={10} />
+        <line x1={-180} y1={420} x2={410} y2={420} stroke="#CBD5E1" strokeWidth={8} />
+        <line x1={1510} y1={420} x2={2100} y2={420} stroke="#CBD5E1" strokeWidth={8} />
+
+        {/* Thanh nan go tieu am hien dai */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <g key={`gd-nan-${i}`}>
+            <rect x={434 + i * 24} y={70} width={12} height={580} rx={3} fill="#D97706" fillOpacity={0.45} />
+            <rect x={1354 + i * 24} y={70} width={12} height={580} rx={3} fill="#D97706" fillOpacity={0.45} />
+          </g>
+        ))}
+
+        {/* Bang kinh / man hinh hien dai trung tam */}
+        <rect x={600} y={108} width={720} height={420} rx={18} fill="#0F172A" stroke="#38BDF8" strokeWidth={6} />
+        {[1, 2, 3, 4].map((gi) => (
+          <line key={`gd-gl-${gi}`} x1={624} y1={108 + gi * 84} x2={1296} y2={108 + gi * 84} stroke="#38BDF8" strokeOpacity={0.14} strokeWidth={1.5} />
+        ))}
+        <polyline points={diemSong} fill="none" stroke="#38BDF8" strokeWidth={5} strokeLinecap="round" />
+        {/* Den LED thanh tren tran */}
+        <rect x={680} y={24} width={560} height={14} rx={7} fill="#FFFFFF" stroke="#BAE6FD" strokeWidth={3} />
+      </g>
+
+      {/* LOP 3 (1.0x): San go sang & buc giang phong thi nghiem */}
+      <g transform={`translate(${px.lop3X.toFixed(1)}, ${px.lop3Y.toFixed(1)})`}>
+        <rect x={-180} y={705} width={2280} height={455} fill="#CBD5E1" />
+        <rect x={-180} y={700} width={2280} height={14} fill="#94A3B8" />
+        <rect x={280} y={714} width={1360} height={42} rx={6} fill="#B45309" stroke="#78350F" strokeWidth={3} />
+        {/* Buc giang ben phai */}
+        <g transform="translate(1585, 718)">
+          <rect x={-62} y={-142} width={124} height={142} rx={8} fill="#1E293B" stroke="#38BDF8" strokeWidth={4} />
+          <polygon points="-76,-142 76,-156 80,-138 -72,-126" fill="#334155" stroke="#94A3B8" strokeWidth={3} />
+          <rect x={-26} y={-92} width={52} height={10} rx={4} fill="#38BDF8" />
+        </g>
+      </g>
+    </g>
+  );
+};
+
 /** Lop phu thoi tiet tat dinh 100% theo frame (khong blur, khong Math.random) */
 const LopThoiTiet: React.FC<{ thoiTiet?: LoaiThoiTiet; frame: number }> = ({
   thoiTiet,
@@ -1064,6 +1487,8 @@ const LopThoiTiet: React.FC<{ thoiTiet?: LoaiThoiTiet; frame: number }> = ({
 export const BoiCanhHoatHinh: React.FC<BoiCanhHoatHinhProps> = ({
   loai,
   thoiTiet = 'khong',
+  vatTheXungQuanh,
+  bienSoXe,
 }) => {
   const frame = useCurrentFrame();
   const cam = useCameraParallax();
@@ -1085,6 +1510,34 @@ export const BoiCanhHoatHinh: React.FC<BoiCanhHoatHinhProps> = ({
         return <LopHocBangXanh frame={frame} px={px} />;
       case 'bau_troi_dem_vu_tru':
         return <BauTroiDemVuTru frame={frame} px={px} />;
+      case 'quang_truong_hy_lap':
+        return <QuangTruongHyLap frame={frame} px={px} />;
+      case 'thu_vien_trung_co':
+        return <ThuVienTrungCo frame={frame} px={px} />;
+      case 'dai_thien_van_phuc_hung':
+        return <DaiThienVanPhucHung frame={frame} px={px} />;
+      case 'giang_duong_hien_dai':
+        return <GiangDuongHienDai frame={frame} px={px} />;
+      case 'nha_co_phong_sinh':
+        return <NhaCoPhongSinh frame={frame} px={px} />;
+      case 'cang_bien_tau_thuy':
+        return <CangBienTauThuy frame={frame} px={px} laHoangHon={thoiTiet === 'hoang_hon'} />;
+      case 'phong_tro_bep_lua':
+        return <PhongTroBepLua frame={frame} px={px} />;
+      case 'phong_benh_vien':
+        return <PhongBenhVien frame={frame} px={px} />;
+      case 'duong_pho_xe_co':
+        return <DuongPhoXeCo frame={frame} px={px} laHoangHon={thoiTiet === 'hoang_hon'} />;
+      case 'giang_duong_dai_hoc':
+        return <GiangDuongDaiHoc frame={frame} px={px} />;
+      case 'san_truong_co_dien':
+        return <SanTruongCoDien frame={frame} px={px} laHoangHon={thoiTiet === 'hoang_hon'} />;
+      case 'phong_thi_nghiem_co':
+        return <PhongThiNghiemCo frame={frame} px={px} />;
+      case 'khong_gian_vu_tru_toan':
+        return <KhongGianVuTruToan frame={frame} px={px} />;
+      case 'lang_que_an_do_a_dong':
+        return <LangQueAnDoADong frame={frame} px={px} laHoangHon={thoiTiet === 'hoang_hon'} />;
       case 'phong_nen_hai_huoc':
       default:
         return <PhongNenHaiHuoc frame={frame} px={px} />;
@@ -1103,6 +1556,12 @@ export const BoiCanhHoatHinh: React.FC<BoiCanhHoatHinhProps> = ({
       }}
     >
       {veBoiCanh()}
+      <SinhVatVaMoiTruong
+        boiCanh={loai}
+        thoiTiet={thoiTiet}
+        vatTheXungQuanh={vatTheXungQuanh}
+        bienSoXe={bienSoXe}
+      />
       <LopThoiTiet thoiTiet={thoiTiet} frame={frame} />
     </svg>
   );

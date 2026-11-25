@@ -1,0 +1,3464 @@
+{
+  "tieuDe": "Srinivasa Ramanujan: Chàng Kế Toán Ấn Độ Làm Đảo Lộn Cambridge Với Con Số 1729",
+  "chuDe": "Hành trình từ chàng kế toán tự học ở Madras tới thiên tài toán học làm rung chuyển Đại học Cambridge và mở ra chìa khóa giải mã lỗ đen vũ trụ.",
+  "batSfx": true,
+  "batPhuDe": true,
+  "bangMau": {
+    "nenChinh": "#0F172A",
+    "nenPhu": "#FEF3C7",
+    "luoi": "#CBD5E1",
+    "chuChinh": "#FFFFFF",
+    "chuPhu": "#FDE047",
+    "nhanManh": "#F59E0B",
+    "canhBao": "#EF4444"
+  },
+  "danhSachNhanVat": [
+    {
+      "id": "ramanujan",
+      "ten": "Srinivasa Ramanujan",
+      "mauThan": "#0F172A",
+      "mauChuDao": "#059669",
+      "mauDa": "#D97706",
+      "phuKien": "khong"
+    },
+    {
+      "id": "hardy",
+      "ten": "G. H. Hardy",
+      "mauThan": "#1E293B",
+      "mauChuDao": "#2563EB",
+      "mauDa": "#FDE047",
+      "phuKien": "kinh_tron"
+    },
+    {
+      "id": "littlewood",
+      "ten": "John Littlewood",
+      "mauThan": "#334155",
+      "mauChuDao": "#DC2626",
+      "mauDa": "#FED7AA",
+      "phuKien": "toc_gia_17"
+    }
+  ],
+  "chuong": [
+    {
+      "id": "chuong_1",
+      "tenChuong": "1. Bức Thư Kỳ Lạ Từ Cảng Madras",
+      "canh": [
+        {
+          "id": "canh_001",
+          "boCuc": "mo_dau",
+          "boiCanh": "rung_nui_thien_nhien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 0,
+          "denFrame": 279,
+          "loiThoai": "Năm 1913 tại cảng Madras nắng gió, một chàng kế toán gầy gò miệt mài khắc ký tự kỳ lạ lên phiến đá granite.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Bờ biển Madras",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_002",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "rung_nui_thien_nhien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 279,
+          "denFrame": 570,
+          "loiThoai": "Chàng trai ấy là Ramanujan. Anh dùng cùi chỏ xóa bảng liên tục tới mức đỏ rát, nhưng ánh mắt vẫn rực sáng đam mê.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 800.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "di_qua_di_lai",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Cử chỉ đam mê",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "giot_mo_hoi",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_003",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 570,
+          "denFrame": 838,
+          "loiThoai": "Nghèo không đủ tiền mua giấy nháp, Ramanujan tận dụng mọi góc đá nhà bếp để tính hàng ngàn công thức mỗi ngày.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 720.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Tiết kiệm từng nháp",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "nhan_chu_hai_huoc",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_004",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "rung_nui_thien_nhien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 838,
+          "denFrame": 1095,
+          "loiThoai": "Anh gom góp chín trang giấy nát chứa đầy phát hiện toán học kỳ diệu gửi sang Đại học Cambridge nước Anh.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Bức thư vươn xa",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_005",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 1095,
+          "denFrame": 1340,
+          "loiThoai": "Tại Cambridge, Giáo sư Hardy, nhà toán học hàng đầu Trinity College, nhận được thư từ vùng Ấn Độ xa xôi.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 900.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Cambridge lạnh giá",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_006",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 1340,
+          "denFrame": 1608,
+          "loiThoai": "Thấy các công thức kỳ dị không chứng minh từ kẻ vô danh, Hardy tưởng đây là thư rác nên định quăng đi.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 850.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Nghi vấn thư rác",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "co_lan_im_lang",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_007",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 1608,
+          "denFrame": 1865,
+          "loiThoai": "Thế nhưng những chuỗi vô hạn hội tụ siêu nhanh này hoàn toàn chưa từng xuất hiện trong giáo trình phương Tây.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Chuỗi vô hạn kỳ lạ",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "chuoi_suy_luan"
+          }
+        },
+        {
+          "id": "canh_008",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 1865,
+          "denFrame": 2099,
+          "loiThoai": "Hardy liền gọi đồng nghiệp John Littlewood sang phòng để cùng soi xét kỹ lưỡng từng trang viết kỳ lạ.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            },
+            {
+              "id": "littlewood",
+              "x": 1050.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gai_dau_kho_hieu",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "kinh_lup",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Cuộc gặp đêm muộn",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_009",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 2099,
+          "denFrame": 2356,
+          "loiThoai": "Littlewood thốt lên: Đây hoặc là trò lừa đảo siêu đẳng của cao thủ, hoặc là kiệt tác của một thiên tài!",
+          "nhanVat": [
+            {
+              "id": "littlewood",
+              "x": 700.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ho_het_sung_suong",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Đánh giá đột ngột",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "dau_cham_hoi",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_010",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 2356,
+          "denFrame": 2613,
+          "loiThoai": "Những công thức tính Pi chính xác kinh hoàng cuồn cuộn xuất hiện mà không cần bất kỳ bước chứng minh nào.",
+          "nhanVat": [
+            {
+              "id": "littlewood",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tu_man",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Hàm phân tích p(n)",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "do_thi_ham_so"
+          }
+        },
+        {
+          "id": "canh_011",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 2613,
+          "denFrame": 2892,
+          "loiThoai": "Đêm đó Hardy trằn trọc ngẫm suy. Ông biết kẻ lừa đảo không thể sáng tạo ra những công thức đẹp đẽ như thế.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 800.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "ly_ca_phe",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Đêm ngẫm nghĩ",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_012",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 2892,
+          "denFrame": 3137,
+          "loiThoai": "Hardy thốt lên: Chúng bắt buộc phải đúng, vì nếu sai thì không ai đủ trí tưởng tượng để bịa ra!",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 750.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tinh_quai",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Lý lẽ của Hardy",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "bong_den_nay_so",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_013",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "rung_nui_thien_nhien",
+          "thoiTiet": "hoang_hon",
+          "tuFrame": 3137,
+          "denFrame": 3394,
+          "loiThoai": "Ở Ấn Độ, Ramanujan tin rằng nữ thần Namagiri đã báo mộng và viết từng phương trình toán học lên lưỡi anh.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 780.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Ánh sáng tâm linh",
+          "namMoc": "Năm 1913",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_014",
+          "boCuc": "dong_thoi_gian",
+          "boiCanh": "pho_co_chau_au",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 3394,
+          "denFrame": 3639,
+          "loiThoai": "Hardy lập tức gửi thư hồi đáp, mời chàng kế toán trẻ vượt đại dương sang Đại học Cambridge hợp tác.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 600.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Lời mời vượt biển",
+          "namMoc": "Đầu năm 1914",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_015",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "rung_nui_thien_nhien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 3639,
+          "denFrame": 3896,
+          "loiThoai": "Vượt qua rào cản hủ tục tôn giáo cấm đi biển, Ramanujan quyết tâm lên tàu hướng về phương Tây xa xôi.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 820.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chay_voi_va",
+              "bieuCam": "tu_man",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Vượt qua rào cản",
+          "namMoc": "Năm 1914",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_016",
+          "boCuc": "ket_thuc",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 3896,
+          "denFrame": 4168,
+          "loiThoai": "Hai thế giới đối lập chuẩn bị va vào nhau, mở ra mối tình bạn toán học huyền thoại trong lịch sử.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 750.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Giao thoa huyền thoại",
+          "namMoc": "Năm 1914",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chuong_2",
+      "tenChuong": "2. Từ Chàng Kế Toán Đến Cổng Trường Trinity",
+      "canh": [
+        {
+          "id": "canh_017",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "rung_nui_thien_nhien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 4168,
+          "denFrame": 4459,
+          "loiThoai": "Năm 1887, tại Erode, Ấn Độ, Ramanujan cất tiếng khóc chào đời. Cậu bé sớm thể hiện tình yêu mãnh liệt với các con số.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Cậu bé Erode",
+          "namMoc": "1887",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_018",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 4459,
+          "denFrame": 4738,
+          "loiThoai": "Tự học qua một cuốn sách cổ, ông mê toán đến mức bỏ ngỏ các môn khác và liên tục thi trượt ở trường.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Cơn say toán học",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_019",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 4738,
+          "denFrame": 5029,
+          "loiThoai": "Năm 1912, Ramanujan làm kế toán tại Cảng Madras kiếm sống. Ban ngày ghi sổ sách, đêm về ông lấp đầy sổ tay công thức.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "di_qua_di_lai",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Chàng kế toán cảng",
+          "namMoc": "1912",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_020",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 5029,
+          "denFrame": 5308,
+          "loiThoai": "Năm 1913, tại thư viện Cambridge, Giáo sư Hardy cùng Littlewood thức trắng đêm phân tích bức thư kỳ lạ gửi từ Ấn Độ.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            },
+            {
+              "id": "littlewood",
+              "x": 1050.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "ly_ca_phe",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Đêm trắng ở Cambridge",
+          "namMoc": "1913",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_021",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 5308,
+          "denFrame": 5599,
+          "loiThoai": "Littlewood giật mình suýt đánh rơi tách trà khi thấy công thức tính số Pi siêu nhanh, thốt lên đây chắc chắn là thiên tài!",
+          "nhanVat": [
+            {
+              "id": "littlewood",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "giat_minh_nhay_dung",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "ly_ca_phe",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Sự ngỡ ngàng của Littlewood",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "giot_mo_hoi",
+              "x": 800.0,
+              "y": 500.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_022",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 5599,
+          "denFrame": 5867,
+          "loiThoai": "Bức thư đề cập hàm phân tích số p(n), đếm số cách chia một số nguyên thành tổng các số nhỏ hơn.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Hàm phân tích số",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "chuoi_suy_luan"
+          }
+        },
+        {
+          "id": "canh_023",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 5867,
+          "denFrame": 6191,
+          "loiThoai": "Với số nhỏ thì dễ, nhưng khi n tăng lên hàng trăm, số cách phân tích bùng nổ khiến việc tìm công thức tổng quát vô cùng khó.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "gai_dau_kho_hieu",
+              "bieuCam": "hoang_mang",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Sự bùng nổ của các con số",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "do_thi_ham_so"
+          }
+        },
+        {
+          "id": "canh_024",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 6191,
+          "denFrame": 6470,
+          "loiThoai": "Hardy chấm thang điểm thiên tài tuyệt đối 100 điểm cho Ramanujan, khẳng định ông vượt trội hơn hầu hết đồng nghiệp châu Âu.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tu_man",
+              "vatCamTay": "but_long_ngong",
+              "dangNoi": true
+            },
+            {
+              "id": "littlewood",
+              "x": 1050.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Bảng điểm thiên tài",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_025",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 6470,
+          "denFrame": 6738,
+          "loiThoai": "Giáo sư Hardy quyết định gửi thư mời Ramanujan sang Anh hợp tác nghiên cứu tại Đại học Cambridge ngay trong năm 1914.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Thư mời lịch sử",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_026",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 6738,
+          "denFrame": 7040,
+          "loiThoai": "Tuy nhiên, quy định tâm linh dòng Brahmin cấm vượt đại dương. Ramanujan đứng trước thử thách vô cùng lớn từ gia đình và tôn giáo.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Rào cản cấm vượt biển",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "co_lan_im_lang",
+              "x": 1000.0,
+              "y": 810.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_027",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 7040,
+          "denFrame": 7319,
+          "loiThoai": "Ông thành tâm cầu nguyện nữ thần Namagiri báo mộng ban phép lành để thuyết phục gia đình đồng ý cho chuyến đi biển.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Lời cầu nguyện gửi Nữ thần",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 760.0,
+              "y": 400.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_028",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "rung_nui_thien_nhien",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 7319,
+          "denFrame": 7587,
+          "loiThoai": "Được sự chấp thuận từ giấc mơ tâm linh, mẹ ông đồng ý. Ramanujan khẩn trương thu xếp hành lý bước lên tàu.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ho_het_sung_suong",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Điềm lành từ giấc mơ",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_029",
+          "boCuc": "dong_thoi_gian",
+          "boiCanh": "bo_bien_hy_lap",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 7587,
+          "denFrame": 7855,
+          "loiThoai": "Năm 1914, chàng kế toán vượt ngàn hải lý sang Anh, mang theo hoài vọng làm đảo lộn giới toán học phương Tây.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "di_bo",
+              "bieuCam": "tu_man",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Vượt ngàn hải lý",
+          "namMoc": "1914",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_030",
+          "boCuc": "doi_thoai",
+          "boiCanh": "pho_co_chau_au",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 7855,
+          "denFrame": 8112,
+          "loiThoai": "Đặt chân tới Trinity College, Ramanujan chính thức gặp mặt Hardy và Littlewood dưới mái trường cổ kính rợp bóng cây xanh.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 560.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            },
+            {
+              "id": "littlewood",
+              "x": 1260.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "ly_ca_phe",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Hội ngộ ở Cambridge",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_031",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 8112,
+          "denFrame": 8436,
+          "loiThoai": "Hai tư tưởng lớn bắt tay hợp tác giải quyết bài toán hàm phân tích số, kết hợp trực giác kỳ diệu và sự chứng minh chặt chẽ.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tu_man",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Công thức tiệm cận",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "chuoi_suy_luan"
+          }
+        },
+        {
+          "id": "canh_032",
+          "boCuc": "ket_thuc",
+          "boiCanh": "pho_co_chau_au",
+          "thoiTiet": "nang_dep",
+          "tuFrame": 8436,
+          "denFrame": 8730,
+          "loiThoai": "Chàng kế toán nghèo giờ đây chính thức bước vào cổng trường Trinity, sẵn sàng tạo nên những trang sử toán học bất tử.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "di_bo",
+              "bieuCam": "tu_man",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1050.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tu_man",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Khởi đầu trang sử mới",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        }
+      ]
+    },
+    {
+      "id": "chuong_3",
+      "tenChuong": "3. Mật Mã Số Pi Và Phép Thuật Của Thần Namagiri",
+      "canh": [
+        {
+          "id": "canh_033",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 8730,
+          "denFrame": 9021,
+          "loiThoai": "Sự xuất hiện của Ramanujan tại Cambridge chính thức khởi đầu cho một trong những màn hợp tác kỳ lạ nhất lịch sử toán học.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 620.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "di_bo",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": false
+            },
+            {
+              "id": "hardy",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "kinh_lup",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Cuộc Hội Ngộ Lịch Sử",
+          "namMoc": "1914",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_034",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 9021,
+          "denFrame": 9323,
+          "loiThoai": "Giáo sư Hardy vô cùng hào hứng mở từng trang sổ tay, nhưng lập tức ngơ ngác vì toàn công thức mà không có chứng minh.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 750.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "gai_dau_kho_hieu",
+              "bieuCam": "hoang_mang",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            },
+            {
+              "id": "ramanujan",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tu_man",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Cuốn Sổ Kỳ Diệu",
+          "namMoc": "1914",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "dau_cham_hoi",
+              "x": 750.0,
+              "y": 600.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_035",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 9323,
+          "denFrame": 9602,
+          "loiThoai": "Khi Hardy vò đầu đòi xem các bước logic, Ramanujan thản nhiên đáp rằng nữ thần Namagiri đã viết công thức lên lưỡi ông.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            },
+            {
+              "id": "ramanujan",
+              "x": 1200.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tinh_quai",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Mật Mã Tâm Linh",
+          "namMoc": "1914",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "giot_mo_hoi",
+              "x": 650.0,
+              "y": 620.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            },
+            {
+              "loai": "nhan_chu_hai_huoc",
+              "x": 920.0,
+              "y": 450.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_036",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 9602,
+          "denFrame": 9870,
+          "loiThoai": "Littlewood đứng bên cạnh chỉ biết câm nín, bởi lẽ những phương trình thần linh này lại chính xác đến mức kinh ngạc.",
+          "nhanVat": [
+            {
+              "id": "littlewood",
+              "x": 700.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "giat_minh_nhay_dung",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "kinh_lup",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Sự Kinh Ngạc Của Littlewood",
+          "namMoc": "1914",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "co_lan_im_lang",
+              "x": 900.0,
+              "y": 810.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_037",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 9870,
+          "denFrame": 10161,
+          "loiThoai": "Ramanujan đặt bút viết nên công thức chuỗi vô hạn tính số Pi cực kỳ dị nhưng sở hữu tốc độ hội tụ siêu nhanh.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Chuỗi Hội Tụ Tính Số Pi",
+          "namMoc": "1914",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "bong_den_nay_so",
+              "x": 255.0,
+              "y": 600.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ],
+          "minhHoaToan": {
+            "loai": "chuoi_suy_luan"
+          },
+          "congThucLatex": [
+            {
+              "latex": "\\frac{1}{\\pi} = \\frac{2\\sqrt{2}}{9801} \\sum_{k=0}^{\\infty} \\frac{(4k)!(1103 + 26390k)}{(k!)^4 396^{4k}}",
+              "tuFrame": 0,
+              "nhan": "Chuỗi tính số Pi siêu nhanh của Ramanujan (1914)",
+              "noiBat": true
+            }
+          ],
+          "loiBinhHaiHuoc": {
+            "noiDung": "Tính một bước là có ngay 8 chữ số thập phân chuẩn đét!",
+            "viTri": "goc_phai",
+            "tuFrame": 14
+          }
+        },
+        {
+          "id": "canh_038",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 10161,
+          "denFrame": 10440,
+          "loiThoai": "Chỉ cần tính một số hạng duy nhất trong chuỗi, ta đã có ngay tám chữ số thập phân chính xác của số Pi.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Sức Mạnh Của Chuỗi Pi",
+          "namMoc": "1914",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 1100.0,
+              "y": 300.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ],
+          "minhHoaToan": {
+            "loai": "chuoi_suy_luan"
+          }
+        },
+        {
+          "id": "canh_039",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 10440,
+          "denFrame": 10731,
+          "loiThoai": "Tại căn phòng trọ lạnh giá, Ramanujan vừa nấu súp rau củ vừa đo từng miligram gia vị chuẩn như một thí nghiệm hóa học.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 700.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tinh_quai",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Bữa Ăn Thí Nghiệm",
+          "namMoc": "1915",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "nhan_chu_hai_huoc",
+              "x": 950.0,
+              "y": 500.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_040",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 10731,
+          "denFrame": 11010,
+          "loiThoai": "Ông vừa nếm canh vừa giảng giải định lý mới cho Hardy, khiến vị giáo sư lừng danh vừa kinh ngạc vừa buồn cười.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Canh Rau Củ Và Định Lý",
+          "namMoc": "1915",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "giot_mo_hoi",
+              "x": 1150.0,
+              "y": 620.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_041",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 11010,
+          "denFrame": 11278,
+          "loiThoai": "Hardy nhận ra vai trò lịch sử của mình: người hệ thống hóa và rèn Ramanujan vào khuôn khổ chứng minh nghiêm ngặt.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 750.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "di_qua_di_lai",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "but_long_ngong",
+              "dangNoi": true
+            },
+            {
+              "id": "ramanujan",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Người Phiên Dịch Vĩ Đại",
+          "namMoc": "1916",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_042",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 11278,
+          "denFrame": 11557,
+          "loiThoai": "Hai người bắt tay chinh phục hàm phân tích p(n), đếm số cách chia một số nguyên thành tổng các số nhỏ hơn.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Hàm Phân Tích p(n)",
+          "namMoc": "1917",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "hinh_hoc_chung_minh"
+          }
+        },
+        {
+          "id": "canh_043",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 11557,
+          "denFrame": 11848,
+          "loiThoai": "Công thức tiệm cận cho hàm p(n) ra đời, kết hợp xuất sắc giữa trực giác Ramanujan và kỹ thuật phân tích của Hardy.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tu_man",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Công Thức Tiệm Cận Hardy-Ramanujan",
+          "namMoc": "1917",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 1100.0,
+              "y": 300.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ],
+          "minhHoaToan": {
+            "loai": "do_thi_ham_so"
+          },
+          "congThucLatex": [
+            {
+              "latex": "p(n) \\sim \\frac{1}{4n\\sqrt{3}} e^{\\pi \\sqrt{\\frac{2n}{3}}}",
+              "tuFrame": 0,
+              "nhan": "Công thức tiệm cận phân tích số Hardy-Ramanujan",
+              "noiBat": true
+            }
+          ],
+          "loiBinhHaiHuoc": {
+            "noiDung": "Từ đếm cách chia kẹo đến tính entropy lỗ đen vũ trụ đều cần phương trình này!",
+            "viTri": "goc_trai",
+            "tuFrame": 14
+          }
+        },
+        {
+          "id": "canh_044",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 11848,
+          "denFrame": 12127,
+          "loiThoai": "Phương trình kỳ diệu này ngày nay còn được ứng dụng để tính toán entropy của lỗ đen trong lý thuyết dây hiện đại.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tu_man",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Ứng Dụng Vật Lý Lỗ Đen",
+          "namMoc": "Hiện đại",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "bong_den_nay_so",
+              "x": 255.0,
+              "y": 600.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ],
+          "minhHoaToan": {
+            "loai": "do_thi_ham_so"
+          }
+        },
+        {
+          "id": "canh_045",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 12127,
+          "denFrame": 12395,
+          "loiThoai": "Hardy kiên trì ép Ramanujan xây dựng từng bước chứng minh chuẩn mực, giúp thế giới công nhận các phát kiến thiên tài.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "but_long_ngong",
+              "dangNoi": true
+            },
+            {
+              "id": "ramanujan",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Kỷ Luật Logic",
+          "namMoc": "1917",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_046",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 12395,
+          "denFrame": 12674,
+          "loiThoai": "Ramanujan đôi khi thở dài vì các bước chứng minh quá dài dòng, trong khi đáp án đã hiện rõ trong tâm trí ông.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "sup_do_tuyet_vong",
+              "bieuCam": "hoang_mang",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tinh_quai",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Nỗi Nhanh Nhảu Của Nữ Thần",
+          "namMoc": "1917",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "giot_mo_hoi",
+              "x": 650.0,
+              "y": 620.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_047",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 12674,
+          "denFrame": 12953,
+          "loiThoai": "Vượt qua rào cản văn hóa và phương pháp luận, sự ăn ý giữa họ đã tạo nên vô số kiệt tác toán học.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 750.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": false
+            },
+            {
+              "id": "hardy",
+              "x": 1050.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Tình Bạn Huyền Thoại",
+          "namMoc": "1917",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 900.0,
+              "y": 500.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_048",
+          "boCuc": "ket_thuc",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 12953,
+          "denFrame": 13236,
+          "loiThoai": "Mật mã toán học của Ramanujan bắt đầu làm đảo lộn Cambridge, chuẩn bị cho những vinh quang đỉnh cao sắp bước tới.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "tu_man",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Đỉnh Cao Đang Chờ",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        }
+      ]
+    },
+    {
+      "id": "chuong_4",
+      "tenChuong": "4. Chiếc Taxi 1729 Và Thang Điểm Thiên Tài",
+      "canh": [
+        {
+          "id": "canh_049",
+          "boCuc": "mo_dau",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 13236,
+          "denFrame": 13504,
+          "loiThoai": "Chiến tranh thế giới thứ nhất bùng nổ cùng mùa đông khắc nghiệt nước Anh làm sức khỏe Ramanujan suy giảm nghiêm trọng.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 680.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Sức Khoẻ Suy Giảm",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_050",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 13504,
+          "denFrame": 13795,
+          "loiThoai": "Nằm trong bệnh viện Putney ảm đạm, nhà toán học trẻ vẫn kiên trì ghi chép những công thức kỳ diệu lên từng trang giấy.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 600.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Bệnh Viện Putney",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 620.0,
+              "y": 600.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_051",
+          "boCuc": "doi_thoai",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 13795,
+          "denFrame": 14052,
+          "loiThoai": "Một ngày tuyết rơi năm 1918, Giáo sư Hardy khoác áo bông đến thăm vị cộng sự thân thiết đang dưỡng bệnh.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 600.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            },
+            {
+              "id": "hardy",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "di_bo",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Hardy Đến Thăm",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_052",
+          "boCuc": "doi_thoai",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 14052,
+          "denFrame": 14331,
+          "loiThoai": "Vừa bước vào phòng, Hardy lắc đầu than thở chuyến đi thật tẻ nhạt với chiếc taxi mang biển số vô cùng nhạt nhẽo.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 600.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            },
+            {
+              "id": "hardy",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gai_dau_kho_hieu",
+              "bieuCam": "hoang_mang",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Lời Than Thở",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_053",
+          "boCuc": "doi_thoai",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 14331,
+          "denFrame": 14622,
+          "loiThoai": "Hardy chán nản bảo: Chiếc xe mang số hiệu 1729, tôi e rằng đó là một con số điềm xấu chẳng có gì đặc biệt.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 600.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            },
+            {
+              "id": "hardy",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Con Số 1729",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "dau_cham_hoi",
+              "x": 1100.0,
+              "y": 620.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_054",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 14622,
+          "denFrame": 14901,
+          "loiThoai": "Ramanujan lập tức bật dậy phản bác giáo sư mà không cần mất tới một giây suy nghĩ, làm Hardy hoàn toàn kinh ngạc.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "giat_minh_nhay_dung",
+              "bieuCam": "tinh_quai",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Phản Bác Tức Thì!",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "nhan_chu_hai_huoc",
+              "x": 900.0,
+              "y": 500.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_055",
+          "boCuc": "doi_thoai",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 14901,
+          "denFrame": 15169,
+          "loiThoai": "Ramanujan reo lên: Không thưa Giáo sư, đó là số rất thú vị, bằng tổng hai lập phương theo hai cách khác nhau!",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Vẻ Đẹp Độc Nhất",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "bong_den_nay_so",
+              "x": 650.0,
+              "y": 620.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_056",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 15169,
+          "denFrame": 15448,
+          "loiThoai": "Số 1729 là số nguyên dương nhỏ nhất có thể viết dưới dạng tổng của hai lập phương dương theo hai cách phân biệt.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Định Lý Hardy-Ramanujan",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "chuoi_suy_luan"
+          },
+          "congThucLatex": [
+            {
+              "latex": "1729 = 1^3 + 12^3 = 9^3 + 10^3",
+              "tuFrame": 0,
+              "nhan": "Số Taxi Hardy-Ramanujan (1729)",
+              "noiBat": true
+            }
+          ],
+          "loiBinhHaiHuoc": {
+            "noiDung": "Hardy thấy biển số xe nhàm chán, Ramanujan thấy ngay kiệt tác số học!",
+            "viTri": "goc_phai",
+            "tuFrame": 14
+          }
+        },
+        {
+          "id": "canh_057",
+          "boCuc": "doi_thoai",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 15448,
+          "denFrame": 15727,
+          "loiThoai": "Giáo sư Hardy đứng ngẩn ngơ trước phản ứng tức thì và tình yêu số học mãnh liệt tự nhiên của người bạn trẻ.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 600.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tu_man",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            },
+            {
+              "id": "hardy",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Sự Thán Phục",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_058",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 15727,
+          "denFrame": 15995,
+          "loiThoai": "Giai thoại chiếc taxi đã cảm hứng cho Hardy sáng tạo thang điểm đánh giá mức độ thiên tài toán học thuần túy.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 850.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Thang Điểm Thiên Tài",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_059",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 15995,
+          "denFrame": 16263,
+          "loiThoai": "Trên bảng điểm một trăm, Hardy tự chấm mình 30, Littlewood 30, Hilbert 80 và dành riêng cho Ramanujan điểm 100 tuyệt đối.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 600.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tu_man",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "littlewood",
+              "x": 900.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            },
+            {
+              "id": "ramanujan",
+              "x": 1200.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "ho_het_sung_suong",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Bảng Xếp Hạng",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "giot_mo_hoi",
+              "x": 900.0,
+              "y": 620.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_060",
+          "boCuc": "doi_thoai",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 16263,
+          "denFrame": 16542,
+          "loiThoai": "John Littlewood gật gù thừa nhận các định lý của Ramanujan chỉ có thể được tạo ra bởi thiên tài đẳng cấp thế giới.",
+          "nhanVat": [
+            {
+              "id": "littlewood",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Lời Khen Của Littlewood",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_061",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 16542,
+          "denFrame": 16833,
+          "loiThoai": "Năm 1918 rực rỡ, Ramanujan vinh dự trở thành người Ấn Độ đầu tiên được bầu làm Hội viên Hội Hoàng gia Anh danh giá.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 850.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Vinh Quang Đỉnh Cao",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 850.0,
+              "y": 600.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_062",
+          "boCuc": "doi_thoai",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 16833,
+          "denFrame": 17078,
+          "loiThoai": "Hardy xúc động chia sẻ rằng việc phát hiện ra Ramanujan là sự kiện lãng mạn duy nhất trong đời ông.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "ramanujan",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Sự Kiện Lãng Mạn",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_063",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 17078,
+          "denFrame": 17323,
+          "loiThoai": "Dù đứng trên đỉnh cao danh vọng Cambridge, Ramanujan vẫn luôn đau đớn nhớ về quê nhà Ấn Độ xa xôi.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 850.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Nỗi Nhớ Quê Hương",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_064",
+          "boCuc": "ket_thuc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "tuyet_roi",
+          "tuFrame": 17323,
+          "denFrame": 17606,
+          "loiThoai": "Con số 1729 huyền thoại đã đi vào lịch sử, khép lại những ngày tháng hợp tác rực rỡ nhất tại nước Anh.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            },
+            {
+              "id": "hardy",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Giai Thoại Bất Tử",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        }
+      ]
+    },
+    {
+      "id": "chuong_5",
+      "tenChuong": "5. Di Sản Mock Theta Và Bí Uẩn Lỗ Đen Vũ Trụ",
+      "canh": [
+        {
+          "id": "canh_065",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 17606,
+          "denFrame": 17885,
+          "loiThoai": "Năm 1918, Ramanujan trở thành người Ấn Độ đầu tiên nhận danh hiệu FRS, nhưng sức khỏe suy giảm buộc ông phải trở về.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Vinh Quang FRS",
+          "namMoc": "1918",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_066",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 17885,
+          "denFrame": 18176,
+          "loiThoai": "Dù kiệt sức trên giường bệnh năm 1920, ngọn lửa toán học vẫn rực cháy khi ông dốc tàn lực viết những công thức cuối.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 800.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "but_long_ngong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Trận Đau Cuối Cùng",
+          "namMoc": "1920",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_067",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 18176,
+          "denFrame": 18467,
+          "loiThoai": "Ở tuổi ba mươi hai, ông qua đời, để lại cuốn sổ tay chứa các hàm Mock Theta đầy bí ẩn chưa ai thấu hiểu.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Sổ Tay Thất Lạc",
+          "namMoc": "1920",
+          "camera": {
+            "kieu": "tinh"
+          }
+        },
+        {
+          "id": "canh_068",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 18467,
+          "denFrame": 18746,
+          "loiThoai": "Tại Cambridge, Hardy và Littlewood bàng hoàng nhìn những trang công thức kỳ lạ mà ông để lại trước khi trút hơi thở cuối.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 750.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "gai_dau_kho_hieu",
+              "bieuCam": "hoang_mang",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            },
+            {
+              "id": "littlewood",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Trăn Trở Cambridge",
+          "namMoc": "1920",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "dau_cham_hoi",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_069",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 18746,
+          "denFrame": 19070,
+          "loiThoai": "Hơn tám mươi năm sau, các nhà vật lý thế kỷ 21 kinh ngạc nhận ra một người không biết lỗ đen năm 1920 đã giải sẵn nó.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "giat_minh_nhay_dung",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "kinh_lup",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Tiên Đoán Lỗ Đen",
+          "namMoc": "Thế kỷ 21",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "nhan_chu_hai_huoc",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_070",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 19070,
+          "denFrame": 19383,
+          "loiThoai": "Hàm Mock Theta được chứng minh chính là chìa khóa tính toán entropy của lỗ đen trong lý thuyết dây và vật lý lượng tử hiện đại.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Hàm Mock Theta & Lỗ Đen",
+          "namMoc": "Hiện đại",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "do_thi_ham_so"
+          }
+        },
+        {
+          "id": "canh_071",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 19383,
+          "denFrame": 19685,
+          "loiThoai": "Không chỉ lỗ đen, công thức tiệm cận hàm phân tích số p(n) của ông còn trở thành nền tảng của vật lý thống kê.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tu_man",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Vật Lý Thống Kê",
+          "namMoc": "Hiện đại",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_072",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 19685,
+          "denFrame": 19987,
+          "loiThoai": "Hàm phân tích p(n) đếm số cách phân tích một số nguyên, phục vụ trực tiếp việc mô phỏng trạng thái động học phân tử.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Hàm Phân Tích p(n)",
+          "namMoc": "Hiện đại",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "chuoi_suy_luan"
+          }
+        },
+        {
+          "id": "canh_073",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 19987,
+          "denFrame": 20266,
+          "loiThoai": "Bên cạnh đó, chuỗi tính Pi siêu nhanh của Ramanujan đã tạo ra bước tiến khổng lồ cho công nghệ tính toán hiện đại.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 850.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Chuỗi Chuẩn Pi",
+          "namMoc": "Hiện đại",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_074",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 20266,
+          "denFrame": 20579,
+          "loiThoai": "Thuật toán tính Pi của ông được dùng làm bài kiểm tra xem siêu máy tính hiện đại có bị tráo hàng kém chất lượng hay không.",
+          "nhanVat": [
+            {
+              "id": "littlewood",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ho_het_sung_suong",
+              "bieuCam": "tinh_quai",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Bài Test Siêu Máy Tính",
+          "namMoc": "Thế kỷ 21",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "giot_mo_hoi",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_075",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 20579,
+          "denFrame": 20858,
+          "loiThoai": "Trong an ninh mạng, mật mã đường cong elip dựa trên nghiên cứu của ông đang bảo vệ ngân hàng toàn cầu mỗi ngày.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "binh_thuong",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Bảo Mật Ngân Hàng ECC",
+          "namMoc": "Hiện đại",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_076",
+          "boCuc": "doi_thoai",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 20858,
+          "denFrame": 21149,
+          "loiThoai": "Giáo sư Hardy từng thừa nhận việc khám phá ra Ramanujan là sự kiện lãng mạn và thành công nhất đời toán học của ông.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 700.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "ly_ca_phe",
+              "dangNoi": true
+            },
+            {
+              "id": "littlewood",
+              "x": 1200.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Thang Điểm 100",
+          "namMoc": "1940",
+          "camera": {
+            "kieu": "tinh"
+          }
+        },
+        {
+          "id": "canh_077",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 21149,
+          "denFrame": 21440,
+          "loiThoai": "Từ căn phòng trọ nhỏ bé, trí tuệ Ramanujan đã vươn xa chạm đến những quy luật thâm sâu nhất của vũ trụ bao la.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Tầm Mắt Vũ Trụ",
+          "namMoc": "Vũ trụ",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 960.0,
+              "y": 480.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_078",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 21440,
+          "denFrame": 21731,
+          "loiThoai": "Những phương trình trong sổ tay thất lạc chính là chiếc cầu nối kỳ diệu giữa số học thuần túy và bản chất tự nhiên.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 800.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Nhịp Cầu Tri Thức",
+          "namMoc": "Vũ trụ",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_079",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 21731,
+          "denFrame": 22022,
+          "loiThoai": "Cuộc đời ngắn ngủi khép lại nhưng di sản Mock Theta vô giá tiếp tục thắp sáng con đường tri thức cho thế hệ sau.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tu_man",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Ngọn Lửa Trường Tồn",
+          "namMoc": "Trường tồn",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_080",
+          "boCuc": "ket_thuc",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 22022,
+          "denFrame": 22328,
+          "loiThoai": "Bức màn bí ẩn về thiên tài Ấn Độ đã sẵn sàng mở ra hồi kết vinh danh di sản trường tồn cùng thời gian.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Hướng Tới Hồi Kết",
+          "namMoc": "Hồi kết",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        }
+      ]
+    },
+    {
+      "id": "chuong_6",
+      "tenChuong": "6. Vẻ Đẹp Vĩnh Cửu Của Tình Bạn Số Học",
+      "canh": [
+        {
+          "id": "canh_081",
+          "boCuc": "mo_dau",
+          "boiCanh": "vuon_tao_dong_que",
+          "thoiTiet": "hoang_hon",
+          "tuFrame": 22328,
+          "denFrame": 22562,
+          "loiThoai": "Khi hoàng hôn buông xuống Cambridge, hành trình Ramanujan khép lại nhưng dư âm tuyệt đẹp vẫn còn sáng mãi.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 680.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1050.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "mo_dan",
+          "tieuDeNho": "Dư Âm Hoàng Hôn",
+          "namMoc": "1920",
+          "camera": {
+            "kieu": "pan_nhe"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 960.0,
+              "y": 300.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_082",
+          "boCuc": "doi_thoai",
+          "boiCanh": "vuon_tao_dong_que",
+          "thoiTiet": "hoang_hon",
+          "tuFrame": 22562,
+          "denFrame": 22819,
+          "loiThoai": "Vượt qua rào cản văn hóa, tình bạn giữa Ramanujan và Hardy đã trở thành một huyền thoại đẹp của toán học.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 750.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "ramanujan",
+              "x": 1120.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Tình Bạn Tối Thượng",
+          "namMoc": "1920",
+          "camera": {
+            "kieu": "zoom_cham"
+          }
+        },
+        {
+          "id": "canh_083",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 22819,
+          "denFrame": 23076,
+          "loiThoai": "Hardy hóm hỉnh thú nhận, việc tìm ra thiên tài Ramanujan chính là sự kiện lãng mạn duy nhất trong đời ông.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "tu_man",
+              "vatCamTay": "ly_ca_phe",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Sự Kiện Lãng Mạn Duy Nhất",
+          "namMoc": "1920",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "nhan_chu_hai_huoc",
+              "x": 960.0,
+              "y": 250.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_084",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "vuon_tao_dong_que",
+          "thoiTiet": "hoang_hon",
+          "tuFrame": 23076,
+          "denFrame": 23333,
+          "loiThoai": "Họ chứng minh toán học không khô khan, mà là nghệ thuật thuần túy được dệt nên từ trực giác diệu kỳ.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 720.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            },
+            {
+              "id": "littlewood",
+              "x": 1100.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Nghệ Thuật Thuần Túy",
+          "namMoc": "1920",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_085",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 23333,
+          "denFrame": 23590,
+          "loiThoai": "Trụ cột đầu tiên là số 1729, số nhỏ nhất biểu diễn bằng tổng hai lập phương theo hai cách phân biệt.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Trụ Cột 1: Số Hardy-Ramanujan",
+          "namMoc": "1729",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "bong_den_nay_so",
+              "x": 255.0,
+              "y": 500.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ],
+          "minhHoaToan": {
+            "loai": "chuoi_suy_luan"
+          }
+        },
+        {
+          "id": "canh_086",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 23590,
+          "denFrame": 23858,
+          "loiThoai": "Trụ cột thứ hai là chuỗi vô hạn tính số Pi siêu nhanh, nền tảng kiểm tra các siêu máy tính ngày nay.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "ngac_nhien",
+              "vatCamTay": "que_chi_bang",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Trụ Cột 2: Chuỗi Vô Hạn Số Pi",
+          "namMoc": "1914",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "chuoi_suy_luan"
+          }
+        },
+        {
+          "id": "canh_087",
+          "boCuc": "giai_thich_toan",
+          "boiCanh": "lop_hoc_bang_xanh",
+          "thoiTiet": "khong",
+          "tuFrame": 23858,
+          "denFrame": 24115,
+          "loiThoai": "Trụ cột thứ ba là các hàm Mock Theta bí ẩn, giúp các nhà lý thuyết giải mã entropy của lỗ đen.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 255.0,
+              "y": 808.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "but_long_ngong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Trụ Cột 3: Hàm Mock Theta",
+          "namMoc": "1920",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "minhHoaToan": {
+            "loai": "do_thi_ham_so"
+          }
+        },
+        {
+          "id": "canh_088",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 24115,
+          "denFrame": 24383,
+          "loiThoai": "Từ căn phòng nhỏ ở Madras đến vũ trụ bao la, phương trình của ông tiếp tục soi sáng vật lý lượng tử.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Soi Sáng Vật Lý Lượng Tử",
+          "namMoc": "Hiện đại",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 960.0,
+              "y": 200.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_089",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "vuon_tao_dong_que",
+          "thoiTiet": "hoang_hon",
+          "tuFrame": 24383,
+          "denFrame": 24640,
+          "loiThoai": "Bài học thứ nhất: Đam mê thuần khiết có thể vượt mọi nghịch cảnh, biến người kế toán nghèo thành thiên tài.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 760.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "khoanh_tay_tu_man",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Sức Mạnh Của Đam Mê",
+          "namMoc": "Bài học 1",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_090",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "vuon_tao_dong_que",
+          "thoiTiet": "hoang_hon",
+          "tuFrame": 24640,
+          "denFrame": 24908,
+          "loiThoai": "Bài học thứ hai: Sự cởi mở lắng nghe. Nếu Hardy bỏ qua bức thư, thế giới đã mất một đại thiên tài.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 800.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "kinh_lup",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Sự Cởi Mở Lắng Nghe",
+          "namMoc": "Bài học 2",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_091",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "vuon_tao_dong_que",
+          "thoiTiet": "hoang_hon",
+          "tuFrame": 24908,
+          "denFrame": 25176,
+          "loiThoai": "Bài học thứ ba: Vẻ đẹp ẩn giấu trong các con số. Hãy luôn nhìn thế giới bằng sự tò mò vô tận.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "chi_tro_giai_thich",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Vẻ Đẹp Trong Con Số",
+          "namMoc": "Bài học 3",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_092",
+          "boCuc": "hai_huoc",
+          "boiCanh": "phong_nen_hai_huoc",
+          "thoiTiet": "khong",
+          "tuFrame": 25176,
+          "denFrame": 25433,
+          "loiThoai": "Lần tới nếu thấy một biển số xe chán ngắt, hãy thử phân tích lập phương trước khi chê nó vô vị!",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "bo_tay_can_loi",
+              "bieuCam": "can_loi_mat_do",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            },
+            {
+              "id": "ramanujan",
+              "x": 1150.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "ho_het_sung_suong",
+              "bieuCam": "tinh_quai",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Biển Xe Vô Vị?",
+          "namMoc": "Góc nhìn hài hước",
+          "camera": {
+            "kieu": "zoom_hai_huoc"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "giot_mo_hoi",
+              "x": 650.0,
+              "y": 550.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_093",
+          "boCuc": "dong_thoi_gian",
+          "boiCanh": "thu_vien_co_dien",
+          "thoiTiet": "khong",
+          "tuFrame": 25433,
+          "denFrame": 25690,
+          "loiThoai": "Năm 1920, Ramanujan ra đi ở tuổi 32, để lại hàng nghìn công thức kỳ diệu vượt xa thời đại của ông.",
+          "nhanVat": [
+            {
+              "id": "littlewood",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ngoi_doc_sach",
+              "bieuCam": "tram_tu",
+              "vatCamTay": "cuon_giay",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Di Sản Trường Tồn",
+          "namMoc": "1920 - Mãi mãi",
+          "camera": {
+            "kieu": "tinh"
+          }
+        },
+        {
+          "id": "canh_094",
+          "boCuc": "doi_thoai",
+          "boiCanh": "vuon_tao_dong_que",
+          "thoiTiet": "hoang_hon",
+          "tuFrame": 25690,
+          "denFrame": 25947,
+          "loiThoai": "Hardy và Littlewood luôn mỉm cười tự hào mỗi khi nhớ về vị đồng nghiệp Ấn Độ khiêm nhường và kiệt xuất.",
+          "nhanVat": [
+            {
+              "id": "hardy",
+              "x": 720.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "littlewood",
+              "x": 1080.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "dung_tho",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Nụ Cười Ký Ức",
+          "namMoc": "Tri ân",
+          "camera": {
+            "kieu": "pan_nhe"
+          }
+        },
+        {
+          "id": "canh_095",
+          "boCuc": "ke_chuyen",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 25947,
+          "denFrame": 26215,
+          "loiThoai": "Trên bầu trời tri thức, Ramanujan là ngôi sao băng rực rỡ, chiếu sáng con đường khám phá chân lý của nhân loại.",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 960.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "nhin_len_troi",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            }
+          ],
+          "chuyenCanh": "quet_ngang",
+          "tieuDeNho": "Ngôi Sao Băng Rực Rỡ",
+          "namMoc": "Vĩnh cửu",
+          "camera": {
+            "kieu": "zoom_cham"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 960.0,
+              "y": 250.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        },
+        {
+          "id": "canh_096",
+          "boCuc": "ket_thuc",
+          "boiCanh": "bau_troi_dem_vu_tru",
+          "thoiTiet": "ban_dem",
+          "tuFrame": 26215,
+          "denFrame": 26483,
+          "loiThoai": "Cảm ơn bạn đã theo dõi! Hẹn gặp lại trong tập tiếp theo để cùng khám phá những thiên tài toán học mới!",
+          "nhanVat": [
+            {
+              "id": "ramanujan",
+              "x": 650.0,
+              "y": 810.0,
+              "huong": "phai",
+              "hanhDong": "ho_het_sung_suong",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": true
+            },
+            {
+              "id": "hardy",
+              "x": 1270.0,
+              "y": 810.0,
+              "huong": "trai",
+              "hanhDong": "gat_gu_dong_tinh",
+              "bieuCam": "vui_tuoi",
+              "vatCamTay": "khong",
+              "dangNoi": false
+            }
+          ],
+          "chuyenCanh": "vong_tron_hoat_hinh",
+          "tieuDeNho": "Cảm Ơn & Lời Chào",
+          "namMoc": "Hẹn gặp lại",
+          "camera": {
+            "kieu": "tinh"
+          },
+          "hieuUngHoatHinh": [
+            {
+              "loai": "sao_lap_lanh",
+              "x": 960.0,
+              "y": 300.0,
+              "tuFrame": 12,
+              "thoiLuong": 75
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

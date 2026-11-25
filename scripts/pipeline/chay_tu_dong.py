@@ -58,9 +58,12 @@ def tao_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--giong", default="", help="Giong Edge TTS (mac dinh vi-VN-NamMinhNeural).")
     parser.add_argument("--toc-do", default=MAC_DINH_RATE, help="Toc do doc TTS (mac dinh +0%%).")
-    parser.add_argument("--nhac-nen", default="", help="File MP3 nhac nen (volume=0.08, fade-out 3s).")
+    parser.add_argument("--nhac-nen", default="", help="File MP3 nhac nen tuy chinh (mac dinh dung public/bgm/nhac_nen_nhe.mp3).")
+    parser.add_argument("--tat-nhac-nen", action="store_true", help="Tat nhac nen khi xuat video.")
     parser.add_argument("--chuong", default="", help="Chi ep render lai cac hoi cu the (vd: 2,4).")
     parser.add_argument("--bo-cache", action="store_true", help="Bo qua cache o cac buoc duoc chay.")
+    parser.add_argument("--bo-qua-thumbnail", action="store_true", help="Bo qua buoc render 3 mau Thumbnail A/B.")
+    parser.add_argument("--bo-qua-visual-qa", action="store_true", help="Bo qua buoc Visual QA Gemini Vision.")
     parser.add_argument("--concurrency", type=int, default=0, help="So luong song song cho Remotion.")
     parser.add_argument("--fps", type=int, default=MAC_DINH_FPS, help="So khung hinh/giay (mac dinh 30).")
     return parser
@@ -115,13 +118,16 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n[TAM DUNG] Da san sang {file_render}. Co the xem truoc trong Remotion Studio hoac chay render_dai.py.")
         return 0
 
-    # BUOC 3: RENDER TACH HOI, GHEP FFMPEG, CHAPTERS & LUOI KIEM DINH
+    # BUOC 3: RENDER TACH HOI, GHEP FFMPEG, CHAPTERS, LUOI KIEM DINH, VISUAL QA & THUMBNAIL A/B
     ket_qua = render_toan_bo_video(
         slug=slug,
         duong_dan_props=file_render,
         chuong_chon=args.chuong,
         nhac_nen=Path(args.nhac_nen) if args.nhac_nen else None,
+        tat_nhac_nen=args.tat_nhac_nen,
         bo_cache=args.bo_cache,
+        bo_qua_thumbnail=args.bo_qua_thumbnail,
+        bo_qua_visual_qa=args.bo_qua_visual_qa,
         concurrency=args.concurrency if args.concurrency > 0 else None,
         fps=args.fps,
     )
@@ -132,7 +138,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  - Moc chuong YouTube: {ket_qua['chapters']}")
     if "chapters_va_mo_ta" in ket_qua:
         print(f"  - Tron goi YouTube  : {ket_qua['chapters_va_mo_ta']}")
+    if "phu_de_srt" in ket_qua:
+        print(f"  - Phu de YouTube SRT: {ket_qua['phu_de_srt']}")
     print(f"  - Luoi kiem dinh 18 : {ket_qua['luoi']}")
+    if "bao_cao_visual_qa" in ket_qua:
+        print(f"  - Bao cao Visual QA : {ket_qua['bao_cao_visual_qa']}")
+    if "thumbnails" in ket_qua:
+        print("  - Thumbnail A/B     : " + ", ".join(str(p) for p in ket_qua["thumbnails"]))
     print("=" * 72)
     return 0
 

@@ -3,12 +3,14 @@ import { interpolate, useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
 import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
+import { giaiTrangThaiNhanVatTrongCanh } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
 import { CongThucMath } from '../daocu/CongThucMath';
 import { MinhHoaToan } from '../daocu/MinhHoaToan';
 import { MayQuayDong } from '../vfx/MayQuayDong';
 import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
 import { KhungLoiBinhHaiHuoc } from './KhungLoiBinhHaiHuoc';
+import { LopCauHoiTuongTac } from './LopCauHoiTuongTac';
 
 type Props = {
   canh: Canh;
@@ -29,6 +31,7 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
 }) => {
   const frame = useCurrentFrame();
   const thoiLuong = Math.max(1, canh.denFrame - canh.tuFrame);
+  const danhSachNhanVat = giaiTrangThaiNhanVatTrongCanh(canh, frame, thoiLuong);
   const danhSachCongThuc = canh.congThucLatex ?? [];
 
   let chiSoDangDoc = -1;
@@ -45,11 +48,19 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
     <div style={{ position: 'absolute', inset: 0 }}>
       <MayQuayDong
         camera={canh.camera}
+        mayQuay={canh.mayQuay}
+        luotThoai={canh.luotThoai}
+        daoCu={canh.daoCu}
         chuyenCanh={canh.chuyenCanh}
         nhanVat={canh.nhanVat}
         thoiLuongCanh={thoiLuong}
       >
-        <BoiCanhHoatHinh loai={canh.boiCanh} thoiTiet={canh.thoiTiet} />
+        <BoiCanhHoatHinh
+          loai={canh.boiCanh}
+          thoiTiet={canh.thoiTiet}
+          vatTheXungQuanh={canh.vatTheXungQuanh}
+          bienSoXe={canh.bienSoXe}
+        />
 
         {/* Bang xanh lon vien go nam gon ben phai man hinh */}
         <div
@@ -244,7 +255,7 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
           {canh.daoCu?.map((dc, idx) => (
             <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
           ))}
-          {canh.nhanVat.map((nv, idx) => {
+          {danhSachNhanVat.map((nv, idx) => {
             const tt = banDoNhanVat[nv.id];
             if (!tt) return null;
             return (
@@ -254,12 +265,21 @@ export const CanhGiaiThichToan: React.FC<Props> = ({
                 trangThai={nv}
                 tiLe={1.32}
                 thoiLuongCanh={thoiLuong}
+                bienDoAmThanh={canh.bienDoAmThanh}
               />
             );
           })}
           <HieuUngHoatHinh danhSach={canh.hieuUngHoatHinh} />
         </svg>
       </MayQuayDong>
+
+      {canh.cauHoiTuongTac && (
+        <LopCauHoiTuongTac
+          cauHoi={canh.cauHoiTuongTac}
+          bangMau={bangMau}
+          thoiLuongCanh={thoiLuong}
+        />
+      )}
 
       <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
     </div>

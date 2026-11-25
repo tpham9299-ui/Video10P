@@ -1,11 +1,14 @@
 import React from 'react';
+import { useCurrentFrame } from 'remotion';
 import type { BangMau, Canh, ThongTinNhanVat } from '../kieu_dai';
 import { BoiCanhHoatHinh } from '../boicanh/BoiCanhHoatHinh';
 import { NguoiQueDong } from '../nhanvat/NguoiQueDong';
+import { giaiTrangThaiNhanVatTrongCanh } from '../nhanvat/dien_xuat';
 import { DaoCu } from '../daocu/DaoCu';
 import { MayQuayDong } from '../vfx/MayQuayDong';
 import { HieuUngHoatHinh } from '../vfx/HieuUngHoatHinh';
 import { KhungLoiBinhHaiHuoc } from './KhungLoiBinhHaiHuoc';
+import { LopCauHoiTuongTac } from './LopCauHoiTuongTac';
 
 type Props = {
   canh: Canh;
@@ -20,17 +23,27 @@ export const CanhKeChuyen: React.FC<Props> = ({
   bangMau,
   banDoNhanVat,
 }) => {
+  const frame = useCurrentFrame();
   const thoiLuong = Math.max(1, canh.denFrame - canh.tuFrame);
+  const danhSachNhanVat = giaiTrangThaiNhanVatTrongCanh(canh, frame, thoiLuong);
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
       <MayQuayDong
         camera={canh.camera}
+        mayQuay={canh.mayQuay}
+        luotThoai={canh.luotThoai}
+        daoCu={canh.daoCu}
         chuyenCanh={canh.chuyenCanh}
         nhanVat={canh.nhanVat}
         thoiLuongCanh={thoiLuong}
       >
-        <BoiCanhHoatHinh loai={canh.boiCanh} thoiTiet={canh.thoiTiet} />
+        <BoiCanhHoatHinh
+          loai={canh.boiCanh}
+          thoiTiet={canh.thoiTiet}
+          vatTheXungQuanh={canh.vatTheXungQuanh}
+          bienSoXe={canh.bienSoXe}
+        />
 
         <svg
           width={1920}
@@ -41,7 +54,7 @@ export const CanhKeChuyen: React.FC<Props> = ({
           {canh.daoCu?.map((dc, idx) => (
             <DaoCu key={`${dc.loai}-${idx}`} daoCu={dc} />
           ))}
-          {canh.nhanVat.map((nv, idx) => {
+          {danhSachNhanVat.map((nv, idx) => {
             const tt = banDoNhanVat[nv.id];
             if (!tt) return null;
             return (
@@ -51,6 +64,7 @@ export const CanhKeChuyen: React.FC<Props> = ({
                 trangThai={nv}
                 tiLe={1.25}
                 thoiLuongCanh={thoiLuong}
+                bienDoAmThanh={canh.bienDoAmThanh}
               />
             );
           })}
@@ -103,6 +117,14 @@ export const CanhKeChuyen: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {canh.cauHoiTuongTac && (
+        <LopCauHoiTuongTac
+          cauHoi={canh.cauHoiTuongTac}
+          bangMau={bangMau}
+          thoiLuongCanh={thoiLuong}
+        />
+      )}
 
       <KhungLoiBinhHaiHuoc loiBinh={canh.loiBinhHaiHuoc} />
     </div>

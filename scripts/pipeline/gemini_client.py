@@ -3,9 +3,13 @@
 
 from __future__ import annotations
 
+import base64
+import http.client
 import json
+import mimetypes
 import os
 import re
+import socket
 import time
 import urllib.error
 import urllib.parse
@@ -293,7 +297,7 @@ class GeminiClient:
         model: str | None = None,
         fallback_models: list[str] | tuple[str, ...] | None = None,
         duong_dan_env: Path | str | None = None,
-        timeout_giay: int = 120,
+        timeout_giay: int = 180,
         backoff_co_so: float = 1.5,
         http_caller: Callable[[str, dict[str, Any], str, int], tuple[int, str]] | None = None,
         http_get_caller: Callable[[str, int], tuple[int, str]] | None = None,
@@ -320,6 +324,7 @@ class GeminiClient:
         self._sleep = sleep_fn or time.sleep
         self._models_khong_kha_dung: set[str] = set()
         self._models_da_do: list[str] = []
+        self._google_search_het_quota = False
         self.nguon_tham_khao_gan_nhat: list[dict[str, str]] = []
         self.truy_van_web_gan_nhat: list[str] = []
 
@@ -364,6 +369,8 @@ class GeminiClient:
             return err.code, body
         except urllib.error.URLError as err:
             return 503, f"URLError: {err.reason}"
+        except (TimeoutError, socket.timeout, http.client.HTTPException, OSError) as err:
+            return 504, f"Timeout/NetworkError: {err}"
 
     @staticmethod
     def _goi_http_get_mac_dinh(url: str, timeout_giay: int) -> tuple[int, str]:
@@ -380,6 +387,8 @@ class GeminiClient:
             return err.code, body
         except urllib.error.URLError as err:
             return 503, f"URLError: {err.reason}"
+        except (TimeoutError, socket.timeout, http.client.HTTPException, OSError) as err:
+            return 504, f"Timeout/NetworkError: {err}"
 
     def tu_do_model_kha_dung(
         self,
@@ -459,14 +468,23 @@ class GeminiClient:
         candidates = du_lieu.get("candidates") or []
         if not candidates:
             raise GeminiError(f"Gemini tra ve khong co candidates: {body[:300]}")
-        parts = candidates[0].get("content", {}).get("parts") or []
+        cand = candidates[0]
+        parts = cand.get("content", {}).get("parts") or []
         doan: list[str] = []
         for p in parts:
-            if isinstance(p, dict) and isinstance(p.get("text"), str):
+            if not isinstance(p, dict):
+                continue
+            # Bo qua phan suy luan noi bo (thought=True) cua cac model Gemini thinking de khong lam hong JSON
+            if p.get("thought") is True:
+                continue
+            if isinstance(p.get("text"), str):
                 doan.append(p["text"])
         ket_qua = "\n".join(doan).strip()
         if not ket_qua:
-            raise GeminiError(f"Gemini tra ve noi dung rong: {body[:300]}")
+            ly_do = cand.get("finishReason") or "UNKNOWN"
+            raise GeminiError(
+                f"Gemini tra ve noi dung rong (finishReason={ly_do}): {body[:300]}"
+            )
         return ket_qua
 
     @staticmethod
@@ -539,9 +557,9 @@ class GeminiClient:
             for tk in ("google_search", "search grounding", "grounding", "tools are not supported")
         )
 
-    def tao_van_ban(
+    def _goi_generate_content(
         self,
-        prompt: str,
+        parts: list[dict[str, Any]],
         system_instruction: str | None = None,
         nhiet_do: float = 0.75,
         yeu_cau_json: bool = False,
@@ -549,8 +567,12 @@ class GeminiClient:
         so_vong_toi_da: int = 2,
         bat_tim_kiem_web: bool = False,
         tra_ve_nguon: bool = False,
+        cho_phep_ha_cap_khong_tim_kiem: bool = True,
     ) -> str | tuple[str, list[dict[str, str]]]:
-        """Goi Gemini API, tu dong xoay key, tu do model khi 404/400, chuyen fallback khi 429 va ho tro Google Search Grounding."""
+        """Loi goi chung Gemini generateContent (text hoac da phuong thuc kem anh inlineData), xoay key & fallback model."""
+        if bat_tim_kiem_web and cho_phep_ha_cap_khong_tim_kiem and self._google_search_het_quota:
+            bat_tim_kiem_web = False
+        model_ban_dau = self.model
         generation_config: dict[str, Any] = {
             "temperature": nhiet_do,
             "maxOutputTokens": max_output_tokens,
@@ -560,7 +582,7 @@ class GeminiClient:
             generation_config["responseMimeType"] = "application/json"
 
         payload: dict[str, Any] = {
-            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "contents": [{"role": "user", "parts": parts}],
             "generationConfig": generation_config,
         }
         if bat_tim_kiem_web:
@@ -679,16 +701,20 @@ class GeminiClient:
                         for m in hang_doi_model
                         if m not in models_da_thu and m not in self._models_khong_kha_dung
                     ]
-                    if len(keys_bi_429) >= so_key and con_fallback:
-                        model_ke_tiep = con_fallback[0]
-                        print(
-                            f"[Gemini] Model '{model_hien_tai}' het quota (429) tren tat ca {so_key} API key. "
-                            f"Chuyen sang model du phong '{model_ke_tiep}'..."
-                        )
-                        self.model = model_ke_tiep
-                        hang_doi_model = con_fallback
-                        chuyen_model = True
-                        break
+                    if len(keys_bi_429) >= so_key:
+                        if con_fallback:
+                            model_ke_tiep = con_fallback[0]
+                            print(
+                                f"[Gemini] Model '{model_hien_tai}' het quota (429) tren tat ca {so_key} API key. "
+                                f"Chuyen sang model du phong '{model_ke_tiep}'..."
+                            )
+                            self.model = model_ke_tiep
+                            hang_doi_model = con_fallback
+                            chuyen_model = True
+                            break
+                        if bat_tim_kiem_web and cho_phep_ha_cap_khong_tim_kiem:
+                            # Da het quota grounding o model cuoi cung -> thoat vong nhanh de ha cap ngay
+                            break
 
                     vong_hien_tai = (luot // so_key) + 1
                     # Neu xoay qua key khac trong cung vong -> nghi ngan; sang vong moi -> backoff tang dan
@@ -722,62 +748,218 @@ class GeminiClient:
                     hang_doi_model = con_fallback
 
         if co_loi_quota:
+            if bat_tim_kiem_web and cho_phep_ha_cap_khong_tim_kiem:
+                self._google_search_het_quota = True
+                print(
+                    "[Gemini] Google Search Grounding het quota (429) tren tat ca key/model. "
+                    f"Tu dong ha cap goi lai model '{model_ban_dau}' khong dung tool google_search..."
+                )
+                self.model = model_ban_dau
+                return self._goi_generate_content(
+                    parts=parts,
+                    system_instruction=system_instruction,
+                    nhiet_do=nhiet_do,
+                    yeu_cau_json=yeu_cau_json,
+                    max_output_tokens=max_output_tokens,
+                    so_vong_toi_da=so_vong_toi_da,
+                    bat_tim_kiem_web=False,
+                    tra_ve_nguon=tra_ve_nguon,
+                    cho_phep_ha_cap_khong_tim_kiem=False,
+                )
             raise GeminiQuotaError(
                 f"Tat ca {so_key} API key Gemini va cac model ({' -> '.join(thu_tu_models_da_thu)}) "
                 f"deu gap loi quota/tam thoi. Loi cuoi: {loi_cuoi}"
             )
         raise GeminiError(f"Khong the goi Gemini API. Loi cuoi: {loi_cuoi}")
 
+    def tao_van_ban(
+        self,
+        prompt: str,
+        system_instruction: str | None = None,
+        nhiet_do: float = 0.75,
+        yeu_cau_json: bool = False,
+        max_output_tokens: int = 8192,
+        so_vong_toi_da: int = 2,
+        bat_tim_kiem_web: bool = False,
+        tra_ve_nguon: bool = False,
+        cho_phep_ha_cap_khong_tim_kiem: bool = True,
+    ) -> str | tuple[str, list[dict[str, str]]]:
+        """Goi Gemini API, tu dong xoay key, tu do model khi 404/400, chuyen fallback khi 429 va ho tro Google Search Grounding."""
+        return self._goi_generate_content(
+            parts=[{"text": prompt}],
+            system_instruction=system_instruction,
+            nhiet_do=nhiet_do,
+            yeu_cau_json=yeu_cau_json,
+            max_output_tokens=max_output_tokens,
+            so_vong_toi_da=so_vong_toi_da,
+            bat_tim_kiem_web=bat_tim_kiem_web,
+            tra_ve_nguon=tra_ve_nguon,
+            cho_phep_ha_cap_khong_tim_kiem=cho_phep_ha_cap_khong_tim_kiem,
+        )
+
+    @staticmethod
+    def _tao_parts_anh_inline(
+        duong_dan_anh: Path | str | list[Path | str],
+        mime_type: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Doc 1 hoac nhieu file anh PNG/JPEG sang danh sach parts inlineData base64 cho Gemini Vision."""
+        ds_path = (
+            [Path(p) for p in duong_dan_anh]
+            if isinstance(duong_dan_anh, (list, tuple))
+            else [Path(duong_dan_anh)]
+        )
+        if not ds_path:
+            raise ValueError("Can truyen it nhat 1 duong dan anh cho Gemini Vision.")
+        parts_anh: list[dict[str, Any]] = []
+        for p in ds_path:
+            if not p.exists():
+                raise FileNotFoundError(f"Khong tim thay file anh cho Gemini Vision: {p}")
+            du_lieu_bytes = p.read_bytes()
+            if not du_lieu_bytes:
+                raise ValueError(f"File anh rong: {p}")
+            mt = mime_type
+            if not mt:
+                doan_mime, _ = mimetypes.guess_type(str(p))
+                mt = doan_mime if (doan_mime and doan_mime.startswith("image/")) else "image/png"
+            b64 = base64.b64encode(du_lieu_bytes).decode("ascii")
+            parts_anh.append(
+                {
+                    "inlineData": {
+                        "mimeType": mt,
+                        "data": b64,
+                    }
+                }
+            )
+        return parts_anh
+
+    def tao_van_ban_voi_anh(
+        self,
+        prompt: str,
+        duong_dan_anh: Path | str | list[Path | str],
+        mime_type: str | None = None,
+        system_instruction: str | None = None,
+        nhiet_do: float = 0.3,
+        yeu_cau_json: bool = False,
+        max_output_tokens: int = 8192,
+        so_vong_toi_da: int = 2,
+    ) -> str:
+        """Goi Gemini Vision voi 1 hoac nhieu anh (base64 inlineData), dung chung co che xoay key & fallback model."""
+        parts = [{"text": prompt}] + self._tao_parts_anh_inline(duong_dan_anh, mime_type=mime_type)
+        kq = self._goi_generate_content(
+            parts=parts,
+            system_instruction=system_instruction,
+            nhiet_do=nhiet_do,
+            yeu_cau_json=yeu_cau_json,
+            max_output_tokens=max_output_tokens,
+            so_vong_toi_da=so_vong_toi_da,
+            bat_tim_kiem_web=False,
+            tra_ve_nguon=False,
+        )
+        assert isinstance(kq, str)
+        return kq
+
+    def tao_json_voi_anh(
+        self,
+        prompt: str,
+        duong_dan_anh: Path | str | list[Path | str],
+        mime_type: str | None = None,
+        system_instruction: str | None = None,
+        nhiet_do: float = 0.25,
+        max_output_tokens: int = 8192,
+        so_lan_thu_lai_json: int = 2,
+    ) -> Any:
+        """Goi Gemini Vision yeu cau tra ve JSON hop le (co lam sach markdown va thu lai khi loi cu phap)."""
+        prompt_hien_tai = prompt
+        loi_gan_nhat: Exception | None = None
+        gioi_han_token = max(1024, int(max_output_tokens))
+
+        for lan in range(so_lan_thu_lai_json + 1):
+            try:
+                raw = self.tao_van_ban_voi_anh(
+                    prompt=prompt_hien_tai,
+                    duong_dan_anh=duong_dan_anh,
+                    mime_type=mime_type,
+                    system_instruction=system_instruction,
+                    nhiet_do=nhiet_do if lan == 0 else max(0.1, nhiet_do - 0.1 * lan),
+                    yeu_cau_json=True,
+                    max_output_tokens=gioi_han_token,
+                )
+                return parse_json_an_toan(raw)
+            except (json.JSONDecodeError, ValueError, GeminiError) as err:
+                if isinstance(err, GeminiQuotaError):
+                    raise
+                if isinstance(err, GeminiError) and "noi dung rong" not in str(err).lower():
+                    raise
+                loi_gan_nhat = err
+                if lan < so_lan_thu_lai_json:
+                    gioi_han_token = min(32768, max(gioi_han_token * 2, 8192))
+                    prompt_hien_tai = (
+                        f"{prompt}\n\n"
+                        f"LUU Y BAT BUOC: Lan tra loi truoc bi loi JSON ({err}). "
+                        "Hay tra ve DUY NHAT 1 doi tuong JSON hop le 100%, khong boc markdown."
+                    )
+
+        raise GeminiError(
+            f"Khong the parse JSON hop le tu Gemini Vision sau {so_lan_thu_lai_json + 1} lan: {loi_gan_nhat}"
+        )
+
     def tao_json(
         self,
         prompt: str,
         system_instruction: str | None = None,
         nhiet_do: float = 0.7,
-        max_output_tokens: int = 8192,
+        max_output_tokens: int = 16384,
         so_lan_thu_lai_json: int = 2,
         bat_tim_kiem_web: bool = False,
         tra_ve_nguon: bool = False,
     ) -> Any:
-        """Goi Gemini yeu cau tra ve JSON, tu lam sach, thu lai toi da 2 lan va ho tro Google Search Grounding."""
+        """Goi Gemini yeu cau tra ve JSON, tu lam sach, thu lai toi da 2 lan (tu tang max_output_tokens neu cat cut) va ho tro Google Search Grounding."""
         prompt_hien_tai = prompt
         loi_gan_nhat: Exception | None = None
         nguon_gop: list[dict[str, str]] = []
         url_da_co: set[str] = set()
+        gioi_han_token = max(1024, int(max_output_tokens))
 
         for lan in range(so_lan_thu_lai_json + 1):
-            ket_qua_raw = self.tao_van_ban(
-                prompt=prompt_hien_tai,
-                system_instruction=system_instruction,
-                nhiet_do=nhiet_do if lan == 0 else max(0.2, nhiet_do - 0.25 * lan),
-                yeu_cau_json=True,
-                max_output_tokens=max_output_tokens,
-                bat_tim_kiem_web=bat_tim_kiem_web,
-                tra_ve_nguon=True,
-            )
-            assert isinstance(ket_qua_raw, tuple)
-            raw, nguon_lan = ket_qua_raw
-            for item in nguon_lan:
-                u = item.get("url", "")
-                if u and u not in url_da_co:
-                    url_da_co.add(u)
-                    nguon_gop.append(item)
-
             try:
+                ket_qua_raw = self.tao_van_ban(
+                    prompt=prompt_hien_tai,
+                    system_instruction=system_instruction,
+                    nhiet_do=nhiet_do if lan == 0 else max(0.2, nhiet_do - 0.25 * lan),
+                    yeu_cau_json=True,
+                    max_output_tokens=gioi_han_token,
+                    bat_tim_kiem_web=bat_tim_kiem_web,
+                    tra_ve_nguon=True,
+                )
+                assert isinstance(ket_qua_raw, tuple)
+                raw, nguon_lan = ket_qua_raw
+                for item in nguon_lan:
+                    u = item.get("url", "")
+                    if u and u not in url_da_co:
+                        url_da_co.add(u)
+                        nguon_gop.append(item)
+
                 parsed = parse_json_an_toan(raw)
                 self.nguon_tham_khao_gan_nhat = nguon_gop
                 if tra_ve_nguon:
                     return parsed, nguon_gop
                 return parsed
-            except (json.JSONDecodeError, ValueError) as err:
+            except (json.JSONDecodeError, ValueError, GeminiError) as err:
+                if isinstance(err, GeminiQuotaError):
+                    raise
+                if isinstance(err, GeminiError) and "noi dung rong" not in str(err).lower():
+                    raise
                 loi_gan_nhat = err
                 if lan < so_lan_thu_lai_json:
+                    gioi_han_token = min(65536, max(gioi_han_token * 2, 16384))
                     print(
-                        f"[Gemini] JSON loi cu phap (lan {lan + 1}/{so_lan_thu_lai_json}), dang yeu cau sinh lai JSON sach..."
+                        f"[Gemini] JSON loi cu phap / rong (lan {lan + 1}/{so_lan_thu_lai_json}), "
+                        f"dang thu lai voi maxOutputTokens={gioi_han_token}..."
                     )
                     prompt_hien_tai = (
                         f"{prompt}\n\n"
-                        "LUU Y BAT BUOC: Lan tra loi truoc bi loi cu phap JSON "
-                        f"({err}). Hay tra ve DUY NHAT 1 doi tuong JSON hop le 100%, "
+                        "LUU Y BAT BUOC: Lan tra loi truoc bi loi cu phap JSON hoac het token "
+                        f"({err}). Hay tra ve DUY NHAT 1 doi tuong JSON hop le 100%, ngan gon dung cau truc, "
                         "khong kem giai thich, khong boc markdown, thoat ky tu \\\\ dung chuan (dac biet trong cong thuc LaTeX)."
                     )
 
