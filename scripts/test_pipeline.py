@@ -380,7 +380,6 @@ class TestGeminiClientOffline(unittest.TestCase):
                     "gemini-2.5-flash-lite",
                     "gemini-flash-latest",
                     "gemini-flash-lite-latest",
-                    "gemini-2.0-flash",
                     "gemini-pro-latest",
                 ],
             )
@@ -712,7 +711,7 @@ class TestGeminiClientOffline(unittest.TestCase):
         self.assertEqual(hang_doi[-1], "gemini-pro-latest")
         self.assertIn("gemini-2.5-flash", hang_doi[:-1])
         self.assertIn("gemini-2.5-flash-lite", hang_doi[:-1])
-        self.assertIn("gemini-2.0-flash", hang_doi[:-1])
+        self.assertNotIn("gemini-2.0-flash", hang_doi)
 
         # 2. Khi tat ca key deu 429 tren 1 model -> nghi dung 2.0s roi chuyen ngay sang model du phong (KHONG lap 3 vong)
         cho_429: list[float] = []

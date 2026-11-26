@@ -23,7 +23,6 @@ MAC_DINH_FALLBACK_MODELS = (
     "gemini-2.5-flash-lite",
     "gemini-flash-latest",
     "gemini-flash-lite-latest",
-    "gemini-2.0-flash",
     "gemini-pro-latest",
 )
 # Lich nghi lui dan (giay) sau moi vong xoay het toan bo API key khi gap 503 qua tai server (toi da 3 vong)
