@@ -1,6 +1,6 @@
 {
   "phienBan": "0.5",
-  "capNhatLanCuoi": "2026-11-25T07:42:55",
+  "capNhatLanCuoi": "2026-11-26T01:30:00",
   "chu_de_da_lam": [
     {
       "slug": "ramanujan_so_tay_bi_an_1729",
@@ -27,17 +27,28 @@
         "https://en.wikipedia.org/wiki/Georg_Cantor",
         "https://en.wikipedia.org/wiki/Cantor%27s_diagonal_argument"
       ]
-    }
-  ],
-  "hang_doi_chu_de": [
+    },
     {
       "slug": "galois_ly_thuyet_nhom_tuoi_teen",
       "tieuDe": "Évariste Galois: Thiên Tài 20 Tuổi Và Đêm Trắng Đổi Thay Lịch Sử Toán Học",
-      "gocKhaiThac": "Cuộc đời dở khóc dở cười của cậu thiếu niên ngông cuồng làm đảo lộn Viện Hàn lâm Pháp, viết vội Lý thuyết Nhóm trong một đêm - nền tảng mã hóa mật mã iPhone và thuật toán giải Rubik ngày nay.",
-      "diemThuHut": 9.5,
-      "doSauToanHoc": 9.2,
-      "trangThai": "cho"
-    },
+      "nhanVatChinh": "Évariste Galois, Giáo Sư Pi",
+      "tomTat1Cau": "Évariste Galois, thiên tài toán học đoản mệnh người Pháp, đã viết vội nền tảng Lý thuyết Nhóm trong một đêm trước trận quyết đấu định mệnh khi mới 20 tuổi.",
+      "thoiLuongGiay": 508.83,
+      "ngayTao": "2026-11-26",
+      "nguonThamKhao": [
+        "https://en.wikipedia.org/wiki/%C3%89variste_Galois",
+        "https://en.wikipedia.org/wiki/Galois_theory"
+      ],
+      "youtubeVideoId": "J5kJQg8E9_w",
+      "youtubeUrl": "https://www.youtube.com/watch?v=J5kJQg8E9_w",
+      "youtubeCheDo": "rieng_tu",
+      "youtubePublishAt": "",
+      "youtubeTaiLenLuc": "2026-11-26T08:30:00+07:00",
+      "youtubeDaGanThumbnail": true,
+      "youtubeDaTaiPhuDe": true
+    }
+  ],
+  "hang_doi_chu_de": [
     {
       "slug": "cardano_tartaglia_phuong_trinh_bac_ba",
       "tieuDe": "Cardano vs Tartaglia: Trận Chiến Mật Mã Bậc 3 Và Sự Ra Đời Của Số Ảo i",
@@ -86,6 +97,18 @@
       "ngay": "2026-11-25",
       "loai": "kich_ban",
       "noiDung": "Tuyệt đối không để camera đứng yên quá 6.5 giây liên tục nhằm đảm bảo nhịp thị giác lôi cuốn, đồng thời phải khớp mốc thời gian rõ ràng ở các cảnh dòng thời gian.",
+      "mucDoUuTien": 4
+    },
+    {
+      "ngay": "2026-11-26",
+      "loai": "kich_ban",
+      "noiDung": "Không để camera ở trạng thái tĩnh quá 6.5 giây liên tiếp để duy trì nhịp thị giác hoạt hình nhanh gọn, hấp dẫn.",
+      "mucDoUuTien": 5
+    },
+    {
+      "ngay": "2026-11-26",
+      "loai": "kich_ban",
+      "noiDung": "Tuân thủ tuyệt đối mốc timeline lịch sử (1811, 1823, 1829, 1830, 1831, 1832), tránh phát âm hoặc ghi chép sai lệch nien dai.",
       "mucDoUuTien": 4
     }
   ],

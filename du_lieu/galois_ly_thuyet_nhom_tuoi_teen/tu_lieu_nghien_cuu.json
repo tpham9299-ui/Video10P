@@ -1,0 +1,187 @@
+{
+  "slug": "galois_ly_thuyet_nhom_tuoi_teen",
+  "tieuDe": "Évariste Galois: Thiên Tài 20 Tuổi Và Đêm Trắng Đổi Thay Lịch Sử Toán Học",
+  "chuDe": "Évariste Galois: Thiên Tài 20 Tuổi Và Đêm Trắng Đổi Thay Lịch Sử Toán Học",
+  "ngayNghienCuu": "2026-11-26",
+  "tomTat1Cau": "Évariste Galois, thiên tài toán học đoản mệnh người Pháp, đã viết vội nền tảng Lý thuyết Nhóm trong một đêm trước trận quyết đấu định mệnh khi mới 20 tuổi.",
+  "nienDaiChuan": [
+    {
+      "nam": "1811",
+      "suKien": "Évariste Galois chào đời tại Bourg-la-Reine, Pháp vào ngày 25 tháng 10."
+    },
+    {
+      "nam": "1829",
+      "suKien": "Galois công bố bài báo đầu tiên về phân thức liên tục và chịu tang cha qua đời bi thảm."
+    },
+    {
+      "nam": "1831",
+      "suKien": "Galois bị bắt giam vì tham gia biểu tình chính trị và các hoạt động cộng hòa cực đoan."
+    },
+    {
+      "nam": "1832",
+      "suKien": "Galois qua đời vào ngày 31 tháng 5 do vết thương sau một trận quyết đấu tay đôi."
+    }
+  ],
+  "timeline_su_kien": [
+    {
+      "nam": "1811",
+      "suKien": "Évariste Galois cất tiếng khóc chào đời trong một gia đình trí thức vùng Bourg-la-Reine.",
+      "noiBat": false
+    },
+    {
+      "nam": "1823",
+      "suKien": "Nhập học trường Lycée Louis-le-Grand, nhanh chóng bộc lộ thiên hướng toán học siêu việt.",
+      "noiBat": false
+    },
+    {
+      "nam": "1829",
+      "suKien": "Gửi các công trình đột phá về phương trình đại số lên Viện Hàn lâm Khoa học Pháp.",
+      "noiBat": true
+    },
+    {
+      "nam": "1830",
+      "suKien": "Bản thảo quan trọng gửi cho Joseph Fourier bị thất lạc một cách đầy bí ẩn và trớ trêu.",
+      "noiBat": false
+    },
+    {
+      "nam": "1831",
+      "suKien": "Bị bắt giam tại nhà tù Sainte-Pélagie vì lý do chính trị và các bài diễn văn quá khích.",
+      "noiBat": false
+    },
+    {
+      "nam": "1832",
+      "suKien": "Thức trắng đêm viết lại toàn bộ tư tưởng toán học trước khi bước vào trận quyết đấu định mệnh.",
+      "noiBat": true
+    }
+  ],
+  "tu_dien_phat_am": {
+    "Evariste Galois": "Ê-va-rít Gác-loa",
+    "Bourg-la-Reine": "Buốc-la-Ren",
+    "Joseph Fourier": "Giô-sép Fu-ri-ê",
+    "Cauchy": "Cô-si",
+    "Poisson": "Pua-xông",
+    "Sainte-Pelagie": "Sanh-tơ Pe-la-gi",
+    "Rubik": "Ru-bích",
+    "iPhone": "Ai-phôn"
+  },
+  "goi_y_boi_canh_va_dao_cu": [
+    {
+      "giaiDoan": "Thời niên thiếu tại trường học Paris",
+      "doTuoi": "thieu_nien",
+      "tuThe": "ngoi_ban",
+      "boiCanh": "lop_hoc_bang_xanh",
+      "daoCu": [
+        "bang_den",
+        "thuoc_compa"
+      ],
+      "vatTheXungQuanh": [
+        "chim_san_truong"
+      ],
+      "ghiChu": "Cảnh Galois ngồi giải các bài toán phức tạp trên bảng đen trước sự kinh ngạc của thầy cô."
+    },
+    {
+      "giaiDoan": "Đêm trắng viết toán trước trận quyết đấu",
+      "doTuoi": "truong_thanh",
+      "tuThe": "ngoi_ban",
+      "boiCanh": "phong_tro_bep_lua",
+      "daoCu": [
+        "cuon_giay",
+        "ban_hoc_den_dau",
+        "dong_ho_cat"
+      ],
+      "vatTheXungQuanh": [
+        "ngon_nen_den_dau",
+        "la_vang_gio"
+      ],
+      "ghiChu": "Cảnh tượng huyền thoại Galois điên cuồng nguệch ngoạc các công thức nhóm dưới ánh đèn lù mù."
+    },
+    {
+      "giaiDoan": "Quảng trường và tranh đấu chính trị",
+      "doTuoi": "truong_thanh",
+      "tuThe": "dung",
+      "boiCanh": "quang_truong_hy_lap",
+      "daoCu": [
+        "phong_bi_thu_tay",
+        "dau_hoi_cham"
+      ],
+      "vatTheXungQuanh": [
+        "hoi_khoi"
+      ],
+      "ghiChu": "Cảnh Galois tham gia các cuộc bạo động và phong trào cách mạng của giới trẻ Pháp."
+    },
+    {
+      "giaiDoan": "Góc suy ngẫm trong nhà giam",
+      "doTuoi": "truong_thanh",
+      "tuThe": "ngoi_ban",
+      "boiCanh": "thu_vien_co_dien",
+      "daoCu": [
+        "cuon_giay"
+      ],
+      "vatTheXungQuanh": [
+        "dong_ho_qua_lac"
+      ],
+      "ghiChu": "Galois miệt mài nghiên cứu cấu trúc đại số phía sau những bức tường giam lạnh lẽo."
+    }
+  ],
+  "nhanVatThat": [
+    {
+      "ten": "Évariste Galois",
+      "vaiTro": "Thiên tài toán học đoản mệnh",
+      "nienDai": "1811-1832",
+      "tinhCachDoiThuong": "Nóng tính, cực đoan, yêu nước cực độ và vô cùng kiêu hãnh về năng lực thiên bẩm."
+    },
+    {
+      "ten": "Joseph Fourier",
+      "vaiTro": "Nhà toán học kiêm thư ký Viện Hàn lâm",
+      "nienDai": "1768-1830",
+      "tinhCachDoiThuong": "Chu đáo nhưng không may qua đời đột ngột khiến bản thảo quan trọng của Galois bị thất lạc."
+    },
+    {
+      "ten": "Siméon Denis Poisson",
+      "vaiTro": "Nhà toán học kiểm duyệt bài báo của Galois",
+      "nienDai": "1815-1840",
+      "tinhCachDoiThuong": "Cứng nhắc, không hiểu nổi tư duy đi trước thời đại của Galois và gác lại bản thảo."
+    }
+  ],
+  "giaiThoaiDoiThuong": [
+    {
+      "tieuDe": "Thi trượt Ecole Polytechnique vì cục súc",
+      "noiDung": "Galois từ chối giải thích các bước trung gian trên bảng vì cho rằng chúng quá hiển nhiên, khiến vị giám khảo tức giận và đánh trượt.",
+      "diemHaiHuoc": "Cậu thiếu niên tức giận ném cả viên phấn thẳng vào đầu vị giám khảo quyền lực."
+    },
+    {
+      "tieuDe": "Bức thư tuyệt mệnh gửi định mệnh toán học",
+      "noiDung": "Đêm trước trận quyết đấu sinh tử, Galois vội vã viết bên lề các trang giấy nguệch ngoạc câu nói nổi tiếng 'Tôi không có thời gian nữa'.",
+      "diemHaiHuoc": "Viết xong ông còn ghi chú thêm những lời nhắn nhủ nhờ bạn bè gửi cho các nhà toán học lớn lúc bấy giờ."
+    },
+    {
+      "tieuDe": "Cái chết vì tình đan xen chính trị",
+      "noiDung": "Nhiều giai thoại truyền rằng trận quyết đấu xuất phát từ một mối tình tay ba rắc rối với một phụ nữ tên là Stephanie.",
+      "diemHaiHuoc": "Thực chất đây là một cái bẫy chính trị được dàn dựng bởi các đối thủ phái bảo hoàng."
+    }
+  ],
+  "kienThucToanCotLoi": [
+    {
+      "tenKienThuc": "Lý thuyết Galois và Nhóm đối xứng nghiệm",
+      "giaiThichDeHieu": "Galois chứng minh rằng một phương trình đa thức bậc từ 5 trở lên không thể giải được bằng căn thức thông qua cấu trúc đối xứng của các nghiệm.",
+      "congThucLatex": "G = \\text{Gal}(K/F), \\quad [K:F] = |G|",
+      "yNghia": "Mở ra kỷ nguyên hiện đại cho Đại số trừu tượng và Lý thuyết Nhóm."
+    },
+    {
+      "tenKienThuc": "Đặc trưng của Nhóm hữu hạn",
+      "giaiThichDeHieu": "Nghiên cứu các phép biến đổi bảo toàn cấu trúc của một tập hợp đóng kín dưới một phép toán.",
+      "congThucLatex": "\\forall a, b \\in G \\implies a \\cdot b \\in G",
+      "yNghia": "Là chìa khóa cốt lõi để giải Rubik và mã hóa bảo mật thông tin."
+    }
+  ],
+  "ungDungHienDai": [
+    "Thuật toán mã hóa mật mã bảo mật thông tin trên iPhone và internet hiện đại",
+    "Lý thuyết nhóm ứng dụng trong việc giải khối lập phương Rubik",
+    "Cơ học lượng tử và vật lý hạt cơ bản mô tả các đối xứng trong không gian"
+  ],
+  "tomTatWikipedia": [],
+  "nguonThamKhao": [
+    "https://en.wikipedia.org/wiki/%C3%89variste_Galois",
+    "https://en.wikipedia.org/wiki/Galois_theory"
+  ]
+}
