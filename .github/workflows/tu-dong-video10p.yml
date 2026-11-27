@@ -5,7 +5,7 @@ on:
     # Tu dong chay 00:00 UTC = 07:00 sang theo gio Viet Nam (UTC+7), cach 2 ngay 1 lan.
     # Dong thay the cho lich co dinh Thu 2 - Thu 4 - Thu 6 hang tuan luc 07:00 VN:
     # - cron: '0 0 * * 1,3,5'
-    - cron: '00 11 * * *'
+    - cron: '20 4 * * *'
   workflow_dispatch:
     inputs:
       chu_de:
